@@ -17,8 +17,6 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                 handleClient(clientSocket);
-
-
             }
         } catch (IOException e) {
             e.printStackTrace();
