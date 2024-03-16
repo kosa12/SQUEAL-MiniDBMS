@@ -1,10 +1,9 @@
 package client;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import javax.swing.JButton;
 import gui.GUI;
 
 public class Client {
@@ -12,18 +11,34 @@ public class Client {
         String serverAddress = "localhost";
         int serverPort = 12345;
         GUI gui = new GUI();
+        Socket[] socketHolder = new Socket[1];
 
-        try (
+        JButton executeButton = gui.getExecuteButton();
+        executeButton.addActionListener(e -> {
+            try {
                 Socket socket = new Socket(serverAddress, serverPort);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        ) {
-            gui.saveText();
-            String message = gui.getjTextField();
+                String message = gui.getjTextField();
+                out.println(message);
+                socketHolder[0] = socket;
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
 
-            out.println(message);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        JButton exitButton = gui.getExitButton();
+        exitButton.addActionListener(e -> {
+            Socket socket = socketHolder[0];
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                gui.dispose();
+            }
+        });
     }
 }
