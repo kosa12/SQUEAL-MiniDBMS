@@ -4,8 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class GUI extends JFrame {
     private final JPanel jPanel;
@@ -16,12 +14,14 @@ public class GUI extends JFrame {
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
+    private final JButton exit;
+
     public GUI() {
         jPanel = new JPanel();
 
         this.setLayout(new BorderLayout());
 
-        JButton exit = new JButton("EXIT");
+        exit = new JButton("EXIT");
         execute = new JButton("XECUTE");
         clear = new JButton("Clear");
         refresh = new JButton("Refresh");
@@ -55,15 +55,6 @@ public class GUI extends JFrame {
             }
         });
 
-        jTextField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    saveText();
-                }
-            }
-        });
-
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
 
@@ -73,14 +64,19 @@ public class GUI extends JFrame {
         this.setResizable(false);
     }
 
-    public void saveText() {
-        String text = jTextField.getText();
-        System.out.println("Mentve: " + text);
+    public JButton getExecuteButton() {
+        return execute;
     }
+
 
     public String getjTextField() {
         return jTextField.getText();
     }
+
+    public JButton getExitButton() {
+        return exit;
+    }
+
 
     public static void main(String[] args) {
         new GUI();

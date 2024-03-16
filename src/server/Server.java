@@ -16,14 +16,14 @@ public class Server {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
-                handleClient(clientSocket);
+                new Thread(() -> handleClient(clientSocket)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static int handleClient(Socket clientSocket) {
+    private static void handleClient(Socket clientSocket) {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true)
@@ -32,11 +32,10 @@ public class Server {
             while ((message = in.readLine()) != null) {
                 System.out.println("Received from client: " + message);
             }
-            System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
             clientSocket.close();
+            System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 1;
     }
 }
