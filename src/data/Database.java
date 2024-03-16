@@ -26,4 +26,9 @@ public class Database {
     public ArrayList<Table> getTables() {
         return tables;
     }
+
+    @Override
+    public String toString() {
+        return dataBaseName;
+    }
 }
