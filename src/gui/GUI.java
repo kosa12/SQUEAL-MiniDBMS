@@ -4,13 +4,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class GUI extends JFrame {
     private final JPanel jPanel;
     private final JButton execute;
     private final JButton clear;
     private final JButton refresh;
-    private final JTextField jTextField;
+    public final JTextField jTextField;
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
@@ -53,6 +55,14 @@ public class GUI extends JFrame {
             }
         });
 
+        jTextField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    saveText();
+                }
+            }
+        });
 
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
@@ -61,6 +71,15 @@ public class GUI extends JFrame {
         this.setVisible(true);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setResizable(false);
+    }
+
+    public void saveText() {
+        String text = jTextField.getText();
+        System.out.println("Mentve: " + text);
+    }
+
+    public String getjTextField() {
+        return jTextField.getText();
     }
 
     public static void main(String[] args) {
