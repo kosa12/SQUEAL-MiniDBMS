@@ -76,4 +76,9 @@ public class Table {
     public void addIndexFile(IndexFile indexFile) {
         indexFiles.add(indexFile);
     }
+
+    @Override
+    public String toString() {
+        return tableName;
+    }
 }

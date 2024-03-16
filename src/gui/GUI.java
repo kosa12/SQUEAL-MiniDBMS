@@ -6,18 +6,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GUI extends JFrame {
-    private JPanel jPanel;
-    private JButton exit, execute, clear, refresh;
-    private JTextField jTextField;
+    private final JPanel jPanel;
+    private final JButton execute;
+    private final JButton clear;
+    private final JButton refresh;
+    private final JTextField jTextField;
     private JLabel jLabel;
-    private JMenuBar jMenuBar;
+    private final JMenuBar jMenuBar;
 
     public GUI() {
         jPanel = new JPanel();
 
         this.setLayout(new BorderLayout());
 
-        exit = new JButton("EXIT");
+        JButton exit = new JButton("EXIT");
         execute = new JButton("XECUTE");
         clear = new JButton("Clear");
         refresh = new JButton("Refresh");
