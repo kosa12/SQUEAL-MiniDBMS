@@ -38,7 +38,7 @@ public class Server {
 
                 String[] parts = message.split(" ");
 
-                if (Objects.equals(parts[0], "create") && Objects.equals(parts[1], "database") && parts[2] != null){
+                if (Objects.equals(parts[0].toLowerCase(), "create") && Objects.equals(parts[1].toLowerCase(), "database") && parts[2] != null){
                     File folder = new File("src/databases/" + parts[2]);
 
                     if (folder.mkdirs()) {
@@ -47,7 +47,7 @@ public class Server {
                         System.out.println("Could not create database <" + parts[2] +">.");
                     }
                 }
-                else if (Objects.equals(parts[0], "drop") && Objects.equals(parts[1], "database") && parts[2] != null){
+                else if (Objects.equals(parts[0].toLowerCase(), "drop") && Objects.equals(parts[1].toLowerCase(), "database") && parts[2] != null){
                     File folder = new File("src/databases/" + parts[2]);
 
                     if(folder.delete()){
