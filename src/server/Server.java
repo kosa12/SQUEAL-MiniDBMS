@@ -1,5 +1,9 @@
 package server;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,8 +14,10 @@ import java.net.Socket;
 import java.util.Objects;
 import java.io.File;
 
-public class Server {
-    public static void main(String[] args) {
+public class Server extends Thread {
+
+    @Override
+    public void run() {
         try {
             ServerSocket serverSocket = new ServerSocket(12345);
             System.out.println("Server is running...");
@@ -19,10 +25,16 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
+                clientSocket.setSoTimeout(5000);
+                //if(){ // ide kell valahogy megkapni a servergui stopServer-et
+                    System.out.println("Server is shutting down...");
+                //}
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private static void handleClient(Socket clientSocket) {
@@ -62,8 +74,6 @@ public class Server {
                 //
 
             }
-
-
 
             clientSocket.close();
             System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
