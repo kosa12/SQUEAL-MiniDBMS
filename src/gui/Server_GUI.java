@@ -42,7 +42,7 @@ public class Server_GUI extends JFrame {
                     System.out.println("Server is shutting down...");
                     System.exit(0);
                 } catch (IOException ex) {
-                    //throw new RuntimeException(ex);
+                    throw new RuntimeException(ex);
                 }
                 stopServer = true;
             }
@@ -64,10 +64,8 @@ public class Server_GUI extends JFrame {
 
     }
 
-    public boolean getstopServer()
-    {
-        return stopServer;
-    }
+
+
 
     private void startServer() {
         server = new Server();
