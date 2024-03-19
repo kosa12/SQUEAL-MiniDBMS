@@ -10,7 +10,9 @@ public class GUI extends JFrame {
     private final JButton execute;
     private final JButton clear;
     private final JButton refresh;
-    public final JTextField jTextField;
+    public final JTextField querry;
+
+    public final JTextField output;
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
@@ -32,14 +34,27 @@ public class GUI extends JFrame {
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
-        jTextField = new JTextField();
-        jTextField.setFont(new Font("Cfont", Font.ITALIC, 20));
+        querry = new JTextField();
+        querry.setFont(new Font("Cfont", Font.ITALIC, 20));
 
-        jTextField.setPreferredSize(new Dimension(800, 600));
+        querry.setPreferredSize(new Dimension(1000, 100));
+        querry.setText("ez lesz a parancs sor");
 
 
-        jTextField.setBackground(new Color(159, 172, 194));
-        jPanel.add(jTextField);
+        output = new JTextField();
+        output.setFont(new Font("Cfont", Font.ITALIC, 20));
+
+        output.setPreferredSize(new Dimension(1000, 600));
+        output.setText("ez meg az output amit majd kiad");
+
+
+        querry.setBackground(new Color(159, 172, 194));
+
+        output.setBackground(new Color(159, 172, 194));
+
+
+        jPanel.add(querry);
+        jPanel.add(output);
 
         exit.addActionListener(new ActionListener() {
             @Override
@@ -51,7 +66,7 @@ public class GUI extends JFrame {
         clear.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                jTextField.setText("");
+                querry.setText("");
             }
         });
 
@@ -70,7 +85,7 @@ public class GUI extends JFrame {
 
 
     public String getjTextField() {
-        return jTextField.getText();
+        return querry.getText();
     }
 
     public JButton getExitButton() {
