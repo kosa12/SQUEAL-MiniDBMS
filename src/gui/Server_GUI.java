@@ -43,7 +43,6 @@ public class Server_GUI extends JFrame {
                     System.exit(0);
                 } catch (IOException ex) {
                     //throw new RuntimeException(ex);
-                    System.out.println(" ");
                 }
                 stopServer = true;
             }
