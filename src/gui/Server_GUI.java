@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Server_GUI extends JFrame {
     private JPanel spanel;
@@ -36,6 +37,14 @@ public class Server_GUI extends JFrame {
         stop.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                try {
+                    server.getServerSocket().close();
+                    System.out.println("Server is shutting down...");
+                    System.exit(0);
+                } catch (IOException ex) {
+                    //throw new RuntimeException(ex);
+                    System.out.println(" ");
+                }
                 stopServer = true;
             }
         });
