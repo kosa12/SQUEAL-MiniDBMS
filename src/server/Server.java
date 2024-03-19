@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.io.File;
@@ -20,6 +21,20 @@ import java.io.File;
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final ArrayList<Database> databases = new ArrayList<>();
+
+    private boolean isRunning = true;
+
+    public void stopServer() {
+        isRunning = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            System.out.println("Server is shutting down...");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public void run() {
 
@@ -29,25 +44,27 @@ public class Server extends Thread {
             System.out.println(db.getDataBaseName());
         }
 
-
         try {
             serverSocket = new ServerSocket(12345);
             System.out.println("Server is running...");
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
-                new Thread(() -> handleClient(clientSocket)).start();
-                clientSocket.setSoTimeout(5000);
-                //if(){ // ide kell valahogy megkapni a servergui stopServer-et
-                 //   System.out.println("Server is shutting down...");
-                //}
-
+            while (isRunning) {
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+                    new Thread(() -> handleClient(clientSocket)).start();
+                    clientSocket.setSoTimeout(5000);
+                } catch (SocketException se) {
+                    if (!isRunning) {
+                        System.out.println("Server is shutting down...");
+                        break;
+                    }
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
 
     public void recreate(){
         File folder = new File("src/databases");
@@ -124,5 +141,10 @@ public class Server extends Thread {
         } catch (IOException e) {
             //e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        Server server = new Server();
+        server.run();
     }
 }
