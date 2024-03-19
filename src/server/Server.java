@@ -15,11 +15,11 @@ import java.util.Objects;
 import java.io.File;
 
 public class Server extends Thread {
-
+    private ServerSocket serverSocket;
     @Override
     public void run() {
         try {
-            ServerSocket serverSocket = new ServerSocket(12345);
+            serverSocket = new ServerSocket(12345);
             System.out.println("Server is running...");
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -27,7 +27,7 @@ public class Server extends Thread {
                 new Thread(() -> handleClient(clientSocket)).start();
                 clientSocket.setSoTimeout(5000);
                 //if(){ // ide kell valahogy megkapni a servergui stopServer-et
-                    System.out.println("Server is shutting down...");
+                 //   System.out.println("Server is shutting down...");
                 //}
 
             }
@@ -35,6 +35,10 @@ public class Server extends Thread {
             e.printStackTrace();
         }
 
+    }
+
+    public ServerSocket getServerSocket(){
+        return serverSocket;
     }
 
     private static void handleClient(Socket clientSocket) {
