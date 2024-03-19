@@ -1,5 +1,7 @@
 package server;
 
+import data.Database;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -11,13 +13,23 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.io.File;
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
+    private static final ArrayList<Database> databases = new ArrayList<>();
     @Override
     public void run() {
+
+        recreate();
+
+        for (Database db : databases){
+            System.out.println(db.getDataBaseName());
+        }
+
+
         try {
             serverSocket = new ServerSocket(12345);
             System.out.println("Server is running...");
@@ -35,6 +47,29 @@ public class Server extends Thread {
             e.printStackTrace();
         }
 
+    }
+
+    public void recreate(){
+        File folder = new File("src/databases");
+        File[] listOfFolders = folder.listFiles();
+
+        assert listOfFolders != null;
+        for (File f : listOfFolders) {
+            if (f.isDirectory()) {
+                databases.add(new Database(f.getName()));
+            }
+        }
+    }
+
+    public static void drop(String dbName){
+        Database tmp = null;
+        for (Database db : databases){
+            tmp = db;
+            if(Objects.equals(db.getDataBaseName(), dbName)){
+                databases.remove(db);
+                break;
+            }
+        }
     }
 
     public ServerSocket getServerSocket(){
@@ -55,10 +90,14 @@ public class Server extends Thread {
                 String[] parts = message.split(" ");
 
                 if (Objects.equals(parts[0].toLowerCase(), "create") && Objects.equals(parts[1].toLowerCase(), "database") && parts[2] != null){
+
                     File folder = new File("src/databases/" + parts[2]);
 
                     if (folder.mkdirs()) {
                         System.out.println("Database succesfully created: " + folder.getAbsolutePath());
+                        Database newDB = new Database(parts[2]);
+                        databases.add(newDB);
+
                     } else {
                         System.out.println("Could not create database <" + parts[2] +">.");
                     }
@@ -68,6 +107,7 @@ public class Server extends Thread {
 
                     if(folder.delete()){
                         System.out.println("Database <" + parts[2] + "> dropped.");
+                        drop(parts[2]);
                     }
                     else {
                         System.out.println("Could not drop database <" + parts[2] + ">." );
