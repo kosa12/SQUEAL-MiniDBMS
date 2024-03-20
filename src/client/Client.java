@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import javax.swing.JButton;
-import gui.GUI;
 
 public class Client {
     public static void main(String[] args) {
         String serverAddress = "localhost";
         int serverPort = 12345;
-        GUI gui = new GUI();
+        Client_GUI gui = new Client_GUI();
         Socket[] socketHolder = new Socket[1];
 
         JButton executeButton = gui.getExecuteButton();
