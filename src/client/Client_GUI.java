@@ -1,44 +1,99 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
+import java.io.PrintStream;
 
 public class Client_GUI extends JFrame {
     private final JPanel jPanel;
-    private final JButton execute;
-    private final JButton clear;
-    private final JButton refresh;
+    private final JMenuItem execute;
+    private final JMenuItem clear;
+    private final JMenuItem refresh;
     private final JTextArea querry, output;
     private final JMenu jmenu;
-    private final JMenuItem one,two;
+    private final JMenuItem save, open;
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
-    private final JButton exit;
+    private final JMenuItem exit;
 
     public Client_GUI() {
         jPanel = new JPanel();
 
         this.setLayout(new BorderLayout());
 
-        exit = new JButton("EXIT");
-        execute = new JButton("XECUTE");
-        clear = new JButton("Clear");
-        refresh = new JButton("Refresh");
+        int padding = 15;
+        Insets insets = new Insets(padding,padding,padding,padding);
 
+
+        exit = new JMenuItem("EXIT");
+        exit.setPreferredSize(new Dimension(60,40));
+
+        //exit.setBorder(new EmptyBorder(insets));
+
+        exit.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                exit.setBackground(Color.LIGHT_GRAY);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                exit.setBackground(null);
+            }
+        });
+
+
+        execute = new JMenuItem("EXECUTE");
+
+        execute.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                execute.setBackground(Color.LIGHT_GRAY);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                execute.setBackground(null);
+            }
+        });
+
+        clear = new JMenuItem("CLEAR");
+
+        clear.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                clear.setBackground(Color.LIGHT_GRAY);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                clear.setBackground(null);
+            }
+        });
+
+        refresh = new JMenuItem("REFRESH");
+
+        refresh.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                refresh.setBackground(Color.LIGHT_GRAY);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                refresh.setBackground(null);
+            }
+        });
 
         jMenuBar = new JMenuBar();
 
-        jmenu = new JMenu();
+        jmenu = new JMenu("File");
+        jmenu.setPreferredSize(new Dimension(60,40));
 
-        one = new JMenuItem("one");
-        two = new JMenuItem("two");
+        save = new JMenuItem("Save");
+        open = new JMenuItem("Open");
 
-
-        jmenu.add(one);
-        jmenu.add(two);
+        jmenu.add(save);
+        jmenu.add(open);
 
         jMenuBar.add(jmenu);
         jMenuBar.add(exit);
@@ -46,26 +101,45 @@ public class Client_GUI extends JFrame {
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
-
-
         querry = new JTextArea();
         querry.setFont(new Font("Cfont", Font.ITALIC, 20));
 
         querry.setPreferredSize(new Dimension(1000, 400));
-        querry.setText("ez lesz a parancs sor");
+        querry.setText("Write your command(s) here");
 
+        querry.setBorder(new EmptyBorder(insets));
+
+        querry.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                querry.setText("");
+                querry.setFont(new Font("Cfont", Font.PLAIN, 20));
+
+            }
+        });
 
         output = new JTextArea();
         output.setFont(new Font("Cfont", Font.ITALIC, 20));
 
+        output.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                output.setText("");
+                output.setFont(new Font("Cfont", Font.PLAIN, 20));
+
+            }
+        });
+
+        output.setBorder(new EmptyBorder(insets));
+
         output.setPreferredSize(new Dimension(1000, 350));
         output.setText("ez meg az output amit majd kiad");
 
+        querry.setBackground(new Color(239, 240, 243));
 
-        querry.setBackground(new Color(159, 172, 194));
+        output.setBackground(new Color(239, 240, 243));
 
-        output.setBackground(new Color(159, 172, 194));
-
+        output.setEditable(false);
 
         jPanel.add(querry);
         jPanel.add(output);
@@ -85,9 +159,10 @@ public class Client_GUI extends JFrame {
         });
 
 
-
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
+
+        jPanel.setBackground(new Color(75, 104, 178));
 
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setVisible(true);
@@ -95,7 +170,7 @@ public class Client_GUI extends JFrame {
         this.setResizable(false);
     }
 
-    public JButton getExecuteButton() {
+    public JMenuItem getExecuteButton() {
         return execute;
     }
 
@@ -104,8 +179,12 @@ public class Client_GUI extends JFrame {
         return querry.getText();
     }
 
-    public JButton getExitButton() {
+    public JMenuItem getExitButton() {
         return exit;
+    }
+
+    public static void main(String[] args) {
+        new Client_GUI();
     }
 
 }
