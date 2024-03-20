@@ -212,10 +212,9 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
-        // Create table object
         JSONObject tableObj = new JSONObject();
-        tableObj.put("name", tableName);
-        tableObj.put("columns", tableColumns);
+        tableObj.put("table_name", tableName);
+        tableObj.put("attributes", tableColumns);
 
         updateDatabaseWithTable(tableName, tableObj);
         System.out.println("Table created: " + tableName);
