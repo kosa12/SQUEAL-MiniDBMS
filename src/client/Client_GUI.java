@@ -10,9 +10,9 @@ public class Client_GUI extends JFrame {
     private final JButton execute;
     private final JButton clear;
     private final JButton refresh;
-    public final JTextField querry;
-
-    public final JTextField output;
+    private final JTextArea querry, output;
+    private final JMenu jmenu;
+    private final JMenuItem one,two;
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
@@ -28,23 +28,37 @@ public class Client_GUI extends JFrame {
         clear = new JButton("Clear");
         refresh = new JButton("Refresh");
 
+
         jMenuBar = new JMenuBar();
+
+        jmenu = new JMenu();
+
+        one = new JMenuItem("one");
+        two = new JMenuItem("two");
+
+
+        jmenu.add(one);
+        jmenu.add(two);
+
+        jMenuBar.add(jmenu);
         jMenuBar.add(exit);
         jMenuBar.add(execute);
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
-        querry = new JTextField();
+
+
+        querry = new JTextArea();
         querry.setFont(new Font("Cfont", Font.ITALIC, 20));
 
-        querry.setPreferredSize(new Dimension(1000, 100));
+        querry.setPreferredSize(new Dimension(1000, 400));
         querry.setText("ez lesz a parancs sor");
 
 
-        output = new JTextField();
+        output = new JTextArea();
         output.setFont(new Font("Cfont", Font.ITALIC, 20));
 
-        output.setPreferredSize(new Dimension(1000, 600));
+        output.setPreferredSize(new Dimension(1000, 350));
         output.setText("ez meg az output amit majd kiad");
 
 
@@ -70,6 +84,8 @@ public class Client_GUI extends JFrame {
             }
         });
 
+
+
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
 
@@ -92,8 +108,4 @@ public class Client_GUI extends JFrame {
         return exit;
     }
 
-
-    public static void main(String[] args) {
-        new Client_GUI();
-    }
 }
