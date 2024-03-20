@@ -12,8 +12,6 @@ public class Client_GUI extends JFrame {
     private final JMenuItem clear;
     private final JMenuItem refresh;
     private final JTextArea querry, output;
-    private final JMenu jmenu;
-    private final JMenuItem save, open;
     private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
@@ -32,7 +30,7 @@ public class Client_GUI extends JFrame {
 
         exit = new JMenuItem("EXIT");
         exit.setPreferredSize(new Dimension(60,40));
-
+        exit.setBackground(new Color(75, 104, 178));
         //exit.setBorder(new EmptyBorder(insets));
 
         exit.addMouseListener(new MouseAdapter() {
@@ -42,13 +40,13 @@ public class Client_GUI extends JFrame {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                exit.setBackground(null);
+                exit.setBackground(new Color(75, 104, 178));
             }
         });
 
 
         execute = new JMenuItem("EXECUTE");
-
+        execute.setBackground(new Color(75, 104, 178));
         execute.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -56,12 +54,12 @@ public class Client_GUI extends JFrame {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                execute.setBackground(null);
+                execute.setBackground(new Color(75, 104, 178));
             }
         });
 
         clear = new JMenuItem("CLEAR");
-
+        clear.setBackground(new Color(75, 104, 178));
         clear.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -69,12 +67,12 @@ public class Client_GUI extends JFrame {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                clear.setBackground(null);
+                clear.setBackground(new Color(75, 104, 178));
             }
         });
 
         refresh = new JMenuItem("REFRESH");
-
+        refresh.setBackground(new Color(75, 104, 178));
         refresh.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -82,22 +80,12 @@ public class Client_GUI extends JFrame {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                refresh.setBackground(null);
+                refresh.setBackground(new Color(75, 104, 178));
             }
         });
 
         jMenuBar = new JMenuBar();
 
-        jmenu = new JMenu("File");
-        jmenu.setPreferredSize(new Dimension(60,40));
-
-        save = new JMenuItem("Save");
-        open = new JMenuItem("Open");
-
-        jmenu.add(save);
-        jmenu.add(open);
-
-        jMenuBar.add(jmenu);
         jMenuBar.add(exit);
         jMenuBar.add(execute);
         jMenuBar.add(clear);

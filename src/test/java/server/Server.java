@@ -174,8 +174,7 @@ public class Server extends Thread {
                 JSONObject newDB = new JSONObject();
                 newDB.put("name", databaseName);
                 databases.add(newDB);
-                writer = new FileWriter(databaseFile);
-                writer.write(databases.toJSONString());
+                saveDatabaseJSON(databases, databaseFile);
 
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
