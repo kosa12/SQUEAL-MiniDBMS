@@ -2,8 +2,6 @@ package data;
 public class Attribute {
     private String attributeName;
     private String type;
-
-
     private int length;
     private boolean isnull;
 
