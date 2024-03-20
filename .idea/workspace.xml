@@ -4,26 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="asd">
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/databases/databases.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/server/JSON.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQUEL_maven.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/Attribute.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Attribute.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Database.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/ForeignKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/ForeignKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/IndexFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/IndexFile.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/Table.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Table.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/server/Server.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/server/Server_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" afterDir="false" />
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="fileexp_kulonjson">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/databases/guka.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/databases/guka.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +57,7 @@
     "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Merging kriszti",
+    "git-widget-placeholder": "kriszti",
     "kotlin-language-version-configured": "true",
     "node.js.selected.package.tslint": "(autodetect)",
     "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
@@ -100,10 +86,29 @@
       <option name="presentableId" value="Default" />
       <updated>1710922416002</updated>
     </task>
+    <task id="LOCAL-00001" summary="fileexp">
+      <option name="closed" value="true" />
+      <created>1710943335985</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1710943335985</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fileexp_kulonjson">
+      <option name="closed" value="true" />
+      <created>1710943609906</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1710943609906</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="asd" />
-    <option name="LAST_COMMIT_MESSAGE" value="asd" />
+    <MESSAGE value="fileexp" />
+    <MESSAGE value="fileexp_kulonjson" />
+    <option name="LAST_COMMIT_MESSAGE" value="fileexp_kulonjson" />
   </component>
 </project>
