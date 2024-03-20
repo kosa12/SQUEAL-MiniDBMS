@@ -8,9 +8,10 @@ import java.io.File;
 
 public class FileExplorer extends JPanel {
     private JTree tree;
+    private DefaultMutableTreeNode root;
 
     public FileExplorer() {
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
+        root = new DefaultMutableTreeNode("databases");
 
         // Set the root directory you want to explore
         File rootDirectory = new File("src\\test\\java\\databases");
@@ -23,8 +24,14 @@ public class FileExplorer extends JPanel {
         setVisible(true);
     }
 
+    public void refreshTree() {
+        root.removeAllChildren();
+        addFiles(root, new File("src\\test\\java\\databases")); // Rebuild the tree
+        ((DefaultTreeModel) tree.getModel()).reload(); // Reload the tree model
+    }
+
     private void addFiles(DefaultMutableTreeNode parentNode, File parentFile) {
-        if (!parentFile.isDirectory()) return; // Exit if it's not a directory
+        if (!parentFile.isDirectory()) return;
 
         File[] files = parentFile.listFiles();
         if (files != null) {
@@ -32,7 +39,7 @@ public class FileExplorer extends JPanel {
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(file.getName());
                 parentNode.add(node);
                 if (file.isDirectory()) {
-                    addFiles(node, file); // Recursively add files and directories
+                    addFiles(node, file);
                 }
             }
         }
