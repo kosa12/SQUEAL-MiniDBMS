@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="asd">
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/databases/databases.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/server/JSON.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SQUEL_maven.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/Attribute.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Attribute.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Database.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/ForeignKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/ForeignKey.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/IndexFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/IndexFile.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/Table.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/data/Table.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/server/Server.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/server/Server_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="alwaysUpdateSnapshots" value="true" />
+        <option name="printErrorStackTraces" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2dwc7Zz4PVgTSlVBvDtSn41Kc6R" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Client.executor": "Run",
+    "Application.Client_GUI.executor": "Run",
+    "Application.FileExplorer.executor": "Run",
+    "Application.FolderExplorerDemo.executor": "Run",
+    "Application.Main.executor": "Run",
+    "Application.Server.executor": "Run",
+    "Application.Server_GUI.executor": "Run",
+    "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "Merging kriszti",
+    "kotlin-language-version-configured": "true",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Matyas\Desktop\DBMS\src\test\java\databases" />
+      <recent name="C:\Users\Matyas\Desktop\DBMS\src\test\java" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="jdk-21.0.1-openjdk-21.0.1-8336523bb0d9-657b72ed" />
+        <option value="jdk-22-openjdk-22-3183f394aec4-bad0321e" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="" />
+      <created>1710922416002</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1710922416002</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="asd" />
+    <option name="LAST_COMMIT_MESSAGE" value="asd" />
+  </component>
+</project>
