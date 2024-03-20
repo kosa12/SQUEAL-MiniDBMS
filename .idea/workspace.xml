@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="gui_daslmkm">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/databases/guka.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/databases/odi.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
-    </list>
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="gui_daslmkm" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -58,7 +51,7 @@
     "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Merging kriszti",
+    "git-widget-placeholder": "kriszti",
     "kotlin-language-version-configured": "true",
     "node.js.selected.package.tslint": "(autodetect)",
     "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
@@ -119,7 +112,15 @@
       <option name="project" value="LOCAL" />
       <updated>1710949095114</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="gui_daslmkm">
+      <option name="closed" value="true" />
+      <created>1710958607823</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1710958607823</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -128,6 +129,7 @@
     <MESSAGE value="fileexp_kulonjson" />
     <MESSAGE value="fileexp_szinteOK" />
     <MESSAGE value="gui_kisupd" />
+    <MESSAGE value="gui_iconok" />
     <MESSAGE value="gui_daslmkm" />
     <option name="LAST_COMMIT_MESSAGE" value="gui_daslmkm" />
   </component>
