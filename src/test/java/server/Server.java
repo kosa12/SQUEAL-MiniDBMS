@@ -17,8 +17,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-
-
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final ArrayList<Database> databases = new ArrayList<>();
