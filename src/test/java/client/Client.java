@@ -25,7 +25,6 @@ public class Client {
             }
         });
 
-
         JMenuItem exitButton = gui.getExitButton();
         exitButton.addActionListener(e -> {
             Socket socket = socketHolder[0];
