@@ -9,6 +9,7 @@
       <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/databases/odi.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/databases/odi.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
+
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,6 +111,7 @@
       <updated>1710946781950</updated>
     </task>
     <option name="localTasksCounter" value="4" />
+
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -118,5 +120,6 @@
     <MESSAGE value="fileexp_kulonjson" />
     <MESSAGE value="fileexp_szinteOK" />
     <option name="LAST_COMMIT_MESSAGE" value="fileexp_szinteOK" />
+
   </component>
 </project>

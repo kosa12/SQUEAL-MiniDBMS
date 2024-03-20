@@ -22,18 +22,6 @@ public class Server extends Thread {
 
     private boolean isRunning = true;
 
-    public void stopServer() {
-        isRunning = false;
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-            }
-            System.out.println("Server is shutting down...");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void run() {
 
@@ -107,7 +95,6 @@ public class Server extends Thread {
     private static void handleClient(Socket clientSocket) {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true)
         ) {
 
             String message;
@@ -122,7 +109,7 @@ public class Server extends Thread {
                     String objectType = matcher.group(2).toLowerCase();
                     String objectName = matcher.group(3);
 
-                    handleDatabaseOperation(operation, objectName);
+                    handleDatabaseOperation(operation, objectName, in);
                 } else {
                     System.out.println("Invalid message format: " + message);
                 }
@@ -136,14 +123,14 @@ public class Server extends Thread {
     }
 
 
-    public static void handleDatabaseOperation(String operation, String databaseName) {
+    public static void handleDatabaseOperation(String operation, String databaseName, BufferedReader in) {
         if (operation == null) {
             System.out.println("Operation cannot be null.");
             return;
         }
 
         JSONParser parser = new JSONParser();
-        FileWriter writer = null;
+        FileReader fileReader = null;
 
         try {
             File databasesDir = new File("src/test/java/databases");
@@ -159,7 +146,8 @@ public class Server extends Thread {
                 }
             }
 
-            Object obj = parser.parse(new FileReader(databaseFile));
+            fileReader = new FileReader(databaseFile);
+            Object obj = parser.parse(fileReader);
             JSONArray databases = (JSONArray) obj;
 
             if (operation.equals("create")) {
@@ -183,29 +171,40 @@ public class Server extends Thread {
                     JSONObject db = (JSONObject) databases.get(i);
                     if (db.get("name").equals(databaseName)) {
                         databases.remove(i);
-                        writer = new FileWriter(databaseFile);
-                        writer.write(databases.toJSONString());
-                        System.out.println("Database dropped: " + databaseName);
                         found = true;
                         break;
                     }
                 }
+
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
-                }
+                } else {
+                    in.close();
+                    fileReader.close();
 
-                if (writer != null) {
-                    writer.close();
-                }
-
-                if (!databaseFile.delete()) {
-                    System.out.println("Failed to delete database file: " + databaseName);
+                    try {
+                        if (databaseFile.delete()) {
+                            System.out.println("Database dropped: " + databaseName);
+                        } else {
+                            System.out.println("Failed to drop database: " + databaseName);
+                        }
+                    } catch (SecurityException e) {
+                        System.out.println("Security exception occurred: " + e.getMessage());
+                    }
                 }
             } else {
                 System.out.println("Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (fileReader != null) {
+                    fileReader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
