@@ -8,14 +8,10 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 
-import java.util.Arrays;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
@@ -234,7 +230,7 @@ public class Server extends Thread {
             Object obj = parser.parse(fileReader);
             JSONArray databaseJson = (JSONArray) obj;
 
-            JSONObject databaseObj = (JSONObject) databaseJson.get(0);
+            JSONObject databaseObj = (JSONObject) databaseJson.getFirst();
             JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
 
             boolean tableFound = false;
@@ -328,7 +324,6 @@ public class Server extends Thread {
             }
         }
     }
-
 
     public static void handleDatabaseOperation(String operation, String databaseName, BufferedReader in) {
         JSONParser parser = new JSONParser();

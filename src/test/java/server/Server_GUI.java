@@ -44,7 +44,6 @@ public class Server_GUI extends JFrame {
             }
         });
 
-
         jTextField = new JTextArea();
         jTextField.setPreferredSize(new Dimension(850,300));
 
