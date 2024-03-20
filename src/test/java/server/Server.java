@@ -2,18 +2,21 @@ package server;
 
 import data.Database;
 
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Objects;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
@@ -32,15 +35,16 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
     @Override
     public void run() {
 
-        //recreate();
-        recreateFromJson("src/test/java/databases/databases.json");
+        recreateFromJson("src/test/java/databases");
 
-        for (Database db : databases){
+        for (Database db : databases) {
             System.out.println(db.getDataBaseName());
         }
+
 
         try {
             serverSocket = new ServerSocket(12345);
@@ -63,50 +67,41 @@ public class Server extends Thread {
         }
     }
 
-
-    public void recreate(){
-        File folder = new File("src/test/java/databases");
-        File[] listOfFolders = folder.listFiles();
-
-        assert listOfFolders != null;
-        for (File f : listOfFolders) {
-            if (f.isDirectory()) {
-                databases.add(new Database(f.getName()));
-            }
-        }
-    }
-
-    public void recreateFromJson(String jsonFilePath) {
+    public void recreateFromJson(String jsonPath) {
         JSONParser parser = new JSONParser();
 
-        try (FileReader reader = new FileReader(jsonFilePath)) {
-            Object obj = parser.parse(reader);
+        try {
+            File databasesDir = new File(jsonPath);
+            if (!databasesDir.exists() || !databasesDir.isDirectory()) {
+                System.out.println("Invalid directory: " + jsonPath);
+                return;
+            }
 
-            JSONArray databaseArray = (JSONArray) obj;
+            File[] databaseFiles = databasesDir.listFiles((dir, name) -> name.endsWith(".json"));
+            if (databaseFiles == null) {
+                System.out.println("No database files found in directory: " + jsonPath);
+                return;
+            }
 
-            // Iterate through each database object in the array
-            for (Object databaseObj : databaseArray) {
-                JSONObject databaseJson = (JSONObject) databaseObj;
+            for (File databaseFile : databaseFiles) {
+                try (FileReader reader = new FileReader(databaseFile)) {
+                    Object obj = parser.parse(reader);
+                    JSONArray databaseArray = (JSONArray) obj;
 
-                String databaseName = (String) databaseJson.get("name");
+                    for (Object databaseObj : databaseArray) {
+                        JSONObject databaseJson = (JSONObject) databaseObj;
 
-                databases.add(new Database(databaseName));
+                        String databaseName = (String) databaseJson.get("name");
+
+                        databases.add(new Database(databaseName));
+                    }
+                }
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }
 
-    public static void drop(String dbName){
-        Database tmp = null;
-        for (Database db : databases){
-            tmp = db;
-            if(Objects.equals(db.getDataBaseName(), dbName)){
-                databases.remove(db);
-                break;
-            }
-        }
-    }
 
     public ServerSocket getServerSocket(){
         return serverSocket;
@@ -117,24 +112,22 @@ public class Server extends Thread {
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true)
         ) {
+
             String message;
             while ((message = in.readLine()) != null) {
                 System.out.println("Received from client: " + message);
 
-                //message feldolgozasa
+                Pattern pattern = Pattern.compile("^\\s*(create|drop)\\s+(database)\\s+(\\S+)\\s*$", Pattern.CASE_INSENSITIVE);
+                Matcher matcher = pattern.matcher(message);
 
-                String[] parts = message.split(" ");
+                if (matcher.matches()) {
+                    String operation = matcher.group(1).toLowerCase();
+                    String objectType = matcher.group(2).toLowerCase();
+                    String objectName = matcher.group(3);
 
-                if (parts.length >= 3) {
-                    String operation = parts[0].toLowerCase();
-                    String objectType = parts[1].toLowerCase();
-                    String objectName = parts[2];
-
-                    if (Objects.equals(operation, "create") && Objects.equals(objectType, "database")) {
-                        handleDatabaseOperation("create", objectName);
-                    } else if (Objects.equals(operation, "drop") && Objects.equals(objectType, "database")) {
-                        handleDatabaseOperation("drop", objectName);
-                    }
+                    handleDatabaseOperation(operation, objectName);
+                } else {
+                    System.out.println("Invalid message format: " + message);
                 }
             }
 
@@ -145,6 +138,7 @@ public class Server extends Thread {
         }
     }
 
+
     public static void handleDatabaseOperation(String operation, String databaseName) {
         if (operation == null) {
             System.out.println("Operation cannot be null.");
@@ -153,49 +147,65 @@ public class Server extends Thread {
 
         JSONParser parser = new JSONParser();
 
-        try (FileReader reader = new FileReader("src/test/java/databases/databases.json")) {
-            Object obj = parser.parse(reader);
+        try {
+            File databasesDir = new File("src/test/java/databases");
+            if (!databasesDir.exists()) {
+                databasesDir.mkdirs();
+            }
 
-            if (obj instanceof JSONArray) {
-                JSONArray databases = (JSONArray) obj;
+            File databaseFile = new File(databasesDir, databaseName + ".json");
+            if (!databaseFile.exists()) {
+                try (FileWriter writer = new FileWriter(databaseFile)) {
+                    JSONArray jsonArray = new JSONArray();
+                    writer.write(jsonArray.toJSONString());
+                }
+            }
 
-                if (operation.equalsIgnoreCase("create")) {
-                    for (Object dbObj : databases) {
-                        JSONObject db = (JSONObject) dbObj;
-                        if (db.get("name").equals(databaseName)) {
-                            System.out.println("Database already exists: " + databaseName);
-                            return;
-                        }
+            Object obj = parser.parse(new FileReader(databaseFile));
+            JSONArray databases = (JSONArray) obj;
+
+            if (operation.equals("create")) {
+                for (Object dbObj : databases) {
+                    JSONObject db = (JSONObject) dbObj;
+                    if (db.get("name").equals(databaseName)) {
+                        System.out.println("Database already exists: " + databaseName);
+                        return;
                     }
+                }
 
-                    JSONObject newDB = new JSONObject();
-                    newDB.put("name", databaseName);
-                    databases.add(newDB);
-                    saveDatabaseJSON(databases);
+                JSONObject newDB = new JSONObject();
+                newDB.put("name", databaseName);
+                databases.add(newDB);
+                saveDatabaseJSON(databases, databaseFile);
 
-                    System.out.println("Database created: " + databaseName);
-                } else if (operation.equalsIgnoreCase("drop")) {
-                    boolean found = false;
-                    for (int i = 0; i < databases.size(); i++) {
-                        JSONObject db = (JSONObject) databases.get(i);
-                        if (db.get("name").equals(databaseName)) {
-                            databases.remove(i);
-                            saveDatabaseJSON(databases);
-                            System.out.println("Database dropped: " + databaseName);
-                            found = true;
-                            break;
-                        }
+                System.out.println("Database created: " + databaseName);
+            } else if (operation.equals("drop")) {
+                boolean found = false;
+                for (int i = 0; i < databases.size(); i++) {
+                    JSONObject db = (JSONObject) databases.get(i);
+                    if (db.get("name").equals(databaseName)) {
+                        databases.remove(i);
+                        saveDatabaseJSON(databases, databaseFile);
+                        System.out.println("Database dropped: " + databaseName);
+                        found = true;
+                        break;
                     }
-                    if (!found) {
-                        System.out.println("Database not found: " + databaseName);
-                    }
-                } else {
-                    System.out.println("Invalid operation: " + operation);
+                }
+                if (!found) {
+                    System.out.println("Database not found: " + databaseName);
                 }
             } else {
-                System.out.println("Invalid JSON structure: Expecting JSON array.");
+                System.out.println("Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
+        try (FileWriter writer = new FileWriter(databaseFile)) {
+            writer.write(databases.toJSONString());
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -207,10 +217,5 @@ public class Server extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        Server server = new Server();
-        server.run();
     }
 }
