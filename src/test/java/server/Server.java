@@ -9,8 +9,6 @@ import java.net.SocketException;
 import java.util.ArrayList;
 
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -25,7 +23,7 @@ public class Server extends Thread {
 
     private static String currentDatabase;
 
-    private boolean isRunning = true;
+    private final boolean isRunning = true;
 
     @Override
     public void run() {
@@ -81,7 +79,7 @@ public class Server extends Thread {
                     for (Object databaseObj : databaseArray) {
                         JSONObject databaseJson = (JSONObject) databaseObj;
 
-                        String databaseName = (String) databaseJson.get("db_name");
+                        String databaseName = (String) databaseJson.get("name");
 
                         databases.add(new Database(databaseName));
                     }
@@ -98,13 +96,13 @@ public class Server extends Thread {
 
     private static void handleClient(Socket clientSocket) {
         try (
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
         ) {
             String message;
             while ((message = in.readLine()) != null) {
                 System.out.println("Received from client: " + message);
 
-                String[] parts = message.trim().split("\\s+"); // Split the message by whitespace
+                String[] parts = message.trim().split("\\s+");
 
                 if (parts.length >= 3) {
                     String operation = parts[0].toLowerCase();
@@ -155,40 +153,27 @@ public class Server extends Thread {
         }
     }
 
-
-    public static void handleDatabaseOperation(String operation, String objectType, String objectName, BufferedReader in) {
-        if (operation == null || objectType == null || objectName == null) {
-            System.out.println("Operation, object type, or object name cannot be null.");
-            return;
-        }
-
-        if (objectType.equalsIgnoreCase("database")) {
-            handleDatabaseOperation(operation, objectName, in);
-        } else if (objectType.equalsIgnoreCase("table")) {
-            handleTableOperation(operation, objectName, in);
-        } else {
-            System.out.println("Invalid object type: " + objectType);
-        }
-    }
-
     private static void handleTableOperation(String operation, String command, BufferedReader in) {
         if (currentDatabase == null) {
             System.out.println("No database selected.");
             return;
         }
 
-        if (!operation.equalsIgnoreCase("create")) {
+        if (operation.equalsIgnoreCase("create")) {
+            createTable(command);
+        } else if (operation.equalsIgnoreCase("drop")) {
+            dropTable(command);
+        } else {
             System.out.println("Invalid table operation: " + operation);
-            return;
         }
+    }
 
-
+    private static void createTable(String command) {
         String[] parts = command.split("\\s+");
         for (int i = 0; i < parts.length; i++) {
             parts[i] = parts[i].trim();
         }
 
-        System.out.println(Arrays.toString(parts));
         if (parts.length < 4 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("TABLE")) {
             System.out.println("Invalid CREATE TABLE command format.");
             return;
@@ -212,15 +197,82 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
-        // Create table object
         JSONObject tableObj = new JSONObject();
-        tableObj.put("name", tableName);
-        tableObj.put("columns", tableColumns);
+        tableObj.put("table_name", tableName);
+        tableObj.put("attributes", tableColumns);
 
         updateDatabaseWithTable(tableName, tableObj);
         System.out.println("Table created: " + tableName);
     }
 
+    private static void dropTable(String command) {
+        String[] parts = command.split("\\s+");
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = parts[i].trim();
+        }
+
+        if (parts.length != 3 || !parts[0].equalsIgnoreCase("DROP") || !parts[1].equalsIgnoreCase("TABLE")) {
+            System.out.println("Invalid DROP TABLE command format.");
+            return;
+        }
+
+        String tableName = parts[2];
+
+        // Read the database JSON file
+        JSONParser parser = new JSONParser();
+        FileReader fileReader = null;
+        FileWriter fileWriter = null;
+
+        try {
+            File databaseFile = new File("src/test/java/databases/" + currentDatabase + ".json");
+            if (!databaseFile.exists()) {
+                System.out.println("Database not found: " + currentDatabase);
+                return;
+            }
+
+            fileReader = new FileReader(databaseFile);
+            Object obj = parser.parse(fileReader);
+            JSONArray databaseJson = (JSONArray) obj;
+
+            JSONObject databaseObj = (JSONObject) databaseJson.get(0);
+            JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
+
+            boolean tableFound = false;
+            int tableIndex = -1;
+            for (int i = 0; i < tablesArray.size(); i++) {
+                JSONObject tableObj = (JSONObject) tablesArray.get(i);
+                if (tableObj.get("table_name").equals(tableName)) {
+                    tableFound = true;
+                    tableIndex = i;
+                    break;
+                }
+            }
+
+            if (tableFound) {
+                tablesArray.remove(tableIndex);
+
+                fileWriter = new FileWriter(databaseFile);
+                fileWriter.write(databaseJson.toJSONString() + "\n");
+
+                System.out.println("Table dropped: " + tableName);
+            } else {
+                System.out.println("Table not found: " + tableName);
+            }
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileReader != null) {
+                    fileReader.close();
+                }
+                if (fileWriter != null) {
+                    fileWriter.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
@@ -292,7 +344,7 @@ public class Server extends Thread {
             if (!databaseFile.exists()) {
                 try (FileWriter tempWriter = new FileWriter(databaseFile)) {
                     JSONArray jsonArray = new JSONArray();
-                    tempWriter.write(jsonArray.toJSONString() + "\n");
+                    tempWriter.write(jsonArray.toJSONString());
                 }
             }
 
@@ -303,14 +355,14 @@ public class Server extends Thread {
             if (operation.equals("create")) {
                 for (Object dbObj : databases) {
                     JSONObject db = (JSONObject) dbObj;
-                    if (db.get("db_name").equals(databaseName)) {
+                    if (db.get("name").equals(databaseName)) {
                         System.out.println("Database already exists: " + databaseName);
                         return;
                     }
                 }
 
                 JSONObject newDB = new JSONObject();
-                newDB.put("db_name", databaseName);
+                newDB.put("name", databaseName);
                 databases.add(newDB);
                 saveDatabaseJSON(databases, databaseFile);
 
@@ -319,7 +371,7 @@ public class Server extends Thread {
                 boolean found = false;
                 for (int i = 0; i < databases.size(); i++) {
                     JSONObject db = (JSONObject) databases.get(i);
-                    if (db.get("db_name").equals(databaseName)) {
+                    if (db.get("name").equals(databaseName)) {
                         databases.remove(i);
                         found = true;
                         break;
@@ -329,7 +381,6 @@ public class Server extends Thread {
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
                 } else {
-                    in.close();
                     fileReader.close();
 
                     try {
