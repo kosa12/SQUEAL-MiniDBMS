@@ -14,7 +14,6 @@ public class Server_GUI extends JFrame {
     private JButton start,stop;
     private JTextArea jTextField;
     private Server server;
-    private boolean stopServer = false;
 
     public Server_GUI(){
         spanel = new JPanel();
@@ -42,7 +41,6 @@ public class Server_GUI extends JFrame {
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
-                stopServer = true;
             }
         });
 
