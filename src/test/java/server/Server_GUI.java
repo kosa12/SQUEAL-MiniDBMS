@@ -1,15 +1,18 @@
 package server;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 public class Server_GUI extends JFrame {
     private JPanel spanel;
     private JButton start,stop;
-    private JTextField jTextField;
+    private JTextArea jTextField;
     private Server server;
     private boolean stopServer = false;
 
@@ -44,23 +47,47 @@ public class Server_GUI extends JFrame {
         });
 
 
-        jTextField = new JTextField();
-        jTextField.setPreferredSize(new Dimension(450,300));
+        jTextField = new JTextArea();
+        jTextField.setPreferredSize(new Dimension(850,300));
+
+        int padding = 15;
+        Insets insets = new Insets(padding,padding,padding,padding);
+
+        jTextField.setBorder(new EmptyBorder(insets));
+        jTextField.setFont(new Font("Cfont", Font.PLAIN, 20));
+
+        RedirectOutputStream redirectOutputStream = new RedirectOutputStream(jTextField);
+        System.setOut(new PrintStream(redirectOutputStream));
+
+        JScrollPane scrollPane = new JScrollPane(jTextField);
+        scrollPane.setPreferredSize(new Dimension(850, 300));
+        this.add(scrollPane);
 
         spanel.add(start);
-        spanel.add(jTextField);
+        spanel.add(scrollPane);
         spanel.add(stop);
 
         this.add(spanel);
 
-        this.setBounds(350,300,800,350);
+        this.setBounds(350,300,1200,350);
         this.setVisible(true);
         this.setResizable(false);
-
+        this.setLocationRelativeTo(null);
     }
 
+    class RedirectOutputStream extends OutputStream {
+        private JTextArea textArea;
 
+        public RedirectOutputStream(JTextArea textArea) {
+            this.textArea = textArea;
+        }
 
+        @Override
+        public void write(int b) {
+            textArea.append(String.valueOf((char) b));
+            textArea.setCaretPosition(textArea.getDocument().getLength());
+        }
+    }
 
     private void startServer() {
         server = new Server();
