@@ -24,17 +24,6 @@ public class Server extends Thread {
 
     private boolean isRunning = true;
 
-    public void stopServer() {
-        isRunning = false;
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-            }
-            System.out.println("Server is shutting down...");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
     @Override
     public void run() {
 
@@ -141,10 +130,5 @@ public class Server extends Thread {
         } catch (IOException e) {
             //e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        Server server = new Server();
-        server.run();
     }
 }
