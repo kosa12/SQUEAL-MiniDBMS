@@ -28,7 +28,13 @@ public class Client_GUI extends JFrame {
         Insets insets = new Insets(padding,padding,padding,padding);
 
 
-        exit = new JMenuItem("EXIT");
+        ImageIcon exiticon = new ImageIcon("src/main/resources/x.png");
+
+        Image ximage = exiticon.getImage();
+        Image xnewimg = ximage.getScaledInstance(40, 40,  java.awt.Image.SCALE_SMOOTH);
+        exiticon = new ImageIcon(xnewimg);
+
+        exit = new JMenuItem("   EXIT",exiticon);
         exit.setPreferredSize(new Dimension(60,40));
         exit.setBackground(new Color(75, 104, 178));
         //exit.setBorder(new EmptyBorder(insets));
@@ -44,9 +50,16 @@ public class Client_GUI extends JFrame {
             }
         });
 
+        ImageIcon execicon = new ImageIcon("src/main/resources/garrow.png");
 
-        execute = new JMenuItem("EXECUTE");
+        Image image = execicon.getImage();
+        Image newimg = image.getScaledInstance(50, 50,  java.awt.Image.SCALE_SMOOTH);
+        execicon = new ImageIcon(newimg);
+
+
+        execute = new JMenuItem("     EXECUTE",execicon);
         execute.setBackground(new Color(75, 104, 178));
+
         execute.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -58,7 +71,13 @@ public class Client_GUI extends JFrame {
             }
         });
 
-        clear = new JMenuItem("CLEAR");
+        ImageIcon clicon = new ImageIcon("src/main/resources/eraser.png");
+
+        Image climage = clicon.getImage();
+        Image clnewimg = climage.getScaledInstance(60, 60,  java.awt.Image.SCALE_SMOOTH);
+        clicon = new ImageIcon(clnewimg);
+
+        clear = new JMenuItem("   CLEAR",clicon);
         clear.setBackground(new Color(75, 104, 178));
         clear.addMouseListener(new MouseAdapter() {
             @Override
@@ -71,7 +90,13 @@ public class Client_GUI extends JFrame {
             }
         });
 
-        refresh = new JMenuItem("REFRESH");
+
+        ImageIcon ricon = new ImageIcon("src/main/resources/refric.png");
+
+        Image rimage = ricon.getImage();
+        Image rnewimg = rimage.getScaledInstance(50, 50,  java.awt.Image.SCALE_SMOOTH);
+        ricon = new ImageIcon(rnewimg);
+        refresh = new JMenuItem("   REFRESH",ricon);
         refresh.setBackground(new Color(75, 104, 178));
         refresh.addMouseListener(new MouseAdapter() {
             @Override
@@ -84,17 +109,23 @@ public class Client_GUI extends JFrame {
             }
         });
 
+        refresh.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fileExplorer.refreshTree();
+            }
+        });
+
         jMenuBar = new JMenuBar();
 
-        jMenuBar.add(exit);
         jMenuBar.add(execute);
+        jMenuBar.add(exit);
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
         fileExplorer = new FileExplorer();
         fileExplorer.setPreferredSize(new Dimension(175,300));
         //this.add(fileExplorer);
-
 
         querry = new JTextArea();
         querry.setFont(new Font("Cfont", Font.ITALIC, 20));
@@ -168,6 +199,7 @@ public class Client_GUI extends JFrame {
     public JMenuItem getExecuteButton() {
         return execute;
     }
+
 
 
     public String getjTextField() {
