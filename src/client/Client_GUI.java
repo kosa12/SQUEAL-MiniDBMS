@@ -1,11 +1,11 @@
-package gui;
+package client;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class GUI extends JFrame {
+public class Client_GUI extends JFrame {
     private final JPanel jPanel;
     private final JButton execute;
     private final JButton clear;
@@ -18,7 +18,7 @@ public class GUI extends JFrame {
 
     private final JButton exit;
 
-    public GUI() {
+    public Client_GUI() {
         jPanel = new JPanel();
 
         this.setLayout(new BorderLayout());
@@ -94,6 +94,6 @@ public class GUI extends JFrame {
 
 
     public static void main(String[] args) {
-        new GUI();
+        new Client_GUI();
     }
 }
