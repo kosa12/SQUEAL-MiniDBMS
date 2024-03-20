@@ -16,8 +16,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-
-
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final ArrayList<Database> databases = new ArrayList<>();
@@ -45,7 +43,6 @@ public class Server extends Thread {
             System.out.println(db.getDataBaseName());
         }
 
-
         try {
             serverSocket = new ServerSocket(12345);
             System.out.println("Server is running...");
@@ -54,7 +51,7 @@ public class Server extends Thread {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
-                    clientSocket.setSoTimeout(5000);
+                    clientSocket.setSoTimeout(50000);
                 } catch (SocketException se) {
                     if (!isRunning) {
                         System.out.println("Server is shutting down...");
@@ -146,6 +143,7 @@ public class Server extends Thread {
         }
 
         JSONParser parser = new JSONParser();
+        FileWriter writer = null;
 
         try {
             File databasesDir = new File("src/test/java/databases");
@@ -155,9 +153,9 @@ public class Server extends Thread {
 
             File databaseFile = new File(databasesDir, databaseName + ".json");
             if (!databaseFile.exists()) {
-                try (FileWriter writer = new FileWriter(databaseFile)) {
+                try (FileWriter tempWriter = new FileWriter(databaseFile)) {
                     JSONArray jsonArray = new JSONArray();
-                    writer.write(jsonArray.toJSONString());
+                    tempWriter.write(jsonArray.toJSONString());
                 }
             }
 
@@ -176,7 +174,8 @@ public class Server extends Thread {
                 JSONObject newDB = new JSONObject();
                 newDB.put("name", databaseName);
                 databases.add(newDB);
-                saveDatabaseJSON(databases, databaseFile);
+                writer = new FileWriter(databaseFile);
+                writer.write(databases.toJSONString());
 
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
@@ -185,7 +184,8 @@ public class Server extends Thread {
                     JSONObject db = (JSONObject) databases.get(i);
                     if (db.get("name").equals(databaseName)) {
                         databases.remove(i);
-                        saveDatabaseJSON(databases, databaseFile);
+                        writer = new FileWriter(databaseFile);
+                        writer.write(databases.toJSONString());
                         System.out.println("Database dropped: " + databaseName);
                         found = true;
                         break;
@@ -193,6 +193,14 @@ public class Server extends Thread {
                 }
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
+                }
+
+                if (writer != null) {
+                    writer.close();
+                }
+
+                if (!databaseFile.delete()) {
+                    System.out.println("Failed to delete database file: " + databaseName);
                 }
             } else {
                 System.out.println("Invalid operation: " + operation);
@@ -202,18 +210,13 @@ public class Server extends Thread {
         }
     }
 
+
+
+
+
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
             writer.write(databases.toJSONString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void saveDatabaseJSON(JSONArray databases) {
-        try (FileWriter file = new FileWriter("src/test/java/databases/databases.json")) {
-            file.write(databases.toJSONString());
-            file.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
