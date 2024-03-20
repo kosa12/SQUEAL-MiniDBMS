@@ -154,7 +154,6 @@ public class Client_GUI extends JFrame {
             }
         });
 
-
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
 
