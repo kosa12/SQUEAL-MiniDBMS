@@ -3,24 +3,23 @@ package client;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.*;
 import java.io.File;
 
-public class FileExplorer extends JFrame {
+public class FileExplorer extends JPanel {
     private JTree tree;
 
     public FileExplorer() {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
 
         // Set the root directory you want to explore
-        File rootDirectory = new File("D:\\Egyetem\\IV\\Adatbazisok2\\SQUEL\\SQUEL_maven\\src\\test\\java\\databases");
+        File rootDirectory = new File("src\\test\\java\\databases");
         addFiles(root, rootDirectory);
 
         tree = new JTree(root);
+        tree.setPreferredSize(new Dimension(150,375));
         add(new JScrollPane(tree));
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("File Explorer");
-        pack();
         setVisible(true);
     }
 
@@ -39,7 +38,4 @@ public class FileExplorer extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(FileExplorer::new);
-    }
 }

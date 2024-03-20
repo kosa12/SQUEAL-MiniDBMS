@@ -19,6 +19,8 @@ public class Client_GUI extends JFrame {
 
     private final JMenuItem exit;
 
+    private FileExplorer fileExplorer;
+
     public Client_GUI() {
         jPanel = new JPanel();
 
@@ -101,10 +103,15 @@ public class Client_GUI extends JFrame {
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
+        fileExplorer = new FileExplorer();
+        fileExplorer.setPreferredSize(new Dimension(175,300));
+        //this.add(fileExplorer);
+
+
         querry = new JTextArea();
         querry.setFont(new Font("Cfont", Font.ITALIC, 20));
 
-        querry.setPreferredSize(new Dimension(1000, 400));
+        querry.setPreferredSize(new Dimension(1350, 400));
         querry.setText("Write your command(s) here");
 
         querry.setBorder(new EmptyBorder(insets));
@@ -132,7 +139,7 @@ public class Client_GUI extends JFrame {
 
         output.setBorder(new EmptyBorder(insets));
 
-        output.setPreferredSize(new Dimension(1000, 350));
+        output.setPreferredSize(new Dimension(1350, 400));
         output.setText("ez meg az output amit majd kiad");
 
         querry.setBackground(new Color(239, 240, 243));
@@ -141,6 +148,7 @@ public class Client_GUI extends JFrame {
 
         output.setEditable(false);
 
+        this.add(fileExplorer,BorderLayout.WEST);
         jPanel.add(querry);
         jPanel.add(output);
 
