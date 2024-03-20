@@ -10,18 +10,19 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class Server_GUI extends JFrame {
-    private JButton start, stop;
-    private JTextArea logTextArea;
+    private JPanel spanel;
+    private JButton start,stop;
+    private JTextArea jTextField;
     private Server server;
 
-    public Server_GUI() {
-        setTitle("Server GUI");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1200, 350));
+    public Server_GUI(){
+        spanel = new JPanel();
 
         start = new JButton("START SERVER");
+        start.setPreferredSize(new Dimension(150,300));
+
         stop = new JButton("STOP SERVER");
+        stop.setPreferredSize(new Dimension(150,300));
 
         start.addActionListener(new ActionListener() {
             @Override
@@ -33,53 +34,42 @@ public class Server_GUI extends JFrame {
         stop.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                stopServer();
+                try {
+                    server.getServerSocket().close();
+                    System.out.println("Server is shutting down...");
+                    System.exit(0);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(start);
-        buttonPanel.add(stop);
+        jTextField = new JTextArea();
+        jTextField.setPreferredSize(new Dimension(850,300));
 
-        logTextArea = new JTextArea();
-        logTextArea.setFont(new Font("Cfont", Font.PLAIN, 20));
-        logTextArea.setEditable(false);
+        int padding = 15;
+        Insets insets = new Insets(padding,padding,padding,padding);
 
-        JScrollPane scrollPane = new JScrollPane(logTextArea);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        jTextField.setBorder(new EmptyBorder(insets));
+        jTextField.setFont(new Font("Cfont", Font.PLAIN, 20));
 
-        add(buttonPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true);
-    }
-
-    private void startServer() {
-        server = new Server();
-        redirectOutput();
-        server.start();
-    }
-
-    private void stopServer() {
-        try {
-            server.getServerSocket().close();
-            logMessage("Server is shutting down...");
-            System.exit(0);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private void redirectOutput() {
-        RedirectOutputStream redirectOutputStream = new RedirectOutputStream(logTextArea);
+        RedirectOutputStream redirectOutputStream = new RedirectOutputStream(jTextField);
         System.setOut(new PrintStream(redirectOutputStream));
-    }
 
-    private void logMessage(String message) {
-        logTextArea.append(message + "\n");
-        logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
+        JScrollPane scrollPane = new JScrollPane(jTextField);
+        scrollPane.setPreferredSize(new Dimension(850, 300));
+        this.add(scrollPane);
+
+        spanel.add(start);
+        spanel.add(scrollPane);
+        spanel.add(stop);
+
+        this.add(spanel);
+
+        this.setBounds(350,300,1200,350);
+        this.setVisible(true);
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
     }
 
     class RedirectOutputStream extends OutputStream {
@@ -96,11 +86,12 @@ public class Server_GUI extends JFrame {
         }
     }
 
+    private void startServer() {
+        server = new Server();
+        server.start();
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new Server_GUI();
-            }
-        });
+        new Server_GUI();
     }
 }
