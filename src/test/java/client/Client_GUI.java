@@ -19,6 +19,7 @@ public class Client_GUI extends JFrame {
 
     private FileExplorer fileExplorer;
 
+    private boolean toResetTA = true;
     public Client_GUI() {
         jPanel = new JPanel();
 
@@ -122,6 +123,23 @@ public class Client_GUI extends JFrame {
         jMenuBar.add(clear);
         jMenuBar.add(refresh);
 
+        exit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+
+        clear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                querry.setText("");
+            }
+        });
+
+        //////////////////////////
+
+
         fileExplorer = new FileExplorer();
         fileExplorer.setPreferredSize(new Dimension(175,300));
         //this.add(fileExplorer);
@@ -137,9 +155,11 @@ public class Client_GUI extends JFrame {
         querry.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                querry.setText("");
-                querry.setFont(new Font("Cfont", Font.PLAIN, 20));
-
+                if(toResetTA) {
+                    querry.setText("");
+                    querry.setFont(new Font("Cfont", Font.PLAIN, 20));
+                    toResetTA = false;
+                }
             }
         });
 
@@ -166,23 +186,13 @@ public class Client_GUI extends JFrame {
 
         output.setEditable(false);
 
+        //////////////////////////////////////
+
+
         this.add(fileExplorer,BorderLayout.WEST);
+
         jPanel.add(querry);
         jPanel.add(output);
-
-        exit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
-
-        clear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                querry.setText("");
-            }
-        });
 
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
@@ -207,6 +217,10 @@ public class Client_GUI extends JFrame {
 
     public JMenuItem getExitButton() {
         return exit;
+    }
+
+    public static void main(String[] args) {
+        new Client_GUI();
     }
 
 }
