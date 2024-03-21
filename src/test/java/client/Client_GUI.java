@@ -27,8 +27,6 @@ public class Client_GUI extends JFrame {
         int padding = 15;
         Insets insets = new Insets(padding,padding,padding,padding);
 
-
-
         ImageIcon exiticon = new ImageIcon("src/main/resources/x.png");
 
         Image ximage = exiticon.getImage();
