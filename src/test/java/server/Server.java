@@ -277,6 +277,9 @@ public class Server extends Thread {
                 fileWriter.write(databaseJson.toJSONString() + "\n");
 
                 System.out.println("Table dropped: " + tableName);
+
+                databases.get(currentDatabase).dropTable(tableName);
+
             } else {
                 System.out.println("Table not found: " + tableName);
             }
@@ -295,6 +298,7 @@ public class Server extends Thread {
             }
         }
     }
+
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();

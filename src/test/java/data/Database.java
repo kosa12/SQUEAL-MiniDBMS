@@ -1,6 +1,7 @@
 package data;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Database {
     private String dataBaseName;
@@ -25,6 +26,17 @@ public class Database {
 
     public void addTable(Table table) {
         tables.add(table);
+    }
+
+    public void dropTable(String tableName) {
+        Iterator<Table> iterator = tables.iterator();
+        while (iterator.hasNext()) {
+            Table table = iterator.next();
+            if (table.getTableName().equals(tableName)) {
+                iterator.remove();
+                break;
+            }
+        }
     }
 
     @Override
