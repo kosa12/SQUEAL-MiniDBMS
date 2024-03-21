@@ -79,6 +79,7 @@ public class Server_GUI extends JFrame {
             this.textArea = textArea;
         }
 
+
         @Override
         public void write(int b) {
             textArea.append(String.valueOf((char) b));
