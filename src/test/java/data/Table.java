@@ -4,15 +4,13 @@ import java.util.ArrayList;
 
 public class Table {
     private String tableName;
-    private String fileName;
     private final ArrayList<Attribute> attributes;
     private String pKAttrName;
     private final ArrayList<ForeignKey> foreignKeys;
     private final ArrayList<IndexFile> indexFiles;
 
-    public Table(String tableName, String fileName, String pKAttrName) {
+    public Table(String tableName, String pKAttrName) {
         this.tableName = tableName;
-        this.fileName = fileName;
         this.pKAttrName = pKAttrName;
         attributes = new ArrayList<>();
         indexFiles = new ArrayList<>();
@@ -34,14 +32,6 @@ public class Table {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
     }
 
     public String getpKAttrName() {
