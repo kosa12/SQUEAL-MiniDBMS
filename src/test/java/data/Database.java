@@ -8,11 +8,7 @@ public class Database {
 
     public Database(String dataBaseName) {
         this.dataBaseName = dataBaseName;
-        tables = new ArrayList<>();
-    }
-
-    public void addTable(Table table) {
-        tables.add(table);
+        this.tables = new ArrayList<>();
     }
 
     public String getDataBaseName() {
@@ -25,6 +21,10 @@ public class Database {
 
     public ArrayList<Table> getTables() {
         return tables;
+    }
+
+    public void addTable(Table table) {
+        tables.add(table);
     }
 
     @Override
