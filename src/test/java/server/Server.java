@@ -84,7 +84,7 @@ public class Server extends Thread {
                             JSONObject tableJson = (JSONObject) tableObj;
                             String tableName = (String) tableJson.get("table_name");
 
-                            Table table = new Table(tableName, "", "");
+                            Table table = new Table(tableName, "");
 
                             JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
                             for (Object attributeObj : attributesArray) {
@@ -215,7 +215,7 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
-        Table table = new Table(tableName, "",  "");
+        Table table = new Table(tableName,  "");
         databases.get(currentDatabase).addTable(table);
 
         for (Object obj : tableColumns) {
@@ -237,10 +237,6 @@ public class Server extends Thread {
                 }
             }
         }
-
-
-
-
 
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
@@ -319,7 +315,6 @@ public class Server extends Thread {
             }
         }
     }
-
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
