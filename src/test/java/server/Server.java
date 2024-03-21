@@ -75,7 +75,7 @@ public class Server extends Thread {
                     for (Object databaseObj : databaseArray) {
                         JSONObject databaseJson = (JSONObject) databaseObj;
 
-                        String databaseName = (String) databaseJson.get("name");
+                        String databaseName = (String) databaseJson.get("database_name");
 
                         databases.add(new Database(databaseName));
                     }
@@ -96,6 +96,11 @@ public class Server extends Thread {
         ) {
             String message;
             while ((message = in.readLine()) != null) {
+
+                if (message.trim().isEmpty()) {
+                    continue;
+                }
+
                 System.out.println("Received from client: " + message);
 
                 String[] parts = message.trim().split("\\s+");
@@ -348,14 +353,14 @@ public class Server extends Thread {
             if (operation.equals("create")) {
                 for (Object dbObj : databases) {
                     JSONObject db = (JSONObject) dbObj;
-                    if (db.get("name").equals(databaseName)) {
+                    if (db.get("database_name").equals(databaseName)) {
                         System.out.println("Database already exists: " + databaseName);
                         return;
                     }
                 }
 
                 JSONObject newDB = new JSONObject();
-                newDB.put("name", databaseName);
+                newDB.put("database_name", databaseName);
                 databases.add(newDB);
                 saveDatabaseJSON(databases, databaseFile);
 
