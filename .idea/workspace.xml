@@ -4,13 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="valami">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="vorkszpesz">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" afterDir="false" />
-
+      <change beforePath="$PROJECT_DIR$/src/test/java/databases/ass.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/databases/odi.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,11 +23,6 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="kriszti" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MavenImportPreferences">
@@ -51,22 +44,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
-    "Application.Client.executor": "Run",
-    "Application.Main.executor": "Run",
-    "Application.Server.executor": "Run",
-    "Application.Server_GUI.executor": "Run",
-    "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "kosa",
-    "kotlin-language-version-configured": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices"
-
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Client.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Client_GUI.executor&quot;: &quot;Run&quot;,
+    &quot;Application.FileExplorer.executor&quot;: &quot;Run&quot;,
+    &quot;Application.FolderExplorerDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Server.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Server_GUI.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.DBMS [-Dtest=org.example.Main...].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;kriszti&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.repository.indices&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
@@ -78,8 +75,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="jdk-21.0.1-openjdk-21.0.1-8336523bb0d9-657b72ed" />
-        <option value="jdk-22-openjdk-22-3183f394aec4-bad0321e" />
+        <option value="jdk-21.0.1-openjdk-21.0.1-4caba194b151-23eed401" />
       </set>
     </attachedChunks>
   </component>
@@ -91,78 +87,56 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1710922416002</updated>
+      <workItem from="1710969958917" duration="2104000" />
+      <workItem from="1711024459931" duration="333000" />
     </task>
-    <task id="LOCAL-00001" summary="elegem van">
+    <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
-      <created>1710933345425</created>
+      <created>1710943335985</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1710933345425</updated>
+      <updated>1710943335985</updated>
     </task>
-    <task id="LOCAL-00002" summary="json file kulon minden databasenek + regex">
+    <task id="LOCAL-00002" summary="fileexp_kulonjson">
       <option name="closed" value="true" />
-      <created>1710935897589</created>
+      <created>1710943609906</created>
       <option name="number" value="00002" />
       <option name="presentableId" value="LOCAL-00002" />
       <option name="project" value="LOCAL" />
-      <updated>1710935897589</updated>
+      <updated>1710943609906</updated>
     </task>
-    <task id="LOCAL-00003" summary="kis nyomor">
+    <task id="LOCAL-00003" summary="fileexp_szinteOK">
       <option name="closed" value="true" />
-      <created>1710939535052</created>
+      <created>1710946781950</created>
       <option name="number" value="00003" />
       <option name="presentableId" value="LOCAL-00003" />
       <option name="project" value="LOCAL" />
-      <updated>1710939535052</updated>
+      <updated>1710946781950</updated>
     </task>
-    <task id="LOCAL-00004" summary="nincs nyomor">
+    <task id="LOCAL-00004" summary="gui_kisupd">
       <option name="closed" value="true" />
-      <created>1710941883120</created>
+      <created>1710949095114</created>
       <option name="number" value="00004" />
       <option name="presentableId" value="LOCAL-00004" />
       <option name="project" value="LOCAL" />
-      <updated>1710941883120</updated>
+      <updated>1710949095114</updated>
     </task>
-    <task id="LOCAL-00005" summary="wtf">
+    <task id="LOCAL-00005" summary="gui_daslmkm">
       <option name="closed" value="true" />
-      <created>1710942217862</created>
+      <created>1710958607823</created>
       <option name="number" value="00005" />
       <option name="presentableId" value="LOCAL-00005" />
       <option name="project" value="LOCAL" />
-      <updated>1710942217862</updated>
+      <updated>1710958607823</updated>
     </task>
-    <task id="LOCAL-00006" summary="feladom">
+    <task id="LOCAL-00006" summary="valami">
       <option name="closed" value="true" />
-      <created>1710943035582</created>
+      <created>1710958921896</created>
       <option name="number" value="00006" />
       <option name="presentableId" value="LOCAL-00006" />
       <option name="project" value="LOCAL" />
-      <updated>1710943035582</updated>
-    </task>
-    <task id="LOCAL-00007" summary="create table">
-      <option name="closed" value="true" />
-      <created>1710951258975</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1710951258975</updated>
-    </task>
-    <task id="LOCAL-00008" summary="create table">
-      <option name="closed" value="true" />
-      <created>1710951831687</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1710951831687</updated>
-    </task>
-    <task id="LOCAL-00009" summary="drop table">
-      <option name="closed" value="true" />
-      <created>1710953776780</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1710953776780</updated>
+      <updated>1710958921896</updated>
     </task>
     <task id="LOCAL-00007" summary="valami">
       <option name="closed" value="true" />
@@ -173,19 +147,10 @@
       <updated>1710963921076</updated>
     </task>
     <option name="localTasksCounter" value="8" />
-
     <servers />
   </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="asd" />
@@ -197,7 +162,18 @@
     <MESSAGE value="gui_daslmkm" />
     <MESSAGE value="kell_Scrollserverbe2" />
     <MESSAGE value="valami" />
-    <option name="LAST_COMMIT_MESSAGE" value="valami" />
-
+    <MESSAGE value="endoftheday" />
+    <MESSAGE value="vorkszpesz" />
+    <option name="LAST_COMMIT_MESSAGE" value="vorkszpesz" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="java.awt.AWTError" package="java.awt" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
