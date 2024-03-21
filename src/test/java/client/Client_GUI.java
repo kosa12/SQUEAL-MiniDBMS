@@ -25,6 +25,8 @@ public class Client_GUI extends JFrame {
 
         this.setLayout(new BorderLayout());
 
+        this.setPreferredSize(new Dimension(1200, 350));
+
         int padding = 15;
         Insets insets = new Insets(padding,padding,padding,padding);
 
@@ -141,13 +143,13 @@ public class Client_GUI extends JFrame {
 
 
         fileExplorer = new FileExplorer();
-        fileExplorer.setPreferredSize(new Dimension(175,300));
+        fileExplorer.setPreferredSize(new Dimension(175,3000));
         //this.add(fileExplorer);
+
 
         querry = new JTextArea();
         querry.setFont(new Font("Cfont", Font.ITALIC, 20));
 
-        querry.setPreferredSize(new Dimension(1350, 400));
         querry.setText("Write your command(s) here");
 
         querry.setBorder(new EmptyBorder(insets));
@@ -163,6 +165,12 @@ public class Client_GUI extends JFrame {
             }
         });
 
+        JScrollPane qScrollPane = new JScrollPane(querry);
+        qScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        qScrollPane.setPreferredSize(new Dimension(1350,400));
+        jPanel.add(qScrollPane);
+
+
         output = new JTextArea();
         output.setFont(new Font("Cfont", Font.ITALIC, 20));
 
@@ -177,8 +185,7 @@ public class Client_GUI extends JFrame {
 
         output.setBorder(new EmptyBorder(insets));
 
-        output.setPreferredSize(new Dimension(1350, 400));
-        output.setText("ez meg az output amit majd kiad");
+        output.setText("Output");
 
         querry.setBackground(new Color(239, 240, 243));
 
@@ -186,13 +193,15 @@ public class Client_GUI extends JFrame {
 
         output.setEditable(false);
 
+        JScrollPane oScrollPane = new JScrollPane(output);
+        oScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        oScrollPane.setPreferredSize(new Dimension(1350,400));
+        jPanel.add(oScrollPane);
+
         //////////////////////////////////////
 
 
         this.add(fileExplorer,BorderLayout.WEST);
-
-        jPanel.add(querry);
-        jPanel.add(output);
 
         this.add(jMenuBar, BorderLayout.NORTH);
         this.add(jPanel, BorderLayout.CENTER);
