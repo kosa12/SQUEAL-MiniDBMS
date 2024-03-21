@@ -38,7 +38,7 @@ public class Server extends Thread {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
-                    clientSocket.setSoTimeout(50000);
+                    clientSocket.setSoTimeout(500000);
                 } catch (SocketException se) {
                     if (!isRunning) {
                         System.out.println("Server is shutting down...");
@@ -130,7 +130,6 @@ public class Server extends Thread {
         }
     }
 
-
     private static void handleUseDatabase(String databaseName) {
         boolean found = false;
         for (Database db : databases) {
@@ -198,7 +197,6 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
 
         updateDatabaseWithTable(tableName, tableObj);
-        System.out.println("Table created: " + tableName);
     }
 
     private static void dropTable(String command) {
@@ -214,7 +212,6 @@ public class Server extends Thread {
 
         String tableName = parts[2];
 
-        // Read the database JSON file
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
         FileWriter fileWriter = null;
@@ -275,8 +272,6 @@ public class Server extends Thread {
         FileReader fileReader = null;
         FileWriter fileWriter = null;
 
-        JSONArray tablesArray = null;
-
         try {
             File databaseFile = new File("src/test/java/databases/" + currentDatabase + ".json");
             if (!databaseFile.exists()) {
@@ -288,8 +283,9 @@ public class Server extends Thread {
             Object obj = parser.parse(fileReader);
             JSONArray databaseJson = (JSONArray) obj;
 
-
             JSONObject databaseObj = (JSONObject) databaseJson.get(0);
+            JSONArray tablesArray;
+
             if (databaseObj.containsKey("tables")) {
                 tablesArray = (JSONArray) databaseObj.get("tables");
             } else {
@@ -299,7 +295,7 @@ public class Server extends Thread {
 
             for (Object table : tablesArray) {
                 JSONObject tableJson = (JSONObject) table;
-                if (tableJson.get("name").equals(tableName)) {
+                if (tableJson.get("table_name").equals(tableName)) {
                     System.out.println("Table already exists: " + tableName);
                     return;
                 }
@@ -308,7 +304,9 @@ public class Server extends Thread {
             tablesArray.add(tableObj);
 
             fileWriter = new FileWriter(databaseFile);
-            fileWriter.write(databaseJson.toJSONString()+ "\n");
+            fileWriter.write(databaseJson.toJSONString() + "\n");
+
+            System.out.println("Table created: " + tableName);
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
