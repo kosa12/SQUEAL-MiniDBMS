@@ -228,8 +228,5 @@ public class Client_GUI extends JFrame {
         return exit;
     }
 
-    public static void main(String[] args) {
-        new Client_GUI();
-    }
 
 }

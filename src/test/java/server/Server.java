@@ -200,32 +200,53 @@ public class Server extends Thread {
         JSONArray tableColumns = new JSONArray();
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
-            if (columnParts.length != 2) {
+            if (columnParts.length != 2 && columnParts.length != 4) {
                 System.out.println("Invalid column definition: " + column);
                 return;
             }
             JSONObject columnObj = new JSONObject();
             columnObj.put("name", columnParts[0]);
             columnObj.put("type", columnParts[1]);
+            if (columnParts.length == 4 && columnParts[3].equalsIgnoreCase("NULL") && columnParts[2].equalsIgnoreCase("NOT")) {
+                columnObj.put("not_null", true);
+            } else {
+                columnObj.put("not_null", false);
+            }
             tableColumns.add(columnObj);
         }
 
         Table table = new Table(tableName, "",  "");
+        databases.get(currentDatabase).addTable(table);
+
         for (Object obj : tableColumns) {
             JSONObject column = (JSONObject) obj;
             String attributeName = (String) column.get("name");
             String attributeType = (String) column.get("type");
-            table.addAttribute(new Attribute(attributeName, attributeType, false));
+            boolean notNull = (boolean) column.get("not_null");
+            table.addAttribute(new Attribute(attributeName, attributeType, notNull));
+            if (notNull) {
+                Database currentDB = databases.get(currentDatabase);
+                if (currentDB != null) {
+                    Table currentTable = currentDB.getTable(tableName);
+                    if (currentTable != null) {
+                        Attribute dbAttribute = currentTable.getAttribute(attributeName);
+                        if (dbAttribute != null) {
+                            dbAttribute.setIsnull(true);
+                        }
+                    }
+                }
+            }
         }
 
-        databases.get(currentDatabase).addTable(table);
+
+
+
 
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
     }
-
 
 
     private static void dropTable(String command) {
