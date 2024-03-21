@@ -142,11 +142,11 @@ public class Server extends Thread {
         if (found) {
             currentDatabase = databaseName;
             System.out.println("Switched to database: " + databaseName);
-
         } else {
             System.out.println("Database not found: " + databaseName);
         }
     }
+
 
     private static void handleTableOperation(String operation, String command, BufferedReader in) {
         if (currentDatabase == null) {
@@ -359,6 +359,8 @@ public class Server extends Thread {
                 databases.add(newDB);
                 saveDatabaseJSON(databases, databaseFile);
 
+                Server.databases.add(new Database(databaseName));
+
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
                 boolean found = false;
@@ -379,6 +381,7 @@ public class Server extends Thread {
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
+                            databases.removeIf(db -> ((JSONObject) db).get("name").equals(databaseName));
                         } else {
                             System.out.println("Failed to drop database: " + databaseName);
                         }
@@ -401,6 +404,7 @@ public class Server extends Thread {
             }
         }
     }
+
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
