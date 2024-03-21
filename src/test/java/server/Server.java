@@ -1,13 +1,15 @@
 package server;
 
+import data.Attribute;
 import data.Database;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
+import java.util.HashMap;
 
+import data.Table;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,10 +17,8 @@ import org.json.simple.parser.ParseException;
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
-    private static final ArrayList<Database> databases = new ArrayList<>();
-
+    private static final HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
-
     private final boolean isRunning = true;
 
     @Override
@@ -26,8 +26,8 @@ public class Server extends Thread {
 
         recreateFromJson("src/test/java/databases");
 
-        for (Database db : databases) {
-            System.out.println(db.getDataBaseName());
+        for (String dbName : databases.keySet()) {
+            System.out.println(dbName);
         }
 
         try {
@@ -77,7 +77,27 @@ public class Server extends Thread {
 
                         String databaseName = (String) databaseJson.get("database_name");
 
-                        databases.add(new Database(databaseName));
+                        Database database = new Database(databaseName);
+
+                        JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
+                        for (Object tableObj : tablesArray) {
+                            JSONObject tableJson = (JSONObject) tableObj;
+                            String tableName = (String) tableJson.get("table_name");
+
+                            Table table = new Table(tableName, "", 0, "");
+
+                            JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+                            for (Object attributeObj : attributesArray) {
+                                JSONObject attributeJson = (JSONObject) attributeObj;
+                                String attributeName = (String) attributeJson.get("name");
+                                String attributeType = (String) attributeJson.get("type");
+                                table.addAttribute(new Attribute(attributeName, attributeType, 0, false));
+                            }
+
+                            database.addTable(table);
+                        }
+
+                        databases.put(databaseName, database);
                     }
                 }
             }
@@ -85,6 +105,7 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
 
     public ServerSocket getServerSocket(){
         return serverSocket;
@@ -136,22 +157,14 @@ public class Server extends Thread {
     }
 
     private static void handleUseDatabase(String databaseName) {
-        boolean found = false;
-        for (Database db : databases) {
-            if (db.getDataBaseName().equals(databaseName)) {
-                found = true;
-                break;
-            }
-        }
-
-        if (found) {
+        Database db = databases.get(databaseName);
+        if (db != null) {
             currentDatabase = databaseName;
             System.out.println("Switched to database: " + databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
         }
     }
-
 
     private static void handleTableOperation(String operation, String command, BufferedReader in) {
         if (currentDatabase == null) {
@@ -197,12 +210,23 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
+        Table table = new Table(tableName, "", 0, "");
+        for (Object obj : tableColumns) {
+            JSONObject column = (JSONObject) obj;
+            String attributeName = (String) column.get("name");
+            String attributeType = (String) column.get("type");
+            table.addAttribute(new Attribute(attributeName, attributeType, 0, false));
+        }
+
+        databases.get(currentDatabase).addTable(table);
+
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
         tableObj.put("attributes", tableColumns);
-
         updateDatabaseWithTable(tableName, tableObj);
     }
+
+
 
     private static void dropTable(String command) {
         String[] parts = command.split("\\s+");
@@ -348,10 +372,10 @@ public class Server extends Thread {
 
             fileReader = new FileReader(databaseFile);
             Object obj = parser.parse(fileReader);
-            JSONArray databases = (JSONArray) obj;
+            JSONArray databasesCurr = (JSONArray) obj;
 
             if (operation.equals("create")) {
-                for (Object dbObj : databases) {
+                for (Object dbObj : databasesCurr) {
                     JSONObject db = (JSONObject) dbObj;
                     if (db.get("database_name").equals(databaseName)) {
                         System.out.println("Database already exists: " + databaseName);
@@ -361,18 +385,18 @@ public class Server extends Thread {
 
                 JSONObject newDB = new JSONObject();
                 newDB.put("database_name", databaseName);
-                databases.add(newDB);
-                saveDatabaseJSON(databases, databaseFile);
+                databasesCurr.add(newDB);
+                saveDatabaseJSON(databasesCurr, databaseFile);
 
-                Server.databases.add(new Database(databaseName));
+                databases.put(databaseName, new Database(databaseName));
 
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
                 boolean found = false;
-                for (int i = 0; i < databases.size(); i++) {
-                    JSONObject db = (JSONObject) databases.get(i);
-                    if (db.get("name").equals(databaseName)) {
-                        databases.remove(i);
+                for (int i = 0; i < databasesCurr.size(); i++) {
+                    JSONObject db = (JSONObject) databasesCurr.get(i);
+                    if (db.get("database_name").equals(databaseName)) {
+                        databasesCurr.remove(i);
                         found = true;
                         break;
                     }
@@ -386,7 +410,7 @@ public class Server extends Thread {
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
-                            databases.removeIf(db -> ((JSONObject) db).get("name").equals(databaseName));
+                            databases.remove(databaseName);
                         } else {
                             System.out.println("Failed to drop database: " + databaseName);
                         }
@@ -410,7 +434,6 @@ public class Server extends Thread {
         }
     }
 
-
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
             writer.write(databases.toJSONString() + "\n");
@@ -419,3 +442,4 @@ public class Server extends Thread {
         }
     }
 }
+
