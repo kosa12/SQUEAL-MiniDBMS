@@ -86,7 +86,7 @@ public class FileExplorer extends JPanel {
             FileReader reader = new FileReader(databaseFile);
             Object obj = parser.parse(reader);
             JSONArray databaseArray = (JSONArray) obj;
-            JSONObject databaseJson = (JSONObject) databaseArray.get(0);
+            JSONObject databaseJson = (JSONObject) databaseArray.getFirst();
             JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
 
             String[] tables = new String[tablesArray.size()];

@@ -4,12 +4,22 @@ public class Attribute {
     private String type;
     private boolean isnull;
 
-    public Attribute(String attributeName, String type, boolean isnull) {
+    private boolean ispk;
+
+    public Attribute(String attributeName, String type, boolean isnull, boolean ispk) {
         this.attributeName = attributeName;
         this.type = type;
         this.isnull = isnull;
+        this.ispk = ispk;
     }
 
+    public boolean isIspk() {
+        return ispk;
+    }
+
+    public void setIspk(boolean ispk) {
+        this.ispk = ispk;
+    }
 
     public String getAttributeName() {
         return attributeName;
@@ -34,4 +44,5 @@ public class Attribute {
     public void setIsnull(boolean isnull) {
         this.isnull = isnull;
     }
+
 }
