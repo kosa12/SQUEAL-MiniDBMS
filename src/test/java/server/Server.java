@@ -80,21 +80,22 @@ public class Server extends Thread {
                         Database database = new Database(databaseName);
 
                         JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
-                        for (Object tableObj : tablesArray) {
-                            JSONObject tableJson = (JSONObject) tableObj;
-                            String tableName = (String) tableJson.get("table_name");
+                        if (tablesArray != null){
+                            for (Object tableObj : tablesArray) {
+                                JSONObject tableJson = (JSONObject) tableObj;
+                                String tableName = (String) tableJson.get("table_name");
 
-                            Table table = new Table(tableName, "");
+                                Table table = new Table(tableName, "");
 
-                            JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
-                            for (Object attributeObj : attributesArray) {
-                                JSONObject attributeJson = (JSONObject) attributeObj;
-                                String attributeName = (String) attributeJson.get("name");
-                                String attributeType = (String) attributeJson.get("type");
-                                table.addAttribute(new Attribute(attributeName, attributeType, false, false));
+                                JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+                                for (Object attributeObj : attributesArray) {
+                                    JSONObject attributeJson = (JSONObject) attributeObj;
+                                    String attributeName = (String) attributeJson.get("name");
+                                    String attributeType = (String) attributeJson.get("type");
+                                    table.addAttribute(new Attribute(attributeName, attributeType, false, false));
+                                }
+                                database.addTable(table);
                             }
-
-                            database.addTable(table);
                         }
 
                         databases.put(databaseName, database);
@@ -438,7 +439,6 @@ public class Server extends Thread {
                         break;
                     }
                 }
-
 
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
