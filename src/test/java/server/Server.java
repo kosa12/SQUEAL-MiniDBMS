@@ -46,6 +46,8 @@ public class Server extends Thread {
                     }
                 }
             }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,9 +70,15 @@ public class Server extends Thread {
             }
 
             for (File databaseFile : databaseFiles) {
+                if (databaseFile.length() == 0){
+                    databaseFile.delete();
+                    continue;
+                }
+
                 try (FileReader reader = new FileReader(databaseFile)) {
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
+
 
                     for (Object databaseObj : databaseArray) {
                         JSONObject databaseJson = (JSONObject) databaseObj;
@@ -99,6 +107,7 @@ public class Server extends Thread {
                         }
 
                         databases.put(databaseName, database);
+
                     }
                 }
             }
@@ -165,6 +174,7 @@ public class Server extends Thread {
         } else {
             System.out.println("Database not found: " + databaseName);
         }
+
     }
 
     private static void handleTableOperation(String operation, String command, BufferedReader in) {
@@ -289,10 +299,13 @@ public class Server extends Thread {
                     JSONObject tableObj = (JSONObject) table;
                     if (!tableObj.get("table_name").equals(tableName)) {
                         newTablesArray.add(tableObj);
+                    } else {
+                        tablesRemoved = true;
                     }
                 }
-                databaseObj.put("tables", newTablesArray);
-                tablesRemoved = true;
+                if (tablesRemoved) {
+                    databaseObj.put("tables", newTablesArray);
+                }
             }
 
             if (!tablesRemoved) {
@@ -420,16 +433,6 @@ public class Server extends Thread {
 
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
-                JSONObject databaseObj = (JSONObject) databasesCurr.get(0);
-                JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
-                if (tablesArray != null && !tablesArray.isEmpty()) {
-                    for (Object table : tablesArray) {
-                        JSONObject tableObj = (JSONObject) table;
-                        String tableName = (String) tableObj.get("table_name");
-                        dropTable("DROP TABLE " + tableName);
-                    }
-                }
-
                 boolean found = false;
                 for (int i = 0; i < databasesCurr.size(); i++) {
                     JSONObject db = (JSONObject) databasesCurr.get(i);
@@ -442,27 +445,21 @@ public class Server extends Thread {
 
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
-                } else {
-                    databases.remove(databaseName);
-                    fileReader.close();
-                    in.close();
-                    try {
-                        if (databaseFile.delete()) {
-                            System.out.println("Database dropped: " + databaseName);
-                            databases.remove(databaseName);
-                        } else {
-                            System.out.println("Failed to drop database: " + databaseName);
-                        }
-                    } catch (SecurityException e) {
-                        System.out.println("Security exception occurred: " + e.getMessage());
-                    }
+                    return;
                 }
+                saveDatabaseJSON(databasesCurr, databaseFile);
+                databases.remove(databaseName);
+                fileReader.close();
+                currentDatabase = null;
+
             } else {
                 System.out.println("Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
-        } finally {
+        }
+
+        finally {
             try {
                 if (fileReader != null) {
                     fileReader.close();
@@ -475,7 +472,9 @@ public class Server extends Thread {
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
-            writer.write(databases.toJSONString() + "\n");
+            if (!databases.isEmpty()) {
+                writer.write(databases.toJSONString() + "\n");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
