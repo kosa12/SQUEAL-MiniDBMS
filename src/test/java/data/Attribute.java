@@ -2,13 +2,11 @@ package data;
 public class Attribute {
     private String attributeName;
     private String type;
-    private int length;
     private boolean isnull;
 
-    public Attribute(String attributeName, String type, int length, boolean isnull) {
+    public Attribute(String attributeName, String type, boolean isnull) {
         this.attributeName = attributeName;
         this.type = type;
-        this.length = length;
         this.isnull = isnull;
     }
 
@@ -26,14 +24,6 @@ public class Attribute {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
     }
 
     public boolean isIsnull() {
