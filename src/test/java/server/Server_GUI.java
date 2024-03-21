@@ -1,7 +1,6 @@
 package server;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,8 +9,9 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class Server_GUI extends JFrame {
-    private JButton start, stop;
-    private JTextArea logTextArea;
+    private final JButton start;
+    private final JButton stop;
+    private final JTextArea logTextArea;
     private Server server;
 
     public Server_GUI() {
@@ -82,13 +82,12 @@ public class Server_GUI extends JFrame {
         logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
     }
 
-    class RedirectOutputStream extends OutputStream {
-        private JTextArea textArea;
+    static class RedirectOutputStream extends OutputStream {
+        private final JTextArea textArea;
 
         public RedirectOutputStream(JTextArea textArea) {
             this.textArea = textArea;
         }
-
 
         @Override
         public void write(int b) {

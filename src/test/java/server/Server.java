@@ -2,6 +2,7 @@ package server;
 
 import data.Attribute;
 import data.Database;
+import data.Table;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -9,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 
-import data.Table;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -84,14 +84,14 @@ public class Server extends Thread {
                             JSONObject tableJson = (JSONObject) tableObj;
                             String tableName = (String) tableJson.get("table_name");
 
-                            Table table = new Table(tableName, "", 0, "");
+                            Table table = new Table(tableName, "", "");
 
                             JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
                             for (Object attributeObj : attributesArray) {
                                 JSONObject attributeJson = (JSONObject) attributeObj;
                                 String attributeName = (String) attributeJson.get("name");
                                 String attributeType = (String) attributeJson.get("type");
-                                table.addAttribute(new Attribute(attributeName, attributeType, 0, false));
+                                table.addAttribute(new Attribute(attributeName, attributeType, false));
                             }
 
                             database.addTable(table);
@@ -210,12 +210,12 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
-        Table table = new Table(tableName, "", 0, "");
+        Table table = new Table(tableName, "",  "");
         for (Object obj : tableColumns) {
             JSONObject column = (JSONObject) obj;
             String attributeName = (String) column.get("name");
             String attributeType = (String) column.get("type");
-            table.addAttribute(new Attribute(attributeName, attributeType, 0, false));
+            table.addAttribute(new Attribute(attributeName, attributeType, false));
         }
 
         databases.get(currentDatabase).addTable(table);
@@ -445,5 +445,6 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
 }
 
