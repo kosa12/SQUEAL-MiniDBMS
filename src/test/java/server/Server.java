@@ -91,7 +91,7 @@ public class Server extends Thread {
                                 JSONObject attributeJson = (JSONObject) attributeObj;
                                 String attributeName = (String) attributeJson.get("name");
                                 String attributeType = (String) attributeJson.get("type");
-                                table.addAttribute(new Attribute(attributeName, attributeType, false));
+                                table.addAttribute(new Attribute(attributeName, attributeType, false, false));
                             }
 
                             database.addTable(table);
@@ -196,14 +196,11 @@ public class Server extends Thread {
 
         String columnDefinitions = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")"));
 
-        String[] columns = columnDefinitions.split(",");
+        String[] columns = columnDefinitions.split(",(?![^(]*\\))");
         JSONArray tableColumns = new JSONArray();
+        String primaryKey = null;
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
-            if (columnParts.length != 2 && columnParts.length != 4) {
-                System.out.println("Invalid column definition: " + column);
-                return;
-            }
             JSONObject columnObj = new JSONObject();
             columnObj.put("name", columnParts[0]);
             columnObj.put("type", columnParts[1]);
@@ -212,10 +209,13 @@ public class Server extends Thread {
             } else {
                 columnObj.put("not_null", false);
             }
+            if (columnParts.length == 3 && columnParts[1].equalsIgnoreCase("PRIMARY") && columnParts[2].equalsIgnoreCase("KEY")) {
+                primaryKey = columnParts[0];
+            }
             tableColumns.add(columnObj);
         }
 
-        Table table = new Table(tableName,  "");
+        Table table = new Table(tableName, "");
         databases.get(currentDatabase).addTable(table);
 
         for (Object obj : tableColumns) {
@@ -223,7 +223,13 @@ public class Server extends Thread {
             String attributeName = (String) column.get("name");
             String attributeType = (String) column.get("type");
             boolean notNull = (boolean) column.get("not_null");
-            table.addAttribute(new Attribute(attributeName, attributeType, notNull));
+            table.addAttribute(new Attribute(attributeName, attributeType, notNull, false));
+            if (primaryKey != null && attributeName.equals(primaryKey)) {
+                Attribute dbAttribute = table.getAttribute(attributeName);
+                if (dbAttribute != null) {
+                    dbAttribute.setIspk(true);
+                }
+            }
             if (notNull) {
                 Database currentDB = databases.get(currentDatabase);
                 if (currentDB != null) {
@@ -243,7 +249,6 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
     }
-
 
     private static void dropTable(String command) {
         String[] parts = command.split("\\s+");
@@ -274,32 +279,32 @@ public class Server extends Thread {
             JSONArray databaseJson = (JSONArray) obj;
 
             JSONObject databaseObj = (JSONObject) databaseJson.getFirst();
+            boolean tablesRemoved = false;
+
             JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
-
-            boolean tableFound = false;
-            int tableIndex = -1;
-            for (int i = 0; i < tablesArray.size(); i++) {
-                JSONObject tableObj = (JSONObject) tablesArray.get(i);
-                if (tableObj.get("table_name").equals(tableName)) {
-                    tableFound = true;
-                    tableIndex = i;
-                    break;
+            if (tablesArray != null && !tablesArray.isEmpty()) {
+                JSONArray newTablesArray = new JSONArray();
+                for (Object table : tablesArray) {
+                    JSONObject tableObj = (JSONObject) table;
+                    if (!tableObj.get("table_name").equals(tableName)) {
+                        newTablesArray.add(tableObj);
+                    }
                 }
+                databaseObj.put("tables", newTablesArray);
+                tablesRemoved = true;
             }
 
-            if (tableFound) {
-                tablesArray.remove(tableIndex);
-
-                fileWriter = new FileWriter(databaseFile);
-                fileWriter.write(databaseJson.toJSONString() + "\n");
-
-                System.out.println("Table dropped: " + tableName);
-
-                databases.get(currentDatabase).dropTable(tableName);
-
-            } else {
-                System.out.println("Table not found: " + tableName);
+            if (!tablesRemoved) {
+                databaseObj.remove("tables");
             }
+
+            fileWriter = new FileWriter(databaseFile);
+            fileWriter.write(databaseJson.toJSONString() + "\n");
+
+            System.out.println("Table dropped: " + tableName);
+
+            databases.get(currentDatabase).dropTable(tableName);
+
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
@@ -315,6 +320,8 @@ public class Server extends Thread {
             }
         }
     }
+
+
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
@@ -412,6 +419,16 @@ public class Server extends Thread {
 
                 System.out.println("Database created: " + databaseName);
             } else if (operation.equals("drop")) {
+                JSONObject databaseObj = (JSONObject) databasesCurr.get(0);
+                JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
+                if (tablesArray != null && !tablesArray.isEmpty()) {
+                    for (Object table : tablesArray) {
+                        JSONObject tableObj = (JSONObject) table;
+                        String tableName = (String) tableObj.get("table_name");
+                        dropTable("DROP TABLE " + tableName);
+                    }
+                }
+
                 boolean found = false;
                 for (int i = 0; i < databasesCurr.size(); i++) {
                     JSONObject db = (JSONObject) databasesCurr.get(i);
@@ -422,11 +439,13 @@ public class Server extends Thread {
                     }
                 }
 
+
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
                 } else {
+                    databases.remove(databaseName);
                     fileReader.close();
-
+                    in.close();
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
