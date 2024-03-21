@@ -19,6 +19,15 @@ public class Table {
         foreignKeys = new ArrayList<>();
     }
 
+    public Attribute getAttribute(String attributeName) {
+        for (Attribute attribute : attributes) {
+            if (attribute.getAttributeName().equals(attributeName)) {
+                return attribute;
+            }
+        }
+        return null;
+    }
+
     public String getTableName() {
         return tableName;
     }
@@ -66,6 +75,7 @@ public class Table {
     public void addIndexFile(IndexFile indexFile) {
         indexFiles.add(indexFile);
     }
+
 
     @Override
     public String toString() {

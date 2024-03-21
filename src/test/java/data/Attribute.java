@@ -10,6 +10,7 @@ public class Attribute {
         this.isnull = isnull;
     }
 
+
     public String getAttributeName() {
         return attributeName;
     }

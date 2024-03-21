@@ -39,6 +39,15 @@ public class Database {
         }
     }
 
+    public Table getTable(String tableName) {
+        for (Table table : tables) {
+            if (table.getTableName().equals(tableName)) {
+                return table;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return dataBaseName;
