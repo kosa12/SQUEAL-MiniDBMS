@@ -3,17 +3,16 @@ package client;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import javax.swing.JButton;
-import gui.GUI;
+import javax.swing.JMenuItem;
 
 public class Client {
     public static void main(String[] args) {
         String serverAddress = "localhost";
         int serverPort = 12345;
-        GUI gui = new GUI();
+        Client_GUI gui = new Client_GUI();
         Socket[] socketHolder = new Socket[1];
 
-        JButton executeButton = gui.getExecuteButton();
+        JMenuItem executeButton = gui.getExecuteButton();
         executeButton.addActionListener(e -> {
             try {
                 Socket socket = new Socket(serverAddress, serverPort);
@@ -26,8 +25,7 @@ public class Client {
             }
         });
 
-
-        JButton exitButton = gui.getExitButton();
+        JMenuItem exitButton = gui.getExitButton();
         exitButton.addActionListener(e -> {
             Socket socket = socketHolder[0];
             try {

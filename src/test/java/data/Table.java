@@ -4,21 +4,26 @@ import java.util.ArrayList;
 
 public class Table {
     private String tableName;
-    private String fileName;
-    private int rowLength;
     private final ArrayList<Attribute> attributes;
     private String pKAttrName;
     private final ArrayList<ForeignKey> foreignKeys;
     private final ArrayList<IndexFile> indexFiles;
 
-    public Table(String tableName, String fileName, int rowLength, String pKAttrName) {
+    public Table(String tableName, String pKAttrName) {
         this.tableName = tableName;
-        this.fileName = fileName;
-        this.rowLength = rowLength;
         this.pKAttrName = pKAttrName;
         attributes = new ArrayList<>();
         indexFiles = new ArrayList<>();
         foreignKeys = new ArrayList<>();
+    }
+
+    public Attribute getAttribute(String attributeName) {
+        for (Attribute attribute : attributes) {
+            if (attribute.getAttributeName().equals(attributeName)) {
+                return attribute;
+            }
+        }
+        return null;
     }
 
     public String getTableName() {
@@ -27,22 +32,6 @@ public class Table {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public int getRowLength() {
-        return rowLength;
-    }
-
-    public void setRowLength(int rowLength) {
-        this.rowLength = rowLength;
     }
 
     public String getpKAttrName() {
@@ -76,6 +65,7 @@ public class Table {
     public void addIndexFile(IndexFile indexFile) {
         indexFiles.add(indexFile);
     }
+
 
     @Override
     public String toString() {

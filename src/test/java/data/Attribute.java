@@ -2,16 +2,23 @@ package data;
 public class Attribute {
     private String attributeName;
     private String type;
-
-
-    private int length;
     private boolean isnull;
 
-    public Attribute(String attributeName, String type, int length, boolean isnull) {
+    private boolean ispk;
+
+    public Attribute(String attributeName, String type, boolean isnull, boolean ispk) {
         this.attributeName = attributeName;
         this.type = type;
-        this.length = length;
         this.isnull = isnull;
+        this.ispk = ispk;
+    }
+
+    public boolean isIspk() {
+        return ispk;
+    }
+
+    public void setIspk(boolean ispk) {
+        this.ispk = ispk;
     }
 
     public String getAttributeName() {
@@ -30,14 +37,6 @@ public class Attribute {
         this.type = type;
     }
 
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
     public boolean isIsnull() {
         return isnull;
     }
@@ -45,4 +44,5 @@ public class Attribute {
     public void setIsnull(boolean isnull) {
         this.isnull = isnull;
     }
+
 }
