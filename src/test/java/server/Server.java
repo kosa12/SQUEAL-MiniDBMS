@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,12 +32,14 @@ public class Server extends Thread {
         }
 
         try {
-            serverSocket = new ServerSocket(12345);
+            serverSocket = new ServerSocket(10000);
             System.out.println("Server is running...");
             while (isRunning) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+                    if (isRunning) {
+                        System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+                    }
                     new Thread(() -> handleClient(clientSocket)).start();
                     clientSocket.setSoTimeout(500000);
                 } catch (SocketException se) {
@@ -70,7 +73,7 @@ public class Server extends Thread {
             }
 
             for (File databaseFile : databaseFiles) {
-                if (databaseFile.length() == 0){
+                if (databaseFile.length() == 0) {
                     databaseFile.delete();
                     continue;
                 }
@@ -78,7 +81,6 @@ public class Server extends Thread {
                 try (FileReader reader = new FileReader(databaseFile)) {
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
-
 
                     for (Object databaseObj : databaseArray) {
                         JSONObject databaseJson = (JSONObject) databaseObj;
@@ -88,7 +90,7 @@ public class Server extends Thread {
                         Database database = new Database(databaseName);
 
                         JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
-                        if (tablesArray != null){
+                        if (tablesArray != null) {
                             for (Object tableObj : tablesArray) {
                                 JSONObject tableJson = (JSONObject) tableObj;
                                 String tableName = (String) tableJson.get("table_name");
@@ -100,14 +102,16 @@ public class Server extends Thread {
                                     JSONObject attributeJson = (JSONObject) attributeObj;
                                     String attributeName = (String) attributeJson.get("name");
                                     String attributeType = (String) attributeJson.get("type");
-                                    table.addAttribute(new Attribute(attributeName, attributeType, false, false));
+                                    boolean attributeNotNull = (boolean) attributeJson.get("not_null");
+                                    boolean attributeIsPK = (boolean) attributeJson.get("is_pk");
+
+                                    table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK));
                                 }
                                 database.addTable(table);
                             }
                         }
 
                         databases.put(databaseName, database);
-
                     }
                 }
             }
@@ -115,6 +119,7 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
 
 
     public ServerSocket getServerSocket(){
@@ -205,25 +210,77 @@ public class Server extends Thread {
 
         String tableName = parts[2];
 
+        if (!command.contains("(") || !command.contains(")")) {
+            System.out.println("Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.");
+            return;
+        }
+
         String columnDefinitions = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")"));
 
         String[] columns = columnDefinitions.split(",(?![^(]*\\))");
+
+        if (columns.length == 0) {
+            System.out.println("Invalid CREATE TABLE command format: No column definitions found.");
+            return;
+        }
+
         JSONArray tableColumns = new JSONArray();
-        String primaryKey = null;
+        boolean hasPrimaryKey = false;
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
+
+            if (columnParts.length < 2) {
+                System.out.println("Invalid column definition: " + column);
+                return;
+            }
+
+
             JSONObject columnObj = new JSONObject();
             columnObj.put("name", columnParts[0]);
             columnObj.put("type", columnParts[1]);
-            if (columnParts.length == 4 && columnParts[3].equalsIgnoreCase("NULL") && columnParts[2].equalsIgnoreCase("NOT")) {
-                columnObj.put("not_null", true);
-            } else {
-                columnObj.put("not_null", false);
+
+            boolean notNull = false;
+            boolean isPK = false;
+
+            for (int i = 2; i < columnParts.length; i++) {
+                String keyword = columnParts[i].toUpperCase();
+                if (keyword.equals("NOT")) {
+                    if (i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("NULL")) {
+                        notNull = true;
+                        i++;
+                    } else {
+                        System.out.println("Invalid keyword after NOT: " + columnParts[i+1]);
+                        return;
+                    }
+                } else if (keyword.equals("PRIMARY") && i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("KEY")) {
+                    if (hasPrimaryKey) {
+                        System.out.println("Only one primary key is allowed.");
+                        return;
+                    }
+                    isPK = true;
+                    hasPrimaryKey = true;
+                    i++;
+                } else {
+                    System.out.println("Invalid keyword in column definition: " + columnParts[i]);
+                    return;
+                }
             }
-            if (columnParts.length == 3 && columnParts[1].equalsIgnoreCase("PRIMARY") && columnParts[2].equalsIgnoreCase("KEY")) {
-                primaryKey = columnParts[0];
-            }
+
+            columnObj.put("is_pk", isPK);
+            columnObj.put("not_null", notNull);
+
+
             tableColumns.add(columnObj);
+        }
+
+        HashSet<String> columnNames = new HashSet<>();
+        for (Object obj : tableColumns) {
+            JSONObject column = (JSONObject) obj;
+            String attributeName = (String) column.get("name");
+            if (!columnNames.add(attributeName)) {
+                System.out.println("Duplicate column name: " + attributeName);
+                return;
+            }
         }
 
         Table table = new Table(tableName, "");
@@ -234,32 +291,17 @@ public class Server extends Thread {
             String attributeName = (String) column.get("name");
             String attributeType = (String) column.get("type");
             boolean notNull = (boolean) column.get("not_null");
-            table.addAttribute(new Attribute(attributeName, attributeType, notNull, false));
-            if (primaryKey != null && attributeName.equals(primaryKey)) {
-                Attribute dbAttribute = table.getAttribute(attributeName);
-                if (dbAttribute != null) {
-                    dbAttribute.setIspk(true);
-                }
-            }
-            if (notNull) {
-                Database currentDB = databases.get(currentDatabase);
-                if (currentDB != null) {
-                    Table currentTable = currentDB.getTable(tableName);
-                    if (currentTable != null) {
-                        Attribute dbAttribute = currentTable.getAttribute(attributeName);
-                        if (dbAttribute != null) {
-                            dbAttribute.setIsnull(true);
-                        }
-                    }
-                }
-            }
+            boolean isPK = (boolean) column.get("is_pk");
+            table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK));
         }
 
+        databases.get(currentDatabase).addTable(table);
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
     }
+
 
     private static void dropTable(String command) {
         String[] parts = command.split("\\s+");
@@ -290,35 +332,28 @@ public class Server extends Thread {
             JSONArray databaseJson = (JSONArray) obj;
 
             JSONObject databaseObj = (JSONObject) databaseJson.getFirst();
-            boolean tablesRemoved = false;
-
             JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
-            if (tablesArray != null && !tablesArray.isEmpty()) {
-                JSONArray newTablesArray = new JSONArray();
-                for (Object table : tablesArray) {
-                    JSONObject tableObj = (JSONObject) table;
-                    if (!tableObj.get("table_name").equals(tableName)) {
-                        newTablesArray.add(tableObj);
-                    } else {
-                        tablesRemoved = true;
-                    }
-                }
-                if (tablesRemoved) {
-                    databaseObj.put("tables", newTablesArray);
+            boolean tableFound = false;
+            int tableIndex = -1;
+            for (int i = 0; i < tablesArray.size(); i++) {
+                JSONObject tableObj = (JSONObject) tablesArray.get(i);
+                if (tableObj.get("table_name").equals(tableName)) {
+                    tableFound = true;
+                    tableIndex = i;
+                    break;
                 }
             }
 
-            if (!tablesRemoved) {
-                databaseObj.remove("tables");
+            if (tableFound) {
+                tablesArray.remove(tableIndex);
+                fileReader.close();
+                fileWriter = new FileWriter(databaseFile);
+                fileWriter.write(databaseJson.toJSONString() + "\n");
+
+                System.out.println("Table dropped: " + tableName);
+
+                databases.get(currentDatabase).dropTable(tableName);
             }
-
-            fileWriter = new FileWriter(databaseFile);
-            fileWriter.write(databaseJson.toJSONString() + "\n");
-
-            System.out.println("Table dropped: " + tableName);
-
-            databases.get(currentDatabase).dropTable(tableName);
-
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
@@ -428,7 +463,6 @@ public class Server extends Thread {
                 newDB.put("database_name", databaseName);
                 databasesCurr.add(newDB);
                 saveDatabaseJSON(databasesCurr, databaseFile);
-
                 databases.put(databaseName, new Database(databaseName));
 
                 System.out.println("Database created: " + databaseName);
@@ -445,12 +479,21 @@ public class Server extends Thread {
 
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
-                    return;
+                } else {
+                    fileReader.close();
+                    currentDatabase = null;
+                    try {
+                        if (databaseFile.delete()) {
+                            System.out.println("Database dropped: " + databaseName);
+                            databases.remove(databaseName);
+                        } else {
+                            System.out.println("Failed to drop database: " + databaseName);
+                        }
+                    } catch (SecurityException e) {
+                        System.out.println("Security exception occurred: " + e.getMessage());
+                    }
                 }
-                saveDatabaseJSON(databasesCurr, databaseFile);
-                databases.remove(databaseName);
-                fileReader.close();
-                currentDatabase = null;
+
 
             } else {
                 System.out.println("Invalid operation: " + operation);
@@ -472,9 +515,7 @@ public class Server extends Thread {
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
-            if (!databases.isEmpty()) {
-                writer.write(databases.toJSONString() + "\n");
-            }
+            writer.write(databases.toJSONString() + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
