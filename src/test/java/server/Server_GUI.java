@@ -18,10 +18,16 @@ public class Server_GUI extends JFrame {
         setTitle("Server GUI");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1200, 350));
+        setPreferredSize(new Dimension(950, 350));
 
         start = new JButton("START SERVER");
+        start.setPreferredSize(new Dimension(460,50));
+        start.setBackground(new Color(239, 240, 243));
+
+
         stop = new JButton("STOP SERVER");
+        stop.setPreferredSize(new Dimension(460,50));
+        stop.setBackground(new Color(239, 240, 243));
 
         start.addActionListener(new ActionListener() {
             @Override
@@ -44,6 +50,7 @@ public class Server_GUI extends JFrame {
         logTextArea = new JTextArea();
         logTextArea.setFont(new Font("Cfont", Font.PLAIN, 20));
         logTextArea.setEditable(false);
+        logTextArea.setBackground(new Color(239, 240, 243));
 
         JScrollPane scrollPane = new JScrollPane(logTextArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -52,6 +59,10 @@ public class Server_GUI extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
 
         pack();
+
+        buttonPanel.setBackground(new Color(75, 104, 178));
+
+        this.setResizable(false);
         setLocationRelativeTo(null);
         setVisible(true);
     }
