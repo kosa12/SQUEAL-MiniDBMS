@@ -478,7 +478,6 @@ public class Server extends Thread {
     public static void handleDatabaseOperation(String operation, String databaseName, BufferedReader in) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
-        FileWriter fileWriter = null;
 
         try {
             File databasesDir = new File("src/test/java/databases");
@@ -528,6 +527,11 @@ public class Server extends Thread {
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
                 } else {
+                    //
+                    //EZ ITT KELL LEGYEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    //
+                    fileReader.close();
+                    currentDatabase=null;
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
@@ -548,9 +552,6 @@ public class Server extends Thread {
             try {
                 if (fileReader != null) {
                     fileReader.close();
-                }
-                if (fileWriter != null) {
-                    fileWriter.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
