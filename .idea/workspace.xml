@@ -7,6 +7,7 @@
     <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="indexmissing">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server_GUI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,6 +106,8 @@
       <workItem from="1711119845033" duration="345000" />
       <workItem from="1711145455962" duration="851000" />
       <workItem from="1711184350009" duration="1723000" />
+      <workItem from="1711220595537" duration="549000" />
+      <workItem from="1711229778180" duration="621000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -207,7 +210,8 @@
     <MESSAGE value="1xreset" />
     <MESSAGE value="scrollbarfinally" />
     <MESSAGE value="indexmissing" />
-    <option name="LAST_COMMIT_MESSAGE" value="indexmissing" />
+    <MESSAGE value="ah" />
+    <option name="LAST_COMMIT_MESSAGE" value="ah" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
