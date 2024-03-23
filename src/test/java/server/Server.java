@@ -234,7 +234,6 @@ public class Server extends Thread {
                 return;
             }
 
-
             JSONObject columnObj = new JSONObject();
             columnObj.put("name", columnParts[0]);
             columnObj.put("type", columnParts[1]);
@@ -244,7 +243,7 @@ public class Server extends Thread {
 
             for (int i = 2; i < columnParts.length; i++) {
                 String keyword = columnParts[i].toUpperCase();
-                if (keyword.equals("NOT")) {
+                if (keyword.equalsIgnoreCase("NOT")) {
                     if (i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("NULL")) {
                         notNull = true;
                         i++;
@@ -252,7 +251,7 @@ public class Server extends Thread {
                         System.out.println("Invalid keyword after NOT: " + columnParts[i+1]);
                         return;
                     }
-                } else if (keyword.equals("PRIMARY") && i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("KEY")) {
+                } else if (keyword.equalsIgnoreCase("PRIMARY") && i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("KEY")) {
                     if (hasPrimaryKey) {
                         System.out.println("Only one primary key is allowed.");
                         return;
