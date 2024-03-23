@@ -19,6 +19,7 @@ public class FileExplorer extends JPanel {
     private final DefaultMutableTreeNode root;
 
     public FileExplorer() {
+        this.setPreferredSize(new Dimension(175,800));
         root = new DefaultMutableTreeNode("databases");
 
         File rootDirectory = new File("src\\test\\java\\databases");
@@ -37,7 +38,12 @@ public class FileExplorer extends JPanel {
             }
         });
 
-        add(new JScrollPane(tree));
+        JScrollPane scrollPane = new JScrollPane(tree);
+
+        scrollPane.setPreferredSize(new Dimension(175,300));
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        this.add(scrollPane);
 
         setVisible(true);
     }

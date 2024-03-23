@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="scrollbarfinally" />
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="indexmissing">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -20,12 +23,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "dKriszti15"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;dKriszti15&quot;
   }
-}]]></component>
+}</component>
   <component name="GithubPullRequestsUISettings">
     <option name="selectedUrlAndAccountId">
       <UrlAndAccount>
@@ -98,6 +101,10 @@
       <updated>1710922416002</updated>
       <workItem from="1710969958917" duration="2104000" />
       <workItem from="1711024459931" duration="333000" />
+      <workItem from="1711051963397" duration="2545000" />
+      <workItem from="1711119845033" duration="345000" />
+      <workItem from="1711145455962" duration="851000" />
+      <workItem from="1711184350009" duration="1723000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -171,7 +178,15 @@
       <option name="project" value="LOCAL" />
       <updated>1711031846661</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="indexmissing">
+      <option name="closed" value="true" />
+      <created>1711033885776</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1711033885776</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -191,7 +206,8 @@
     <MESSAGE value="vorkszpesz" />
     <MESSAGE value="1xreset" />
     <MESSAGE value="scrollbarfinally" />
-    <option name="LAST_COMMIT_MESSAGE" value="scrollbarfinally" />
+    <MESSAGE value="indexmissing" />
+    <option name="LAST_COMMIT_MESSAGE" value="indexmissing" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
