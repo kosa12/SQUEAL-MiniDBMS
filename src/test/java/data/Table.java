@@ -50,6 +50,15 @@ public class Table {
         attributes.add(attribute);
     }
 
+    public boolean hasAttribute(String attributeName) {
+        for (Attribute attribute : attributes) {
+            if (attribute.getAttributeName().equals(attributeName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public ArrayList<ForeignKey> getForeignKeys() {
         return foreignKeys;
     }

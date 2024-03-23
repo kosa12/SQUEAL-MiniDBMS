@@ -25,6 +25,7 @@ public class Attribute {
         return attributeName;
     }
 
+
     public void setAttributeName(String attributeName) {
         this.attributeName = attributeName;
     }

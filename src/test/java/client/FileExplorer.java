@@ -54,10 +54,9 @@ public class FileExplorer extends JPanel {
         File[] files = parentFile.listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.length() == 0){
+                if (file.length() == 0 || file.getName().contains("index")) {
                     continue;
-                }
-                else {
+                } else {
                     String nodeName = file.isDirectory() ? file.getName() : file.getName().replace(".json", "");
                     DefaultMutableTreeNode node = new DefaultMutableTreeNode(nodeName);
                     parentNode.add(node);
@@ -65,7 +64,6 @@ public class FileExplorer extends JPanel {
                         addFiles(node, file);
                     }
                 }
-
             }
         }
     }
