@@ -50,7 +50,6 @@ public class Server extends Thread {
                 }
             }
 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,7 +65,7 @@ public class Server extends Thread {
                 return;
             }
 
-            File[] databaseFiles = databasesDir.listFiles((dir, name) -> name.endsWith(".json"));
+            File[] databaseFiles = databasesDir.listFiles((dir, name) -> name.endsWith(".json") && !name.contains("index"));
             if (databaseFiles == null) {
                 System.out.println("No database files found in directory: " + jsonPath);
                 return;
@@ -105,12 +104,16 @@ public class Server extends Thread {
                                     boolean attributeNotNull = (boolean) attributeJson.get("not_null");
                                     boolean attributeIsPK = (boolean) attributeJson.get("is_pk");
 
+                                    if (attributeIsPK) {
+                                        table.setpKAttrName(attributeName);
+                                    }
+
                                     table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK));
                                 }
                                 database.addTable(table);
                             }
                         }
-
+                        //reader.close();
                         databases.put(databaseName, database);
                     }
                 }
@@ -119,8 +122,6 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
-
-
 
     public ServerSocket getServerSocket(){
         return serverSocket;
@@ -149,7 +150,7 @@ public class Server extends Thread {
                     if (operation.equals("create") || operation.equals("drop")) {
                         if (objectType.equals("database")) {
                             handleDatabaseOperation(operation, objectName, in);
-                        } else if (objectType.equals("table")) {
+                        } else if (objectType.equals("table") || objectType.equals("index")) {
                             handleTableOperation(operation, message, in);
                         } else {
                             System.out.println("Invalid object type: " + objectType);
@@ -179,7 +180,6 @@ public class Server extends Thread {
         } else {
             System.out.println("Database not found: " + databaseName);
         }
-
     }
 
     private static void handleTableOperation(String operation, String command, BufferedReader in) {
@@ -189,7 +189,11 @@ public class Server extends Thread {
         }
 
         if (operation.equalsIgnoreCase("create")) {
-            createTable(command);
+            if (command.toLowerCase().contains("index")) {
+                createIndex(command);
+            } else {
+                createTable(command);
+            }
         } else if (operation.equalsIgnoreCase("drop")) {
             dropTable(command);
         } else {
@@ -226,6 +230,7 @@ public class Server extends Thread {
 
         JSONArray tableColumns = new JSONArray();
         boolean hasPrimaryKey = false;
+        Table table = new Table(tableName, "");
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
 
@@ -256,6 +261,7 @@ public class Server extends Thread {
                         System.out.println("Only one primary key is allowed.");
                         return;
                     }
+                    table.setpKAttrName(columnParts[0]);
                     isPK = true;
                     hasPrimaryKey = true;
                     i++;
@@ -267,7 +273,6 @@ public class Server extends Thread {
 
             columnObj.put("is_pk", isPK);
             columnObj.put("not_null", notNull);
-
 
             tableColumns.add(columnObj);
         }
@@ -281,9 +286,6 @@ public class Server extends Thread {
                 return;
             }
         }
-
-        Table table = new Table(tableName, "");
-        databases.get(currentDatabase).addTable(table);
 
         for (Object obj : tableColumns) {
             JSONObject column = (JSONObject) obj;
@@ -300,7 +302,6 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
     }
-
 
     private static void dropTable(String command) {
         String[] parts = command.split("\\s+");
@@ -369,7 +370,54 @@ public class Server extends Thread {
         }
     }
 
+    private static void createIndex(String command) {
+        String[] parts = command.split("\\s+");
+        if (parts.length < 5 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("INDEX")) {
+            System.out.println("Invalid CREATE INDEX command format.");
+            return;
+        }
 
+        String indexName = parts[2];
+        String tableName = parts[4];
+        String[] columns = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).split(",");
+
+        for (int i = 0; i < columns.length; i++) {
+            columns[i] = columns[i].trim();
+        }
+
+        Database currentDB = databases.get(currentDatabase);
+        if (currentDB == null || !currentDB.hasTable(tableName)) {
+            System.out.println("Table not found: " + tableName);
+            return;
+        }
+
+        Table table = currentDB.getTable(tableName);
+
+        for (String column : columns) {
+            if (!table.hasAttribute(column)) {
+                System.out.println("Column not found in table " + tableName + ": " + column);
+                return;
+            }
+        }
+
+        JSONObject indexObj = new JSONObject();
+        indexObj.put("index_name", indexName);
+        indexObj.put("table_name", tableName);
+        JSONArray columnsArray = new JSONArray();
+        for (String column : columns) {
+            columnsArray.add(column);
+        }
+
+        indexObj.put("columns", columnsArray);
+
+        String fileName = currentDatabase + "-" + tableName + "-" + indexName + "-index.json";
+        try (FileWriter fileWriter = new FileWriter("src/test/java/databases/" + fileName)) {
+            fileWriter.write(indexObj.toJSONString());
+            System.out.println("Index created: " + indexName + " on table " + tableName);
+        } catch (IOException e) {
+            System.out.println("Failed to create index file: " + e.getMessage());
+        }
+    }
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
@@ -430,6 +478,7 @@ public class Server extends Thread {
     public static void handleDatabaseOperation(String operation, String databaseName, BufferedReader in) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
+        FileWriter fileWriter = null;
 
         try {
             File databasesDir = new File("src/test/java/databases");
@@ -479,8 +528,6 @@ public class Server extends Thread {
                 if (!found) {
                     System.out.println("Database not found: " + databaseName);
                 } else {
-                    fileReader.close();
-                    currentDatabase = null;
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
@@ -492,25 +539,25 @@ public class Server extends Thread {
                         System.out.println("Security exception occurred: " + e.getMessage());
                     }
                 }
-
-
             } else {
                 System.out.println("Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
-        }
-
-        finally {
+        } finally {
             try {
                 if (fileReader != null) {
                     fileReader.close();
+                }
+                if (fileWriter != null) {
+                    fileWriter.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
