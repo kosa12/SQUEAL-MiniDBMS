@@ -137,7 +137,35 @@ public class Server extends Thread {
                 if (line.trim().endsWith(";")) {
                     commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                     String command = commandBuilder.toString().trim();
-                    handleCommand(command);
+                    if (command.trim().isEmpty()) {
+                        return;
+                    }
+
+                    System.out.println("Received from client: " + command);
+
+                    String[] parts = command.trim().split("\\s+");
+
+                    if (parts.length >= 3) {
+                        String operation = parts[0].toLowerCase();
+                        String objectType = parts[1].toLowerCase();
+                        String objectName = parts[2];
+
+                        if (operation.equals("create") || operation.equals("drop")) {
+                            if (objectType.equals("database")) {
+                                handleDatabaseOperation(operation, objectName);
+                            } else if (objectType.equals("table") || objectType.equals("index")) {
+                                handleTableOperation(operation, command);
+                            } else {
+                                System.out.println("Invalid object type: " + objectType);
+                            }
+                        } else if (operation.equals("use") && objectType.equals("database")) {
+                            handleUseDatabase(objectName);
+                        } else {
+                            System.out.println("Invalid operation: " + operation);
+                        }
+                    } else {
+                        System.out.println("Invalid message format: " + command);
+                    }
                     commandBuilder.setLength(0);
                 } else {
                     commandBuilder.append(line);
@@ -148,38 +176,6 @@ public class Server extends Thread {
             System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private static void handleCommand(String command) {
-        if (command.trim().isEmpty()) {
-            return;
-        }
-
-        System.out.println("Received from client: " + command);
-
-        String[] parts = command.trim().split("\\s+");
-
-        if (parts.length >= 3) {
-            String operation = parts[0].toLowerCase();
-            String objectType = parts[1].toLowerCase();
-            String objectName = parts[2];
-
-            if (operation.equals("create") || operation.equals("drop")) {
-                if (objectType.equals("database")) {
-                    handleDatabaseOperation(operation, objectName);
-                } else if (objectType.equals("table") || objectType.equals("index")) {
-                    handleTableOperation(operation, command);
-                } else {
-                    System.out.println("Invalid object type: " + objectType);
-                }
-            } else if (operation.equals("use") && objectType.equals("database")) {
-                handleUseDatabase(objectName);
-            } else {
-                System.out.println("Invalid operation: " + operation);
-            }
-        } else {
-            System.out.println("Invalid message format: " + command);
         }
     }
 
@@ -394,10 +390,14 @@ public class Server extends Thread {
 
             if (tableFound) {
                 tablesArray.remove(tableIndex);
-                fileReader.close();
-                fileWriter = new FileWriter(databaseFile);
-                fileWriter.write(databaseJson.toJSONString() + "\n");
-                fileWriter.close();
+                try {
+                    fileReader.close();
+                    fileWriter = new FileWriter(databaseFile);
+                    fileWriter.write(databaseJson.toJSONString() + "\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 System.out.println("Table dropped: " + tableName);
 
                 databases.get(currentDatabase).dropTable(tableName);
