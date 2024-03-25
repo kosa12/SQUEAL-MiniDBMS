@@ -57,7 +57,7 @@ public class Server extends Thread {
 
     public void recreateFromJson(String jsonPath) {
         JSONParser parser = new JSONParser();
-
+        FileReader reader = null;
         try {
             File databasesDir = new File(jsonPath);
             if (!databasesDir.exists() || !databasesDir.isDirectory()) {
@@ -77,7 +77,9 @@ public class Server extends Thread {
                     continue;
                 }
 
-                try (FileReader reader = new FileReader(databaseFile)) {
+                reader = new FileReader(databaseFile);
+
+                try {
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
 
@@ -116,10 +118,18 @@ public class Server extends Thread {
                         //reader.close();
                         databases.put(databaseName, database);
                     }
+                } catch (IOException | ParseException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -523,7 +533,7 @@ public class Server extends Thread {
         }
     }
 
-    public static void handleDatabaseOperation(String operation, String databaseName) {
+    public static synchronized void handleDatabaseOperation(String operation, String databaseName) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
 

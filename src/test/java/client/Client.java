@@ -10,16 +10,19 @@ public class Client {
         String serverAddress = "localhost";
         int serverPort = 10000;
         Client_GUI gui = new Client_GUI();
-        Socket[] socketHolder = new Socket[1];
+        final Socket[] socketHolder = new Socket[1];
 
         JMenuItem executeButton = gui.getExecuteButton();
         executeButton.addActionListener(e -> {
             try {
-                Socket socket = new Socket(serverAddress, serverPort);
+                Socket socket = socketHolder[0];
+                if (socket == null || socket.isClosed()) {
+                    socket = new Socket(serverAddress, serverPort);
+                    socketHolder[0] = socket;
+                }
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 String message = gui.getjTextField();
                 out.println(message);
-                socketHolder[0] = socket;
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
