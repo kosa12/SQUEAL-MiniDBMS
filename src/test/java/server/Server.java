@@ -131,37 +131,16 @@ public class Server extends Thread {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
         ) {
-            String message;
-            while ((message = in.readLine()) != null) {
-
-                if (message.trim().isEmpty()) {
-                    continue;
-                }
-
-                System.out.println("Received from client: " + message);
-
-                String[] parts = message.trim().split("\\s+");
-
-                if (parts.length >= 3) {
-                    String operation = parts[0].toLowerCase();
-                    String objectType = parts[1].toLowerCase();
-                    String objectName = parts[2];
-
-                    if (operation.equals("create") || operation.equals("drop")) {
-                        if (objectType.equals("database")) {
-                            handleDatabaseOperation(operation, objectName, in);
-                        } else if (objectType.equals("table") || objectType.equals("index")) {
-                            handleTableOperation(operation, message, in);
-                        } else {
-                            System.out.println("Invalid object type: " + objectType);
-                        }
-                    } else if (operation.equals("use") && objectType.equals("database")) {
-                        handleUseDatabase(objectName);
-                    } else {
-                        System.out.println("Invalid operation: " + operation);
-                    }
+            StringBuilder commandBuilder = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                if (line.trim().endsWith(";")) {
+                    commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
+                    String command = commandBuilder.toString().trim();
+                    handleCommand(command);
+                    commandBuilder.setLength(0); // Clear the command builder
                 } else {
-                    System.out.println("Invalid message format: " + message);
+                    commandBuilder.append(line);
                 }
             }
 
@@ -169,6 +148,38 @@ public class Server extends Thread {
             System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void handleCommand(String command) {
+        if (command.trim().isEmpty()) {
+            return;
+        }
+
+        System.out.println("Received from client: " + command);
+
+        String[] parts = command.trim().split("\\s+");
+
+        if (parts.length >= 3) {
+            String operation = parts[0].toLowerCase();
+            String objectType = parts[1].toLowerCase();
+            String objectName = parts[2];
+
+            if (operation.equals("create") || operation.equals("drop")) {
+                if (objectType.equals("database")) {
+                    handleDatabaseOperation(operation, objectName);
+                } else if (objectType.equals("table") || objectType.equals("index")) {
+                    handleTableOperation(operation, command);
+                } else {
+                    System.out.println("Invalid object type: " + objectType);
+                }
+            } else if (operation.equals("use") && objectType.equals("database")) {
+                handleUseDatabase(objectName);
+            } else {
+                System.out.println("Invalid operation: " + operation);
+            }
+        } else {
+            System.out.println("Invalid message format: " + command);
         }
     }
 
@@ -182,7 +193,7 @@ public class Server extends Thread {
         }
     }
 
-    private static void handleTableOperation(String operation, String command, BufferedReader in) {
+    private static void handleTableOperation(String operation, String command) {
         if (currentDatabase == null) {
             System.out.println("No database selected.");
             return;
@@ -239,6 +250,31 @@ public class Server extends Thread {
                 return;
             }
 
+            boolean goodSyntax = false;
+
+            if (isValidColumnType(columnParts[1])) {
+                goodSyntax = true;
+            } else if (columnParts[1].matches("(?i)varchar\\(\\d+\\)")) {
+                String lengthStr = columnParts[1].substring(7, columnParts[1].length() - 1);
+                try {
+                    int length = Integer.parseInt(lengthStr);
+                    if (length <= 0) {
+                        System.out.println("Invalid length for varchar: " + length);
+                        return;
+                    }
+                    goodSyntax = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid length for varchar: " + lengthStr);
+                    return;
+                }
+            } else {
+                System.out.println("Invalid column type: " + columnParts[1]);
+            }
+
+            if (!goodSyntax) {
+                return;
+            }
+
             JSONObject columnObj = new JSONObject();
             columnObj.put("name", columnParts[0]);
             columnObj.put("type", columnParts[1]);
@@ -277,6 +313,8 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
+
+
         HashSet<String> columnNames = new HashSet<>();
         for (Object obj : tableColumns) {
             JSONObject column = (JSONObject) obj;
@@ -301,6 +339,16 @@ public class Server extends Thread {
         tableObj.put("table_name", tableName);
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
+    }
+
+    private static boolean isValidColumnType(String type) {
+        String[] validTypes = {"int", "float", "bit", "date", "datetime"};
+        for (String validType : validTypes) {
+            if (validType.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void dropTable(String command) {
@@ -475,7 +523,7 @@ public class Server extends Thread {
         }
     }
 
-    public static void handleDatabaseOperation(String operation, String databaseName, BufferedReader in) {
+    public static void handleDatabaseOperation(String operation, String databaseName) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
 
