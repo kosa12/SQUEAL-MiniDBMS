@@ -138,7 +138,7 @@ public class Server extends Thread {
                     commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                     String command = commandBuilder.toString().trim();
                     handleCommand(command);
-                    commandBuilder.setLength(0); // Clear the command builder
+                    commandBuilder.setLength(0);
                 } else {
                     commandBuilder.append(line);
                 }
@@ -397,7 +397,7 @@ public class Server extends Thread {
                 fileReader.close();
                 fileWriter = new FileWriter(databaseFile);
                 fileWriter.write(databaseJson.toJSONString() + "\n");
-
+                fileWriter.close();
                 System.out.println("Table dropped: " + tableName);
 
                 databases.get(currentDatabase).dropTable(tableName);
@@ -579,7 +579,7 @@ public class Server extends Thread {
                     //EZ ITT KELL LEGYEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     //
                     fileReader.close();
-                    currentDatabase=null;
+                    currentDatabase = null;
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
