@@ -120,10 +120,12 @@ public class Client_GUI extends JFrame {
 
         jMenuBar = new JMenuBar();
 
+        jMenuBar.add(refresh);
+        jMenuBar.add(clear);
         jMenuBar.add(execute);
         jMenuBar.add(exit);
-        jMenuBar.add(clear);
-        jMenuBar.add(refresh);
+
+
 
         exit.addActionListener(new ActionListener() {
             @Override
