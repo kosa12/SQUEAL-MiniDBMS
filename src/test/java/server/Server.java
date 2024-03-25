@@ -261,7 +261,7 @@ public class Server extends Thread {
             if (isValidColumnType(columnParts[1])) {
                 goodSyntax = true;
             } else if (columnParts[1].matches("(?i)varchar\\(\\d+\\)")) {
-                String lengthStr = columnParts[1].substring(7, columnParts[1].length() - 1);
+                String lengthStr = columnParts[1].substring(8, columnParts[1].length() - 1);
                 try {
                     int length = Integer.parseInt(lengthStr);
                     if (length <= 0) {
