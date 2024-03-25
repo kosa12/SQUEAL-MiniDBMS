@@ -8,7 +8,7 @@ import javax.swing.JMenuItem;
 public class Client {
     public static void main(String[] args) {
         String serverAddress = "localhost";
-        int serverPort = 12345;
+        int serverPort = 10000;
         Client_GUI gui = new Client_GUI();
         Socket[] socketHolder = new Socket[1];
 

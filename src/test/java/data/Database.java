@@ -48,8 +48,18 @@ public class Database {
         return null;
     }
 
+    public boolean hasTable(String tableName) {
+        for (Table table : tables) {
+            if (table.getTableName().equals(tableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return dataBaseName;
     }
+
 }

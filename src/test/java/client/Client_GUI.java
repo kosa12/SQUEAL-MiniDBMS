@@ -120,10 +120,12 @@ public class Client_GUI extends JFrame {
 
         jMenuBar = new JMenuBar();
 
+        jMenuBar.add(refresh);
+        jMenuBar.add(clear);
         jMenuBar.add(execute);
         jMenuBar.add(exit);
-        jMenuBar.add(clear);
-        jMenuBar.add(refresh);
+
+
 
         exit.addActionListener(new ActionListener() {
             @Override
@@ -211,7 +213,6 @@ public class Client_GUI extends JFrame {
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setVisible(true);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setResizable(false);
     }
 
     public JMenuItem getExecuteButton() {
