@@ -161,14 +161,14 @@ public class Server extends Thread {
                         String objectName = parts[2];
 
                         if (operation.equals("create") || operation.equals("drop")) {
-                            if (objectType.equals("database")) {
+                            if (objectType.equals("database") || objectType.equals("db")) {
                                 handleDatabaseOperation(operation, objectName);
                             } else if (objectType.equals("table") || objectType.equals("index")) {
                                 handleTableOperation(operation, command);
                             } else {
                                 System.out.println("Invalid object type: " + objectType);
                             }
-                        } else if (operation.equals("use") && objectType.equals("database")) {
+                        } else if (operation.equals("use") && (objectType.equals("database") || objectType.equals("db"))) {
                             handleUseDatabase(objectName);
                         } else {
                             System.out.println("Invalid operation: " + operation);
@@ -261,7 +261,7 @@ public class Server extends Thread {
             if (isValidColumnType(columnParts[1])) {
                 goodSyntax = true;
             } else if (columnParts[1].matches("(?i)varchar\\(\\d+\\)")) {
-                String lengthStr = columnParts[1].substring(7, columnParts[1].length() - 1);
+                String lengthStr = columnParts[1].substring(8, columnParts[1].length() - 1);
                 try {
                     int length = Integer.parseInt(lengthStr);
                     if (length <= 0) {
