@@ -161,14 +161,14 @@ public class Server extends Thread {
                         String objectName = parts[2];
 
                         if (operation.equals("create") || operation.equals("drop")) {
-                            if (objectType.equals("database")) {
+                            if (objectType.equals("database") || objectType.equals("db")) {
                                 handleDatabaseOperation(operation, objectName);
                             } else if (objectType.equals("table") || objectType.equals("index")) {
                                 handleTableOperation(operation, command);
                             } else {
                                 System.out.println("Invalid object type: " + objectType);
                             }
-                        } else if (operation.equals("use") && objectType.equals("database")) {
+                        } else if (operation.equals("use") && (objectType.equals("database") || objectType.equals("db"))) {
                             handleUseDatabase(objectName);
                         } else {
                             System.out.println("Invalid operation: " + operation);
