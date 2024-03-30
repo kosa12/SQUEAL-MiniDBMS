@@ -22,7 +22,7 @@ public class FileExplorer extends JPanel {
         this.setPreferredSize(new Dimension(175,1000));
         root = new DefaultMutableTreeNode("databases");
 
-        File rootDirectory = new File("src\\test\\java\\databases");
+        File rootDirectory = new File("src/test/java/databases/");
         addFiles(root, rootDirectory);
 
         tree = new JTree(root);
@@ -50,7 +50,7 @@ public class FileExplorer extends JPanel {
 
     public void refreshTree() {
         root.removeAllChildren();
-        addFiles(root, new File("src\\test\\java\\databases"));
+        addFiles(root, new File("src/test/java/databases/"));
         ((DefaultTreeModel) tree.getModel()).reload();
     }
 
@@ -78,7 +78,7 @@ public class FileExplorer extends JPanel {
         node.removeAllChildren();
 
         String dbName = node.getUserObject().toString();
-        File databaseFile = new File("src\\test\\java\\databases\\" + dbName + ".json");
+        File databaseFile = new File("src/test/java/databases/" + dbName + ".json");
 
         String[] tables = getTablesFromDatabase(databaseFile);
         if (tables != null) {

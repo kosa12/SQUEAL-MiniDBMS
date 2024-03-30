@@ -25,7 +25,7 @@ public class Server extends Thread {
     @Override
     public void run() {
 
-        recreateFromJson("src/test/java/databases");
+        recreateFromJson("src/test/java/databases/");
 
         for (String dbName : databases.keySet()) {
             System.out.println(dbName);
@@ -115,7 +115,6 @@ public class Server extends Thread {
                                 database.addTable(table);
                             }
                         }
-                        //reader.close();
                         databases.put(databaseName, database);
                     }
                 } catch (IOException | ParseException e) {
@@ -175,7 +174,7 @@ public class Server extends Thread {
                         String operation = parts[0].toLowerCase();
                         String objectName = parts[1];
                         if (operation.equals("use")) {
-
+                            handleUseDatabase(objectName);
                         } else {
                             System.out.println("Invalid operation: " + operation);
                         }
