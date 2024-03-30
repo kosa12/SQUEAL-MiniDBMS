@@ -168,8 +168,14 @@ public class Server extends Thread {
                             } else {
                                 System.out.println("Invalid object type: " + objectType);
                             }
-                        } else if (operation.equals("use") && (objectType.equals("database") || objectType.equals("db"))) {
-                            handleUseDatabase(objectName);
+                        }  else {
+                            System.out.println("Invalid operation: " + operation);
+                        }
+                    } else if(parts.length == 2){
+                        String operation = parts[0].toLowerCase();
+                        String objectName = parts[1];
+                        if (operation.equals("use")) {
+
                         } else {
                             System.out.println("Invalid operation: " + operation);
                         }

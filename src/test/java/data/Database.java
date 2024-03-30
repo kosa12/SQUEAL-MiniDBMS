@@ -12,18 +12,6 @@ public class Database {
         this.tables = new ArrayList<>();
     }
 
-    public String getDataBaseName() {
-        return dataBaseName;
-    }
-
-    public void setDataBaseName(String dataBaseName) {
-        this.dataBaseName = dataBaseName;
-    }
-
-    public ArrayList<Table> getTables() {
-        return tables;
-    }
-
     public void addTable(Table table) {
         tables.add(table);
     }
