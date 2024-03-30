@@ -309,16 +309,13 @@ public class Server extends Thread {
         document.append("ertek", concatenatedValue.toString());
 
         String collectionName = tableName.toLowerCase();
-        MongoDatabase database = mongoClient.getDatabase(currentDatabase);
-        MongoCollection<Document> collection = database.getCollection(collectionName);
-        collection.insertOne(document);
+
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+        mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
+        mongoDBHandler.close();
 
         System.out.println("Row inserted into MongoDB collection: " + collectionName);
     }
-
-
-
-
 
     private static Object convertValue(String value, String type) {
         switch (type.toLowerCase()) {
