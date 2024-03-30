@@ -16,7 +16,7 @@ public class Table {
     private final ArrayList<ForeignKey> foreignKeys;
     private final ArrayList<IndexFile> indexFiles;
 
-    private final List<JSONObject> rows;
+    private final List<String> pkList;
     private String primaryKeyAttributeName;
 
     private MongoCollection<Document> collection;
@@ -28,18 +28,20 @@ public class Table {
         indexFiles = new ArrayList<>();
         foreignKeys = new ArrayList<>();
         this.collection = collection;
-        this.primaryKeyAttributeName = primaryKeyAttributeName;
-        this.rows = new ArrayList<>();
+        this.pkList = new ArrayList<>();
     }
 
     public boolean hasPrimaryKeyValue(Object primaryKeyValue) {
-        for (JSONObject row : rows) {
-            Object value = row.get(primaryKeyAttributeName);
-            if (value != null && value.equals(primaryKeyValue)) {
+        for (String row : pkList) {
+            if (row.equals(primaryKeyValue)) {
                 return true;
             }
         }
         return false;
+    }
+
+    public void addPKtoList(String pkname){
+        pkList.add(pkname);
     }
 
     public String getTableName() {

@@ -1,5 +1,6 @@
 package server;
 
+import com.mongodb.client.*;
 import data.Attribute;
 import data.Database;
 import data.Table;
@@ -11,16 +12,13 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
 
@@ -62,6 +60,32 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
+    public void recreateFromMongoDB(String databaseName) {
+        MongoDatabase mongoDatabase = mongoClient.getDatabase(databaseName);
+        for (String collectionName : mongoDatabase.listCollectionNames()) {
+            MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+            Table table = databases.getOrDefault(databaseName, new Database(databaseName)).getTable(collectionName);
+            if (table == null) {
+                System.out.println("Table not found in database: " + collectionName);
+                continue;
+            }
+            FindIterable<Document> documents = collection.find();
+            for (Document document : documents) {
+                Object idValue = document.get("_id");
+                if (idValue != null) {
+                    String primaryKeyAttribute = idValue.toString();
+                    table.addPKtoList(primaryKeyAttribute);
+                } else {
+                    System.out.println("No value found for _id field in document.");
+                }
+            }
+        }
+    }
+
+
+
+
 
     public void recreateFromJson(String jsonPath) {
         JSONParser parser = new JSONParser();
@@ -121,9 +145,11 @@ public class Server extends Thread {
                                     table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK));
                                 }
                                 database.addTable(table);
+
                             }
                         }
                         databases.put(databaseName, database);
+                        recreateFromMongoDB(databaseName);
                     }
                 } catch (IOException | ParseException e) {
                     throw new RuntimeException(e);
@@ -295,14 +321,11 @@ public class Server extends Thread {
             }
         }
 
-        String primaryKeyAttributeName = table.getpKAttrName();
-        if (primaryKeyAttributeName != null) {
-            if (table.hasPrimaryKeyValue(primaryKeyValue)) {
-                System.out.println("Primary key value already exists: " + primaryKeyValue);
-                return;
-            }
-        }
 
+        if (table.hasPrimaryKeyValue(primaryKeyValue)) {
+            System.out.println("Primary key value already exists: " + primaryKeyValue);
+            return;
+        }
 
         Document document = new Document();
         document.append("_id", primaryKeyValue);
@@ -447,6 +470,7 @@ public class Server extends Thread {
                     table.setpKAttrName(columnParts[0]);
                     isPK = true;
                     hasPrimaryKey = true;
+                    table.addPKtoList(primaryKeyAttributeName);
                     i++;
                 } else {
                     System.out.println("Invalid keyword in column definition: " + columnParts[i]);
