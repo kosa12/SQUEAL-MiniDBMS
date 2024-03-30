@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -49,7 +50,6 @@ public class Server extends Thread {
                     }
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -467,9 +467,7 @@ public class Server extends Thread {
         indexObj.put("index_name", indexName);
         indexObj.put("table_name", tableName);
         JSONArray columnsArray = new JSONArray();
-        for (String column : columns) {
-            columnsArray.add(column);
-        }
+        columnsArray.addAll(Arrays.asList(columns));
 
         indexObj.put("columns", columnsArray);
 

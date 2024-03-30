@@ -80,14 +80,15 @@ public class FileExplorer extends JPanel {
         String dbName = node.getUserObject().toString();
         File databaseFile = new File("src/test/java/databases/" + dbName + ".json");
 
-        String[] tables = getTablesFromDatabase(databaseFile);
-        if (tables != null) {
-            for (String tableName : tables) {
-                node.add(new DefaultMutableTreeNode(tableName));
+        if(databaseFile.exists()){
+            String[] tables = getTablesFromDatabase(databaseFile);
+            if (tables != null) {
+                for (String tableName : tables) {
+                    node.add(new DefaultMutableTreeNode(tableName));
+                }
             }
+            ((DefaultTreeModel) tree.getModel()).reload(node);
         }
-
-        ((DefaultTreeModel) tree.getModel()).reload(node);
     }
 
     private String[] getTablesFromDatabase(File databaseFile) {
