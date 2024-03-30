@@ -83,10 +83,6 @@ public class Server extends Thread {
         }
     }
 
-
-
-
-
     public void recreateFromJson(String jsonPath) {
         JSONParser parser = new JSONParser();
         FileReader reader = null;
@@ -290,6 +286,23 @@ public class Server extends Thread {
             return;
         }
 
+        int index = 0;
+        for (Attribute attribute : table.getAttributes()) {
+            if (index >= values.length) {
+                break;
+            }
+            String value = values[index].trim();
+            String attributeType = attribute.getType();
+            if (attributeType.toLowerCase().startsWith("varchar")) {
+                int maxLength = extractMaxLengthFromType(attributeType);
+                if (value.length() > maxLength) {
+                    System.out.println("Value length exceeds maximum length for attribute " + attribute.getAttributeName());
+                    return;
+                }
+            }
+            index++;
+        }
+
         if (values.length != table.getAttributes().size()) {
             System.out.println("Invalid number of values provided.");
             return;
@@ -338,6 +351,14 @@ public class Server extends Thread {
         mongoDBHandler.close();
 
         System.out.println("Row inserted into MongoDB collection: " + collectionName);
+    }
+
+    private static int extractMaxLengthFromType(String type) {
+        if (type.toLowerCase().startsWith("varchar")) {
+            String maxLengthStr = type.substring(type.indexOf("(") + 1, type.indexOf(")"));
+            return Integer.parseInt(maxLengthStr);
+        }
+        return -1;
     }
 
     private static Object convertValue(String value, String type) {
