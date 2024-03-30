@@ -50,4 +50,7 @@ public class Database {
         return dataBaseName;
     }
 
+    public ArrayList<Table> getTables() {
+        return tables;
+    }
 }

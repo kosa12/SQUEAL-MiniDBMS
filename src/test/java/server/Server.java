@@ -17,15 +17,23 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+
+
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
     private final boolean isRunning = true;
+    private static MongoClient mongoClient;
 
     @Override
     public void run() {
-
+        mongoClient = MongoClients.create("mongodb://localhost:27017");
         recreateFromJson("src/test/java/databases/");
 
         for (String dbName : databases.keySet()) {
@@ -96,7 +104,7 @@ public class Server extends Thread {
                                 JSONObject tableJson = (JSONObject) tableObj;
                                 String tableName = (String) tableJson.get("table_name");
 
-                                Table table = new Table(tableName, "");
+                                Table table = new Table(tableName, "", null);
 
                                 JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
                                 for (Object attributeObj : attributesArray) {
@@ -153,8 +161,10 @@ public class Server extends Thread {
                     System.out.println("Received from client: " + command);
 
                     String[] parts = command.trim().split("\\s+");
-
-                    if (parts.length >= 3) {
+                    if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
+                        insertRow(command);
+                    }
+                    else if (parts.length >= 3) {
                         String operation = parts[0].toLowerCase();
                         String objectType = parts[1].toLowerCase();
                         String objectName = parts[2];
@@ -194,6 +204,7 @@ public class Server extends Thread {
         }
     }
 
+
     private static void handleUseDatabase(String databaseName) {
         Database db = databases.get(databaseName);
         if (db != null) {
@@ -217,11 +228,117 @@ public class Server extends Thread {
                 createTable(command);
             }
         } else if (operation.equalsIgnoreCase("drop")) {
-            dropTable(command);
-        } else {
+            dropTable(command);}
+        else {
             System.out.println("Invalid table operation: " + operation);
         }
     }
+
+    private static void insertRow(String command) {
+        if (!command.toLowerCase().contains("insert into")) {
+            System.out.println("Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
+            return;
+        }
+
+        if (!command.toLowerCase().contains("values")) {
+            System.out.println("Invalid INSERT command format: Missing 'VALUES' keyword.");
+            return;
+        }
+
+        int startIndex = command.indexOf("(");
+        int endIndex = command.lastIndexOf(")");
+        if (startIndex == -1 || endIndex == -1) {
+            System.out.println("Invalid INSERT command format: Missing '(' or ')' for values.");
+            return;
+        }
+
+        String valuesPart = command.substring(startIndex + 1, endIndex);
+
+        String[] values = valuesPart.split(",");
+
+        String[] parts = command.trim().split("\\s+");
+        String tableName = parts[2];
+        Table table = databases.get(currentDatabase).getTable(tableName);
+        if (table == null) {
+            System.out.println("Table not found: " + tableName);
+            return;
+        }
+
+        if (values.length != table.getAttributes().size()) {
+            System.out.println("Invalid number of values provided.");
+            return;
+        }
+
+        StringBuilder concatenatedValue = new StringBuilder();
+        String primaryKeyValue = "";
+        for (int i = 0; i < values.length; i++) {
+            String value = values[i].trim();
+            Attribute attribute = table.getAttributes().get(i);
+            String attributeName = attribute.getAttributeName();
+            String attributeType = attribute.getType();
+            if(attributeType.contains("varchar")){
+                attributeType="varchar";
+            }
+
+            if (convertValue(value, attributeType)==null) {
+                System.out.println("Invalid value type for attribute: " + attributeName);
+                return;
+            }
+
+            if (i == 0) {
+                primaryKeyValue = value;
+            } else {
+                concatenatedValue.append(value);
+                if (i < values.length - 1) {
+                    concatenatedValue.append(";");
+                }
+            }
+        }
+
+        String primaryKeyAttributeName = table.getpKAttrName();
+        if (primaryKeyAttributeName != null) {
+            if (table.hasPrimaryKeyValue(primaryKeyValue)) {
+                System.out.println("Primary key value already exists: " + primaryKeyValue);
+                return;
+            }
+        }
+
+
+        Document document = new Document();
+        document.append("_id", primaryKeyValue);
+        document.append("ertek", concatenatedValue.toString());
+
+        String collectionName = tableName.toLowerCase();
+        MongoDatabase database = mongoClient.getDatabase(currentDatabase);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+        collection.insertOne(document);
+
+        System.out.println("Row inserted into MongoDB collection: " + collectionName);
+    }
+
+
+
+
+
+    private static Object convertValue(String value, String type) {
+        switch (type.toLowerCase()) {
+            case "int":
+                return Integer.parseInt(value);
+            case "float":
+                return Float.parseFloat(value);
+            case "bit":
+                return Boolean.parseBoolean(value);
+            case "date":
+                return value;
+            case "datetime":
+                return value;
+            case "varchar":
+                return value;
+            default:
+                return null;
+        }
+    }
+
 
     private static void createTable(String command) {
         String[] parts = command.split("\\s+");
@@ -250,12 +367,34 @@ public class Server extends Thread {
             return;
         }
 
-        JSONArray tableColumns = new JSONArray();
-        boolean hasPrimaryKey = false;
-        Table table = new Table(tableName, "");
+        if (databases.get(currentDatabase).hasTable(tableName)) {
+            System.out.println("Table already exists: " + tableName);
+            return;
+        }
+
+        String primaryKeyAttributeName = null;
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
+            if (columnParts.length > 2 && columnParts[2].equalsIgnoreCase("PRIMARY")) {
+                primaryKeyAttributeName = columnParts[0];
+                break;
+            }
+        }
 
+        if (primaryKeyAttributeName != null) {
+            for (Table table : databases.get(currentDatabase).getTables()) {
+                if (table.hasAttribute(primaryKeyAttributeName)) {
+                    System.out.println("Primary key attribute already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
+                    return;
+                }
+            }
+        }
+
+        JSONArray tableColumns = new JSONArray();
+        boolean hasPrimaryKey = false;
+        Table table = new Table(tableName, "", null);
+        for (String column : columns) {
+            String[] columnParts = column.trim().split("\\s+");
             if (columnParts.length < 2) {
                 System.out.println("Invalid column definition: " + column);
                 return;
@@ -324,8 +463,6 @@ public class Server extends Thread {
             tableColumns.add(columnObj);
         }
 
-
-
         HashSet<String> columnNames = new HashSet<>();
         for (Object obj : tableColumns) {
             JSONObject column = (JSONObject) obj;
@@ -351,6 +488,7 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj);
     }
+
 
     private static boolean isValidColumnType(String type) {
         String[] validTypes = {"int", "float", "bit", "date", "datetime"};

@@ -1,6 +1,13 @@
 package data;
 
+import org.bson.Document;
+import org.json.simple.JSONObject;
+
 import java.util.ArrayList;
+import java.util.List;
+
+import com.mongodb.client.MongoCollection;
+
 
 public class Table {
     private String tableName;
@@ -9,21 +16,30 @@ public class Table {
     private final ArrayList<ForeignKey> foreignKeys;
     private final ArrayList<IndexFile> indexFiles;
 
-    public Table(String tableName, String pKAttrName) {
+    private final List<JSONObject> rows;
+    private String primaryKeyAttributeName;
+
+    private MongoCollection<Document> collection;
+
+    public Table(String tableName, String pKAttrName, MongoCollection<Document> collection) {
         this.tableName = tableName;
         this.pKAttrName = pKAttrName;
         attributes = new ArrayList<>();
         indexFiles = new ArrayList<>();
         foreignKeys = new ArrayList<>();
+        this.collection = collection;
+        this.primaryKeyAttributeName = primaryKeyAttributeName;
+        this.rows = new ArrayList<>();
     }
 
-    public Attribute getAttribute(String attributeName) {
-        for (Attribute attribute : attributes) {
-            if (attribute.getAttributeName().equals(attributeName)) {
-                return attribute;
+    public boolean hasPrimaryKeyValue(Object primaryKeyValue) {
+        for (JSONObject row : rows) {
+            Object value = row.get(primaryKeyAttributeName);
+            if (value != null && value.equals(primaryKeyValue)) {
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
     public String getTableName() {
