@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="uh">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="db is megy">
+      <change afterPath="$PROJECT_DIR$/src/test/java/client/OurNode.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,7 +112,10 @@
       <workItem from="1711390996018" duration="2529000" />
       <workItem from="1711404481289" duration="965000" />
       <workItem from="1711448589416" duration="44000" />
-      <workItem from="1711481101525" duration="1809000" />
+      <workItem from="1711481101525" duration="1875000" />
+      <workItem from="1711626739964" duration="1114000" />
+      <workItem from="1711647230302" duration="453000" />
+      <workItem from="1711819945469" duration="7146000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -216,7 +221,15 @@
       <option name="project" value="LOCAL" />
       <updated>1711405125027</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="db is megy">
+      <option name="closed" value="true" />
+      <created>1711482949060</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1711482949060</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -241,7 +254,8 @@
     <MESSAGE value="servegui_lilupdate" />
     <MESSAGE value="clientgui_lilupdate" />
     <MESSAGE value="uh" />
-    <option name="LAST_COMMIT_MESSAGE" value="uh" />
+    <MESSAGE value="db is megy" />
+    <option name="LAST_COMMIT_MESSAGE" value="db is megy" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

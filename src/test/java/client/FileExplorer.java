@@ -3,7 +3,6 @@ package client;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.File;
@@ -16,11 +15,11 @@ import org.json.simple.parser.ParseException;
 
 public class FileExplorer extends JPanel {
     private final JTree tree;
-    private final DefaultMutableTreeNode root;
+    private final OurNode root;
 
     public FileExplorer() {
         this.setPreferredSize(new Dimension(175,1000));
-        root = new DefaultMutableTreeNode("databases");
+        root = new OurNode("databases");
 
         File rootDirectory = new File("src/test/java/databases/");
         addFiles(root, rootDirectory);
@@ -31,7 +30,7 @@ public class FileExplorer extends JPanel {
         tree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+                OurNode selectedNode = (OurNode) tree.getLastSelectedPathComponent();
                 if (selectedNode != null && selectedNode.isLeaf()) {
                     showTables(selectedNode);
                 }
@@ -54,7 +53,7 @@ public class FileExplorer extends JPanel {
         ((DefaultTreeModel) tree.getModel()).reload();
     }
 
-    private void addFiles(DefaultMutableTreeNode parentNode, File parentFile) {
+    private void addFiles(OurNode parentNode, File parentFile) {
         if (!parentFile.isDirectory()) return;
 
         File[] files = parentFile.listFiles();
@@ -64,7 +63,7 @@ public class FileExplorer extends JPanel {
                     continue;
                 } else {
                     String nodeName = file.isDirectory() ? file.getName() : file.getName().replace(".json", "");
-                    DefaultMutableTreeNode node = new DefaultMutableTreeNode(nodeName);
+                    OurNode node = new OurNode(nodeName);
                     parentNode.add(node);
                     if (file.isDirectory()) {
                         addFiles(node, file);
@@ -74,7 +73,7 @@ public class FileExplorer extends JPanel {
         }
     }
 
-    private void showTables(DefaultMutableTreeNode node) {
+    private void showTables(OurNode node) {
         node.removeAllChildren();
 
         String dbName = node.getUserObject().toString();
@@ -84,7 +83,7 @@ public class FileExplorer extends JPanel {
             String[] tables = getTablesFromDatabase(databaseFile);
             if (tables != null) {
                 for (String tableName : tables) {
-                    node.add(new DefaultMutableTreeNode(tableName));
+                    node.add(new OurNode(tableName));
                 }
             }
             ((DefaultTreeModel) tree.getModel()).reload(node);
