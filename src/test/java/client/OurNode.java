@@ -22,16 +22,20 @@ public class OurNode extends DefaultMutableTreeNode {
                 TreePath path = tree.getPathForRow(row);
                 if (path != null) {
                     OurNode node = (OurNode) path.getLastPathComponent();
-                    showPopupMenu(e.getComponent(), e.getX(), e.getY());
+                    if(node.isLeaf()) {
+                        showPopupMenu(e.getComponent(), e.getX(), e.getY(),node.toString());
+                    }
                 }
             }
         }
 
-        private void showPopupMenu(Component component, int x, int y) {
+        private void showPopupMenu(Component component, int x, int y,String name) {
             JPopupMenu popupMenu = new JPopupMenu();
             JMenuItem menuItem = new JMenuItem("Visual Editor");
             menuItem.addActionListener(e -> {
-                System.out.println("Visual Editor - kivalasztva");
+                System.out.println("Visual Editor - kivalasztva: " + name);
+
+                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name);
 
             });
             popupMenu.add(menuItem);
