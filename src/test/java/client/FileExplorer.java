@@ -27,6 +27,8 @@ public class FileExplorer extends JPanel {
         tree = new JTree(root);
         tree.setPreferredSize(new Dimension(150, 2500));
 
+        tree.addMouseListener(new OurNode.OurMouseListener());
+
         tree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {

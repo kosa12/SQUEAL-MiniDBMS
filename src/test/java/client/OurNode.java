@@ -2,58 +2,45 @@ package client;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 public class OurNode extends DefaultMutableTreeNode {
     public OurNode(Object userObject) {
         super(userObject);
-
     }
 
-    public static class OurMouseListener implements MouseListener {
+    public static class OurMouseListener extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
-
             if (SwingUtilities.isRightMouseButton(e)) {
-
-                OurNode node = (OurNode) e.getSource();
-                System.out.println("DSADSADSA");
-                if (node != null) {
-                    showPopupMenu(e.getComponent(), e.getX(), e.getY());
+                JTree tree = (JTree) e.getComponent();
+                int row = tree.getRowForLocation(e.getX(), e.getY());
+                TreePath path = tree.getPathForRow(row);
+                if (path != null) {
+                    OurNode node = (OurNode) path.getLastPathComponent();
+                    if(node.isLeaf()) {
+                        showPopupMenu(e.getComponent(), e.getX(), e.getY(),node.toString());
+                    }
                 }
             }
         }
 
-        @Override
-        public void mousePressed(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-
-        }
-
-        private void showPopupMenu(Component component, int x, int y) {
+        private void showPopupMenu(Component component, int x, int y,String name) {
             JPopupMenu popupMenu = new JPopupMenu();
-            JMenuItem menuItem = new JMenuItem("Menüpont 1");
+            JMenuItem menuItem = new JMenuItem("Visual Editor");
             menuItem.addActionListener(e -> {
-                System.out.println("DSADSADSA");
+                System.out.println("Visual Editor - kivalasztva: " + name);
+
+                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name);
+
             });
             popupMenu.add(menuItem);
             popupMenu.show(component, x, y);
         }
+    }
 
-}}
+}
