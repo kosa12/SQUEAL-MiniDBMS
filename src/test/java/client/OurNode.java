@@ -9,8 +9,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class OurNode extends DefaultMutableTreeNode {
-    public OurNode(Object userObject) {
+    private String currentDatabase;
+
+    public OurNode(Object userObject, String currentDatabase) {
         super(userObject);
+        this.currentDatabase = currentDatabase;
     }
 
     public static class OurMouseListener extends MouseAdapter {
@@ -23,24 +26,29 @@ public class OurNode extends DefaultMutableTreeNode {
                 if (path != null) {
                     OurNode node = (OurNode) path.getLastPathComponent();
                     if(node.isLeaf()) {
-                        showPopupMenu(e.getComponent(), e.getX(), e.getY(),node.toString());
+                        showPopupMenu(e.getComponent(), e.getX(), e.getY(),node.toString(), node.getCurrentDatabase());
                     }
                 }
             }
         }
 
-        private void showPopupMenu(Component component, int x, int y,String name) {
+        private void showPopupMenu(Component component, int x, int y,String name, String currentDatabase) {
             JPopupMenu popupMenu = new JPopupMenu();
             JMenuItem menuItem = new JMenuItem("Visual Editor");
             menuItem.addActionListener(e -> {
                 System.out.println("Visual Editor - kivalasztva: " + name);
+                System.out.println("Current Database: " + currentDatabase);
 
-                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name);
-
+                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name, currentDatabase);
             });
             popupMenu.add(menuItem);
             popupMenu.show(component, x, y);
         }
     }
 
+    // Getter for currentDatabase
+    public String getCurrentDatabase() {
+        return currentDatabase;
+    }
 }
+

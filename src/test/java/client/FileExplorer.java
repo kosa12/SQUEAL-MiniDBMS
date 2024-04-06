@@ -17,9 +17,11 @@ public class FileExplorer extends JPanel {
     private final JTree tree;
     private final OurNode root;
 
+    String currentDatabase;
+
     public FileExplorer() {
         this.setPreferredSize(new Dimension(175,1000));
-        root = new OurNode("databases");
+        root = new OurNode("databases", currentDatabase);
 
         File rootDirectory = new File("src/test/java/databases/");
         addFiles(root, rootDirectory);
@@ -65,7 +67,7 @@ public class FileExplorer extends JPanel {
                     continue;
                 } else {
                     String nodeName = file.isDirectory() ? file.getName() : file.getName().replace(".json", "");
-                    OurNode node = new OurNode(nodeName);
+                    OurNode node = new OurNode(nodeName, currentDatabase);
                     parentNode.add(node);
                     if (file.isDirectory()) {
                         addFiles(node, file);
@@ -79,13 +81,14 @@ public class FileExplorer extends JPanel {
         node.removeAllChildren();
 
         String dbName = node.getUserObject().toString();
+        currentDatabase = dbName;
         File databaseFile = new File("src/test/java/databases/" + dbName + ".json");
 
         if(databaseFile.exists()){
             String[] tables = getTablesFromDatabase(databaseFile);
             if (tables != null) {
                 for (String tableName : tables) {
-                    node.add(new OurNode(tableName));
+                    node.add(new OurNode(tableName, currentDatabase));
                 }
             }
             ((DefaultTreeModel) tree.getModel()).reload(node);
