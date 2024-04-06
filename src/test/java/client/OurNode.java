@@ -46,7 +46,7 @@ public class OurNode extends DefaultMutableTreeNode {
         }
     }
 
-    // Getter for currentDatabase
+
     public String getCurrentDatabase() {
         return currentDatabase;
     }

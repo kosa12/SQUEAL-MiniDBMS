@@ -30,6 +30,7 @@ public class VisualEditorFrame extends JFrame {
         panel = new JPanel();
         panel.setPreferredSize(new Dimension(300, 300));
         panel.setBackground(new Color(100, 0, 0));
+        this.setLocationRelativeTo(null);
 
         table = new JTable();
 

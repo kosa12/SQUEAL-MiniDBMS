@@ -75,9 +75,12 @@ public class Server_GUI extends JFrame {
 
     private void stopServer() {
         try {
-            server.getServerSocket().close();
-            logMessage("Server is shutting down...");
-            System.exit(0);
+            if(this.server!=null){
+                server.getServerSocket().close();
+                logMessage("Server is shutting down...");
+                System.exit(0);
+            }
+
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
