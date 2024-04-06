@@ -25,7 +25,7 @@ public class Client_GUI extends JFrame {
 
         this.setLayout(new BorderLayout());
 
-        this.setPreferredSize(new Dimension(1200, 350));
+        this.setPreferredSize(new Dimension(1600, 800));
 
         int padding = 15;
         Insets insets = new Insets(padding,padding,padding,padding);
@@ -210,8 +210,9 @@ public class Client_GUI extends JFrame {
 
         jPanel.setBackground(new Color(75, 104, 178));
 
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setVisible(true);
+        this.pack();
+        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 

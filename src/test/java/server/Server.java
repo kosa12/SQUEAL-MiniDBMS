@@ -12,7 +12,6 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -185,6 +184,8 @@ public class Server extends Thread {
                     String[] parts = command.trim().split("\\s+");
                     if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
                         insertRow(command);
+                    } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
+                        deleteRow(command);
                     }
                     else if (parts.length >= 3) {
                         String operation = parts[0].toLowerCase();
@@ -352,6 +353,40 @@ public class Server extends Thread {
 
         System.out.println("Row inserted into MongoDB collection: " + collectionName);
     }
+
+    private static void deleteRow(String command) {
+        if (!command.toLowerCase().contains("delete from")) {
+            System.out.println("Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
+            return;
+        }
+
+        if (!command.toLowerCase().contains("where")) {
+            System.out.println("Invalid DELETE command format: Missing 'WHERE' keyword.");
+            return;
+        }
+
+        String[] parts = command.trim().split("\\s+");
+        String tableName = parts[2];
+        String condition = parts[parts.length - 1];
+
+        if (!condition.startsWith("_id")) {
+            System.out.println("Invalid DELETE condition: Must be based on primary key (_id).");
+            return;
+        }
+
+        String primaryKeyValue = condition.substring(4);
+
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+        long deletedCount = mongoDBHandler.deleteDocumentByPK(currentDatabase, tableName, primaryKeyValue);
+        mongoDBHandler.close();
+
+        if (deletedCount > 0) {
+            System.out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
+        } else {
+            System.out.println("No document found with primary key value: " + primaryKeyValue);
+        }
+    }
+
 
     private static int extractMaxLengthFromType(String type) {
         if (type.toLowerCase().startsWith("varchar")) {
@@ -676,7 +711,7 @@ public class Server extends Thread {
             Object obj = parser.parse(fileReader);
             JSONArray databaseJson = (JSONArray) obj;
 
-            JSONObject databaseObj = (JSONObject) databaseJson.get(0);
+            JSONObject databaseObj = (JSONObject) databaseJson.getFirst();
             JSONArray tablesArray;
 
             if (databaseObj.containsKey("tables")) {

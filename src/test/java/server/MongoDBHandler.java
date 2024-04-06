@@ -19,6 +19,13 @@ public class MongoDBHandler {
         collection.insertOne(document);
     }
 
+    public long deleteDocumentByPK(String databaseName, String collectionName, String primaryKeyValue) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+        Document query = new Document("_id", primaryKeyValue);
+        return collection.deleteOne(query).getDeletedCount();
+    }
+
     public void close() {
         mongoClient.close();
     }

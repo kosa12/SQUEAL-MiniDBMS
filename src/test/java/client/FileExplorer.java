@@ -98,13 +98,16 @@ public class FileExplorer extends JPanel {
             JSONArray databaseArray = (JSONArray) obj;
             JSONObject databaseJson = (JSONObject) databaseArray.getFirst();
             JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
-
-            String[] tables = new String[tablesArray.size()];
-            for (int i = 0; i < tablesArray.size(); i++) {
-                JSONObject tableObj = (JSONObject) tablesArray.get(i);
-                tables[i] = (String) tableObj.get("table_name");
+            if(tablesArray!=null){
+                String[] tables = new String[tablesArray.size()];
+                for (int i = 0; i < tablesArray.size(); i++) {
+                    JSONObject tableObj = (JSONObject) tablesArray.get(i);
+                    tables[i] = (String) tableObj.get("table_name");
+                }
+                return tables;
             }
-            return tables;
+            else return null;
+
         } catch (IOException | ParseException e) {
             e.printStackTrace();
             return null;
