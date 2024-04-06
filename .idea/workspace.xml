@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="db is megy">
-      <change afterPath="$PROJECT_DIR$/src/test/java/client/OurNode.java" afterDir="false" />
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="megy a jobbklikk -&gt; visualed">
+      <change afterPath="$PROJECT_DIR$/src/test/java/client/VisualEditorFrame.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/FileExplorer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/OurNode.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/OurNode.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,28 +57,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Client.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Client_GUI.executor&quot;: &quot;Run&quot;,
-    &quot;Application.FileExplorer.executor&quot;: &quot;Run&quot;,
-    &quot;Application.FolderExplorerDemo.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Server.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Server_GUI.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.DBMS [-Dtest=org.example.Main...].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;kriszti&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.repository.indices&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Client.executor": "Run",
+    "Application.Client_GUI.executor": "Run",
+    "Application.FileExplorer.executor": "Run",
+    "Application.FolderExplorerDemo.executor": "Run",
+    "Application.Main.executor": "Run",
+    "Application.OurNode.executor": "Run",
+    "Application.Server.executor": "Run",
+    "Application.Server_GUI.executor": "Run",
+    "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "kriszti",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Matyas\Desktop\DBMS\src\test\java\databases" />
@@ -115,7 +116,12 @@
       <workItem from="1711481101525" duration="1875000" />
       <workItem from="1711626739964" duration="1114000" />
       <workItem from="1711647230302" duration="453000" />
-      <workItem from="1711819945469" duration="7146000" />
+      <workItem from="1711819945469" duration="7918000" />
+      <workItem from="1711836729500" duration="143000" />
+      <workItem from="1711836887774" duration="222000" />
+      <workItem from="1711837123425" duration="109000" />
+      <workItem from="1711837244688" duration="2831000" />
+      <workItem from="1711921523618" duration="3982000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -229,7 +235,23 @@
       <option name="project" value="LOCAL" />
       <updated>1711482949060</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="uj node class">
+      <option name="closed" value="true" />
+      <created>1711836543671</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1711836543671</updated>
+    </task>
+    <task id="LOCAL-00016" summary="megy a jobbklikk -&gt; visualed">
+      <option name="closed" value="true" />
+      <created>1711924136107</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1711924136107</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -255,7 +277,9 @@
     <MESSAGE value="clientgui_lilupdate" />
     <MESSAGE value="uh" />
     <MESSAGE value="db is megy" />
-    <option name="LAST_COMMIT_MESSAGE" value="db is megy" />
+    <MESSAGE value="uj node class" />
+    <MESSAGE value="megy a jobbklikk -&gt; visualed" />
+    <option name="LAST_COMMIT_MESSAGE" value="megy a jobbklikk -&gt; visualed" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
