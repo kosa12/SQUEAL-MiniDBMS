@@ -20,7 +20,6 @@ import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
 
-
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
@@ -167,7 +166,8 @@ public class Server extends Thread {
 
     private static void handleClient(Socket clientSocket) {
         try (
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
         ) {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
@@ -179,10 +179,19 @@ public class Server extends Thread {
                         return;
                     }
 
-                    System.out.println("Received from client: " + command);
+                    out.println("Received from client: " + command);
 
                     String[] parts = command.trim().split("\\s+");
-                    if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
+                    if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
+                        String objectType = parts[1].toUpperCase();
+                        if (objectType.equals("DATABASES")) {
+                            showDatabases();
+                        } else if (objectType.equals("TABLES")) {
+                            showTables();
+                        } else {
+                            System.out.println("Invalid SHOW command: " + command);
+                        }
+                    } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
                         insertRow(command);
                     } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                         deleteRow(command);
@@ -198,10 +207,10 @@ public class Server extends Thread {
                             } else if (objectType.equals("table") || objectType.equals("index")) {
                                 handleTableOperation(operation, command);
                             } else {
-                                System.out.println("Invalid object type: " + objectType);
+                                out.println("Invalid object type: " + objectType);
                             }
                         }  else {
-                            System.out.println("Invalid operation: " + operation);
+                            out.println("Invalid operation: " + operation);
                         }
                     } else if(parts.length == 2){
                         String operation = parts[0].toLowerCase();
@@ -209,10 +218,10 @@ public class Server extends Thread {
                         if (operation.equals("use")) {
                             handleUseDatabase(objectName);
                         } else {
-                            System.out.println("Invalid operation: " + operation);
+                            out.println("Invalid operation: " + operation);
                         }
                     } else {
-                        System.out.println("Invalid message format: " + command);
+                        out.println("Invalid message format: " + command);
                     }
                     commandBuilder.setLength(0);
                 } else {
@@ -221,9 +230,29 @@ public class Server extends Thread {
             }
 
             clientSocket.close();
-            System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
+            out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void showDatabases() {
+        for (String dbName : databases.keySet()) {
+            System.out.println(dbName);
+        }
+    }
+
+    private static void showTables() {
+        if (currentDatabase == null) {
+            System.out.println("No database selected.");
+            return;
+        }
+
+        Database db = databases.get(currentDatabase);
+        if (db != null) {
+            for (Table table : db.getTables()) {
+                System.out.println(table.getTableName());
+            }
         }
     }
 
