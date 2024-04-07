@@ -13,6 +13,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -20,10 +22,11 @@ import java.util.List;
 
 public class VisualEditorFrame extends JFrame {
     private JPanel panel,bpanel;
+    private JFrame insertFrame;
     private JTable table;
     private String clickedTableName;
     private String currentDatabase;
-    private JButton delSelRow,insertNewRow;
+    private JButton delSelRow,insertNewRow,go;
 
     public VisualEditorFrame(String tableName, String databaseName) {
         this.clickedTableName = tableName;
@@ -70,16 +73,55 @@ public class VisualEditorFrame extends JFrame {
         panel.setBounds(50,0,attributeNames.length * 200, 300);
 
         bpanel = new JPanel();
-        bpanel.setBackground(Color.black);
 
         bpanel.setLayout(new FlowLayout());
+
+        insertNewRow.setPreferredSize(new Dimension(300,50));
+        delSelRow.setPreferredSize(new Dimension(300,50));
+
+        //kivalasztott sor torlese
+        delSelRow.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        // uj sor beszurasa
+        insertNewRow.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                insertFrame = new JFrame();
+
+                JPanel insertPanel = new JPanel();
+
+                go = new JButton("GO");
+
+                go.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                    }
+                });
+
+                insertPanel.add(go);
+
+                insertFrame.add(insertPanel);
+                insertFrame.setPreferredSize(new Dimension(300,attributeNames.length * 50));
+                insertFrame.setLocationRelativeTo(null);
+                insertFrame.pack();
+                insertFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                insertFrame.setVisible(true);
+            }
+        });
+
 
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
 
-        bpanel.setBounds(50,300,550,100);
+        bpanel.setBackground(new Color(100, 0, 0));
+        bpanel.setBounds((attributeNames.length * 200)/4,300,620,60);
 
-        //this.setLayout(new GridLayout(2,1));
         this.setLayout(null);
         this.add(panel);
         this.add(bpanel);
