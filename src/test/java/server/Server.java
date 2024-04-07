@@ -345,9 +345,10 @@ public class Server extends Thread {
             Attribute attribute = table.getAttributes().get(i);
             String attributeName = attribute.getAttributeName();
             String attributeType = attribute.getType();
-            if(attributeType.contains("varchar")){
-                attributeType="varchar";
+            if (attributeType.toLowerCase().contains("varchar")) {
+                attributeType = "varchar";
             }
+
 
             if (convertValue(value, attributeType)==null) {
                 System.out.println("Invalid value type for attribute: " + attributeName);
@@ -433,11 +434,7 @@ public class Server extends Thread {
                 return Float.parseFloat(value);
             case "bit":
                 return Boolean.parseBoolean(value);
-            case "date":
-                return value;
-            case "datetime":
-                return value;
-            case "varchar":
+            case "date", "datetime", "varchar":
                 return value;
             default:
                 return null;

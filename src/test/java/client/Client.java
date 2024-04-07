@@ -10,8 +10,6 @@ public class Client {
         String serverAddress = "localhost";
         int serverPort = 10000;
 
-
-
         final Socket[] socketHolder = new Socket[1];
 
         try {
@@ -21,8 +19,6 @@ public class Client {
             System.out.println("The client is not connected to the server, please start the server!");
             return;
         }
-
-
 
         Client_GUI gui = new Client_GUI();
 
@@ -39,7 +35,7 @@ public class Client {
                 }
             } else {
                 System.err.println("Not connected to the server.");
-                // Optionally, display an error message to the user
+
             }
         });
 
