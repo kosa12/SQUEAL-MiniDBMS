@@ -11,6 +11,7 @@ import org.json.simple.parser.JSONParser;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.io.File;
 import java.io.FileReader;
@@ -18,32 +19,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VisualEditorFrame extends JFrame {
-    private JPanel panel;
+    private JPanel panel,bpanel;
     private JTable table;
     private String clickedTableName;
     private String currentDatabase;
+    private JButton delSelRow,insertNewRow;
 
     public VisualEditorFrame(String tableName, String databaseName) {
         this.clickedTableName = tableName;
         this.currentDatabase = databaseName;
 
         panel = new JPanel();
-        panel.setPreferredSize(new Dimension(300, 300));
         panel.setBackground(new Color(100, 0, 0));
-        this.setLocationRelativeTo(null);
+        //this.setLocationRelativeTo(null);
+
+        delSelRow = new JButton("Delete Selected Row");
+        insertNewRow = new JButton("Insert Row");
 
         table = new JTable();
 
         DefaultTableModel model = new DefaultTableModel();
+        table.setModel(model);
 
         // valahogy bekell tenni a tabla oszlopait + sorait ( tippre egy for )
         // Spoiler: sok for volt XDDDDDDD
 
         String[] attributeNames = getAttributeNamesFromJSON(databaseName, tableName);
+        //panel.setPreferredSize(new Dimension(attributeNames.length * 100, 300));
+
         if (attributeNames != null && attributeNames.length > 0) {
             for (String attributeName : attributeNames) {
                 model.addColumn(attributeName);
             }
+
 
             List<String[]> rows = fetchRowsFromMongoDB(databaseName, tableName, attributeNames);
             if (rows != null && !rows.isEmpty()) {
@@ -51,17 +59,32 @@ public class VisualEditorFrame extends JFrame {
                     model.addRow(rowData);
                 }
             }
+
         }
 
-        table.setModel(model);
 
         JScrollPane tscp = new JScrollPane(table);
-        tscp.setPreferredSize(new Dimension(400, 450));
+        tscp.setPreferredSize(new Dimension(attributeNames.length * 200, 300));
+
         panel.add(tscp);
+        panel.setBounds(50,0,attributeNames.length * 200, 300);
 
+        bpanel = new JPanel();
+        bpanel.setBackground(Color.black);
+
+        bpanel.setLayout(new FlowLayout());
+
+        bpanel.add(insertNewRow);
+        bpanel.add(delSelRow);
+
+        bpanel.setBounds(50,300,550,100);
+
+        //this.setLayout(new GridLayout(2,1));
+        this.setLayout(null);
         this.add(panel);
+        this.add(bpanel);
 
-        this.setPreferredSize(new Dimension(400, 475));
+        this.setPreferredSize(new Dimension(attributeNames.length * 200 + 500, 500));
         this.pack();
         this.setVisible(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
