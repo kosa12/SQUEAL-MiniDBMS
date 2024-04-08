@@ -28,7 +28,6 @@ public class Server extends Thread {
     private final boolean isRunning = true;
     private static MongoClient mongoClient;
 
-
     @Override
     public void run() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
@@ -198,8 +197,6 @@ public class Server extends Thread {
                         return;
                     }
 
-                    out.println("Received from client: " + command);
-
                     String[] parts = command.trim().split("\\s+");
                     if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
                         String objectType = parts[1].toUpperCase();
@@ -208,12 +205,12 @@ public class Server extends Thread {
                         } else if (objectType.equals("TABLES")) {
                             showTables(out);
                         } else {
-                            System.out.println("Invalid SHOW command: " + command);
+                            out.println("Invalid SHOW command: " + command);
                         }
                     } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
-                        insertRow(command);
+                        insertRow(command, out, clientSocket);
                     } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
-                        deleteRow(command);
+                        deleteRow(command, out);
                     }
                     else if (parts.length >= 3) {
                         String operation = parts[0].toLowerCase();
@@ -304,14 +301,14 @@ public class Server extends Thread {
         }
     }
 
-    private static void insertRow(String command) {
+    private static void insertRow(String command, PrintWriter out, Socket clientSocket) {
         if (!command.toLowerCase().contains("insert into")) {
-            System.out.println("Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
+            out.println("Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
             return;
         }
 
         if (!command.toLowerCase().contains("values")) {
-            System.out.println("Invalid INSERT command format: Missing 'VALUES' keyword.");
+            out.println("Invalid INSERT command format: Missing 'VALUES' keyword.");
             return;
         }
 
@@ -319,7 +316,7 @@ public class Server extends Thread {
         int columnsStartIndex = command.indexOf("(", tableNameIndex);
         int columnsEndIndex = command.indexOf(")", columnsStartIndex);
         if (columnsStartIndex == -1 || columnsEndIndex == -1) {
-            System.out.println("Invalid INSERT command format: Missing '(' or ')' for column names.");
+            out.println("Invalid INSERT command format: Missing '(' or ')' for column names.");
             return;
         }
 
@@ -330,7 +327,7 @@ public class Server extends Thread {
         int valuesStartIndex = command.indexOf("(", columnsEndIndex);
         int valuesEndIndex = command.lastIndexOf(")");
         if (valuesStartIndex == -1 || valuesEndIndex == -1) {
-            System.out.println("Invalid INSERT command format: Missing '(' or ')' for values.");
+            out.println("Invalid INSERT command format: Missing '(' or ')' for values.");
             return;
         }
 
@@ -338,13 +335,13 @@ public class Server extends Thread {
         String[] values = valuesPart.split(",");
 
         if (columns.length != values.length) {
-            System.out.println("Number of columns does not match number of values provided.");
+            out.println("Number of columns does not match number of values provided.");
             return;
         }
 
         Table table = databases.get(currentDatabase).getTable(tableName);
         if (table == null) {
-            System.out.println("Table not found: " + tableName);
+            out.println("Table not found: " + tableName);
             return;
         }
 
@@ -354,7 +351,7 @@ public class Server extends Thread {
             String value = values[i].trim();
             Attribute attribute = table.getAttributes().get(i);
             if (attribute == null) {
-                System.out.println("Column not found: " + columns[i].trim());
+                out.println("Column not found: " + columns[i].trim());
                 return;
             }
             String attributeName = attribute.getAttributeName();
@@ -364,7 +361,7 @@ public class Server extends Thread {
             }
 
             if (convertValue(value, attributeType) == null) {
-                System.out.println("Invalid value type for attribute: " + attributeName);
+                out.println("Invalid value type for attribute: " + attributeName);
                 return;
             }
 
@@ -379,7 +376,7 @@ public class Server extends Thread {
         }
 
         if (table.hasPrimaryKeyValue(primaryKeyValue)) {
-            System.out.println("Primary key value already exists: " + primaryKeyValue);
+            out.println("Primary key value already exists: " + primaryKeyValue);
             return;
         }
 
@@ -392,17 +389,18 @@ public class Server extends Thread {
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
         mongoDBHandler.close();
+        out.println("Row inserted into MongoDB collection: " + collectionName);
     }
 
 
-    private static void deleteRow(String command) {
+    private static void deleteRow(String command, PrintWriter out) {
         if (!command.toLowerCase().contains("delete from")) {
-            System.out.println("Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
+            out.println("Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
             return;
         }
 
         if (!command.toLowerCase().contains("where")) {
-            System.out.println("Invalid DELETE command format: Missing 'WHERE' keyword.");
+           out.println("Invalid DELETE command format: Missing 'WHERE' keyword.");
             return;
         }
 
@@ -411,7 +409,7 @@ public class Server extends Thread {
         String condition = parts[parts.length - 1];
 
         if (!condition.startsWith("_id")) {
-            System.out.println("Invalid DELETE condition: Must be based on primary key (_id).");
+           out.println("Invalid DELETE condition: Must be based on primary key (_id).");
             return;
         }
 
@@ -425,15 +423,15 @@ public class Server extends Thread {
         if (table != null) {
             if (table.removePrimaryKeyValue(primaryKeyValue)) {
                 if (deletedCount > 0) {
-                    System.out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
+                    out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
                 } else {
-                    System.out.println("No document found with primary key value: " + primaryKeyValue);
+                    out.println("No document found with primary key value: " + primaryKeyValue);
                 }
             } else {
-                System.out.println("Primary key value not found in table: " + tableName);
+                out.println("Primary key value not found in table: " + tableName);
             }
         } else {
-            System.out.println("Table not found: " + tableName);
+            out.println("Table not found: " + tableName);
         }
     }
 
@@ -453,21 +451,21 @@ public class Server extends Thread {
     }
 
 
-    private static void createTable(String command) {
+    private static void createTable(String command, PrintWriter out) {
         String[] parts = command.split("\\s+");
         for (int i = 0; i < parts.length; i++) {
             parts[i] = parts[i].trim();
         }
 
         if (parts.length < 4 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("TABLE")) {
-            System.out.println("Invalid CREATE TABLE command format.");
+            out.println("Invalid CREATE TABLE command format.");
             return;
         }
 
         String tableName = parts[2];
 
         if (!command.contains("(") || !command.contains(")")) {
-            System.out.println("Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.");
+            out.println("Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.");
             return;
         }
 
@@ -476,12 +474,12 @@ public class Server extends Thread {
         String[] columns = columnDefinitions.split(",(?![^(]*\\))");
 
         if (columns.length == 0) {
-            System.out.println("Invalid CREATE TABLE command format: No column definitions found.");
+            out.println("Invalid CREATE TABLE command format: No column definitions found.");
             return;
         }
 
         if (databases.get(currentDatabase).hasTable(tableName)) {
-            System.out.println("Table already exists: " + tableName);
+            out.println("Table already exists: " + tableName);
             return;
         }
 
@@ -497,7 +495,7 @@ public class Server extends Thread {
         if (primaryKeyAttributeName != null) {
             for (Table table : databases.get(currentDatabase).getTables()) {
                 if (table.hasAttribute(primaryKeyAttributeName)) {
-                    System.out.println("Primary key attribute already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
+                    out.println("Primary key attribute already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
                     return;
                 }
             }
@@ -509,7 +507,7 @@ public class Server extends Thread {
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
             if (columnParts.length < 2) {
-                System.out.println("Invalid column definition: " + column);
+                out.println("Invalid column definition: " + column);
                 return;
             }
 
@@ -522,16 +520,16 @@ public class Server extends Thread {
                 try {
                     int length = Integer.parseInt(lengthStr);
                     if (length <= 0) {
-                        System.out.println("Invalid length for varchar: " + length);
+                        out.println("Invalid length for varchar: " + length);
                         return;
                     }
                     goodSyntax = true;
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid length for varchar: " + lengthStr);
+                    out.println("Invalid length for varchar: " + lengthStr);
                     return;
                 }
             } else {
-                System.out.println("Invalid column type: " + columnParts[1]);
+                out.println("Invalid column type: " + columnParts[1]);
             }
 
             if (!goodSyntax) {
@@ -552,12 +550,12 @@ public class Server extends Thread {
                         notNull = true;
                         i++;
                     } else {
-                        System.out.println("Invalid keyword after NOT: " + columnParts[i+1]);
+                        out.println("Invalid keyword after NOT: " + columnParts[i+1]);
                         return;
                     }
                 } else if (keyword.equalsIgnoreCase("PRIMARY") && i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("KEY")) {
                     if (hasPrimaryKey) {
-                        System.out.println("Only one primary key is allowed.");
+                        out.println("Only one primary key is allowed.");
                         return;
                     }
                     table.setpKAttrName(columnParts[0]);
@@ -566,7 +564,7 @@ public class Server extends Thread {
                     table.addPKtoList(primaryKeyAttributeName);
                     i++;
                 } else {
-                    System.out.println("Invalid keyword in column definition: " + columnParts[i]);
+                    out.println("Invalid keyword in column definition: " + columnParts[i]);
                     return;
                 }
             }
@@ -582,7 +580,7 @@ public class Server extends Thread {
             JSONObject column = (JSONObject) obj;
             String attributeName = (String) column.get("name");
             if (!columnNames.add(attributeName)) {
-                System.out.println("Duplicate column name: " + attributeName);
+                out.println("Duplicate column name: " + attributeName);
                 return;
             }
         }

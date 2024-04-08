@@ -24,7 +24,7 @@ public class MongoDBHandler {
         }
 
         collection.insertOne(document);
-        System.out.println("Row inserted into MongoDB collection: " + collectionName);
+
     }
 
 

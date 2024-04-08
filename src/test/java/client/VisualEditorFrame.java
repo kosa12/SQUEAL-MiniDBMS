@@ -8,8 +8,7 @@ import server.MongoDBHandler;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,10 +110,20 @@ public class VisualEditorFrame extends JFrame {
 
         for (int i = 0; i < columnCount; i++) {
             rowData[i] = JOptionPane.showInputDialog("Enter value for " + columnNames[i]);
+            if (rowData[i] == null || rowData[i].toString().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "This should not be null or empty, add a value next time");
+                return;
+            }
         }
 
 
-        model.addRow(rowData);
+        Object primaryKeyValue = rowData[0];
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (model.getValueAt(i, 0).equals(primaryKeyValue)) {
+                JOptionPane.showMessageDialog(null, "Primary key value already exists: " + primaryKeyValue);
+                return;
+            }
+        }
 
         StringBuilder command = new StringBuilder("INSERT INTO " + clickedTableName + " (");
 
@@ -133,10 +142,12 @@ public class VisualEditorFrame extends JFrame {
             }
         }
         command.append(");");
+
         client.sendMessage("USE " + currentDatabase + ";");
         client.sendMessage(command.toString());
-    }
+        model.addRow(rowData);
 
+    }
 
     private String[] getAttributeNamesFromJSON(String databaseName, String tableName) {
         try {
