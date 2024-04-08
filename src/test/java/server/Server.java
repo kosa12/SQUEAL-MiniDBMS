@@ -421,10 +421,19 @@ public class Server extends Thread {
         long deletedCount = mongoDBHandler.deleteDocumentByPK(currentDatabase, tableName, primaryKeyValue);
         mongoDBHandler.close();
 
-        if (deletedCount > 0) {
-            System.out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
+        Table table = databases.get(currentDatabase).getTable(tableName);
+        if (table != null) {
+            if (table.removePrimaryKeyValue(primaryKeyValue)) {
+                if (deletedCount > 0) {
+                    System.out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
+                } else {
+                    System.out.println("No document found with primary key value: " + primaryKeyValue);
+                }
+            } else {
+                System.out.println("Primary key value not found in table: " + tableName);
+            }
         } else {
-            System.out.println("No document found with primary key value: " + primaryKeyValue);
+            System.out.println("Table not found: " + tableName);
         }
     }
 
