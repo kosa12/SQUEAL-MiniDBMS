@@ -21,8 +21,6 @@ import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
 
-import java.util.UUID;
-
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
@@ -30,20 +28,7 @@ public class Server extends Thread {
     private final boolean isRunning = true;
     private static MongoClient mongoClient;
 
-    private String authToken;
 
-
-    public Server() {
-        this.authToken = generateToken();
-    }
-
-    private String generateToken() {
-        return UUID.randomUUID().toString();
-    }
-
-    boolean validateToken(String token) {
-        return token.equals(authToken);
-    }
     @Override
     public void run() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");

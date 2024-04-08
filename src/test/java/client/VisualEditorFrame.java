@@ -1,30 +1,31 @@
 package client;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.io.File;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import server.MongoDBHandler;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.io.File;
+import java.io.FileReader;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
 public class VisualEditorFrame extends JFrame {
     private JPanel panel, bpanel;
-    private JFrame insertFrame;
     private JTable table;
     private String clickedTableName;
     private String currentDatabase;
-    private JButton delSelRow, insertNewRow, go;
+    private JButton delSelRow, insertNewRow;
+    private Client client;
 
-    public VisualEditorFrame(String tableName, String databaseName) {
+    public VisualEditorFrame(String tableName, String databaseName, Client client) {
         this.clickedTableName = tableName;
         this.currentDatabase = databaseName;
+        this.client = client;
 
         panel = new JPanel();
         panel.setBackground(new Color(100, 0, 0));
@@ -63,93 +64,8 @@ public class VisualEditorFrame extends JFrame {
         insertNewRow.setPreferredSize(new Dimension(300, 50));
         delSelRow.setPreferredSize(new Dimension(300, 50));
 
-        delSelRow.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                DefaultTableModel model_new = (DefaultTableModel) table.getModel();
-                String primaryKeyValue = (String) model_new.getValueAt(row, 0);
-
-                model_new.removeRow(row);
-
-                MongoDBHandler mongoDBHandler = new MongoDBHandler();
-                try {
-                    mongoDBHandler.deleteDocumentByPK(currentDatabase, clickedTableName, primaryKeyValue);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Error deleting row from MongoDB.");
-                } finally {
-                    mongoDBHandler.close();
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "Please select a row to delete.");
-            }
-        });
-
-
-        insertNewRow.addActionListener(e -> {
-            insertFrame = new JFrame();
-            JPanel insertPanel = new JPanel();
-            DefaultTableModel newModel = (DefaultTableModel) table.getModel();
-            JButton confirmButton = new JButton("Confirm");
-            confirmButton.addActionListener(actionEvent -> {
-
-                String[] columnNames = new String[newModel.getColumnCount()];
-                for (int i = 0; i < newModel.getColumnCount(); i++) {
-                    columnNames[i] = newModel.getColumnName(i);
-                }
-
-                Object primaryKeyValue = JOptionPane.showInputDialog("Enter value for primary key (_id)");
-
-                StringBuilder concatenatedValue = new StringBuilder();
-                for (int i = 1; i < newModel.getColumnCount(); i++) {
-                    String columnName = newModel.getColumnName(i);
-                    String columnValue = JOptionPane.showInputDialog("Enter value for " + columnName);
-                    concatenatedValue.append(columnValue);
-                    if (i < newModel.getColumnCount() - 1) {
-                        concatenatedValue.append(";");
-                    }
-                }
-
-                Document document = new Document();
-                document.append("_id", primaryKeyValue);
-                document.append("ertek", concatenatedValue.toString());
-
-                String[] splitValues = concatenatedValue.toString().split(";");
-                Object[] rowData = new Object[newModel.getColumnCount()];
-                rowData[0] = primaryKeyValue;
-                for (int i = 1; i < newModel.getColumnCount(); i++) {
-                    rowData[i] = splitValues[i - 1];
-                }
-                newModel.addRow(rowData);
-
-                MongoDBHandler mongoDBHandler = new MongoDBHandler();
-                try {
-                    mongoDBHandler.insertDocument(currentDatabase, clickedTableName, document);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Error inserting row into MongoDB.");
-                } finally {
-                    mongoDBHandler.close();
-                }
-
-                insertFrame.dispose();
-            });
-
-            insertPanel.add(confirmButton);
-
-            insertFrame.add(insertPanel);
-            insertFrame.setPreferredSize(new Dimension(300, newModel.getColumnCount() * 50));
-            insertFrame.setLocationRelativeTo(null);
-            insertFrame.pack();
-            insertFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            insertFrame.setVisible(true);
-        });
-
-
-
-
-
-
+        delSelRow.addActionListener(e -> deleteSelectedRow());
+        insertNewRow.addActionListener(e -> insertRow());
 
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
@@ -165,6 +81,40 @@ public class VisualEditorFrame extends JFrame {
         this.pack();
         this.setVisible(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    }
+
+    private void deleteSelectedRow() {
+        int row = table.getSelectedRow();
+        if (row != -1) {
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            String primaryKeyValue = (String) model.getValueAt(row, 0);
+            model.removeRow(row);
+            String useCommand = "USE " + currentDatabase + ";";
+            client.sendMessage(useCommand);
+            String command = "DELETE FROM " + clickedTableName + " WHERE _id=" + primaryKeyValue + ";";
+            client.sendMessage(command);
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select a row to delete.");
+        }
+    }
+
+    private void insertRow() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        Object[] rowData = new Object[model.getColumnCount()];
+        for (int i = 0; i < rowData.length; i++) {
+            rowData[i] = JOptionPane.showInputDialog("Enter value for " + model.getColumnName(i));
+        }
+        model.addRow(rowData);
+
+        StringBuilder command = new StringBuilder("INSERT INTO " + clickedTableName + " VALUES (");
+        for (int i = 0; i < rowData.length; i++) {
+            command.append("'").append(rowData[i]).append("'");
+            if (i < rowData.length - 1) {
+                command.append(", ");
+            }
+        }
+        command.append(")");
+        client.sendMessage(command.toString());
     }
 
     private String[] getAttributeNamesFromJSON(String databaseName, String tableName) {
@@ -219,5 +169,4 @@ public class VisualEditorFrame extends JFrame {
         }
         return rows;
     }
-
 }

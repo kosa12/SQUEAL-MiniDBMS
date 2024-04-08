@@ -19,8 +19,10 @@ public class Client_GUI extends JFrame {
 
     private FileExplorer fileExplorer;
 
+    private Client client;
+
     private boolean toResetTA = true;
-    public Client_GUI() {
+    public Client_GUI(Client client) {
         jPanel = new JPanel();
 
         this.setLayout(new BorderLayout());
@@ -144,7 +146,7 @@ public class Client_GUI extends JFrame {
         //////////////////////////
 
 
-        fileExplorer = new FileExplorer();
+        fileExplorer = new FileExplorer(client);
         fileExplorer.setPreferredSize(new Dimension(175,3000));
         //this.add(fileExplorer);
 
