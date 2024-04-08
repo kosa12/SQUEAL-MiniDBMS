@@ -28,7 +28,7 @@ public class VisualEditorFrame extends JFrame {
         this.client = client;
 
         panel = new JPanel();
-        panel.setBackground(new Color(100, 0, 0));
+        panel.setBackground(new Color(75, 104, 178));
 
         delSelRow = new JButton("Delete Selected Row");
         insertNewRow = new JButton("Insert Row");
@@ -70,7 +70,7 @@ public class VisualEditorFrame extends JFrame {
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
 
-        bpanel.setBackground(new Color(100, 0, 0));
+        bpanel.setBackground(new Color(75, 104, 178));
         bpanel.setBounds((attributeNames.length * 200) / 4, 300, 620, 60);
 
         this.setLayout(null);
