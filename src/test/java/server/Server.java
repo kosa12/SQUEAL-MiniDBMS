@@ -175,7 +175,6 @@ public class Server extends Thread {
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.trim().endsWith(";")) {
-
                     MongoDBHandler mongoDBHandler = new MongoDBHandler();
                     if (line.startsWith("FETCH")) {
                         String[] parts = line.split("\\s+");
@@ -205,9 +204,9 @@ public class Server extends Thread {
                     if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
                         String objectType = parts[1].toUpperCase();
                         if (objectType.equals("DATABASES")) {
-                            showDatabases();
+                            showDatabases(out);
                         } else if (objectType.equals("TABLES")) {
-                            showTables();
+                            showTables(out);
                         } else {
                             System.out.println("Invalid SHOW command: " + command);
                         }
@@ -256,26 +255,25 @@ public class Server extends Thread {
         }
     }
 
-    private static void showDatabases() {
+    private static void showDatabases(PrintWriter out) {
         for (String dbName : databases.keySet()) {
-            System.out.println(dbName);
+            out.println(dbName);
         }
     }
 
-    private static void showTables() {
+    private static void showTables(PrintWriter out) {
         if (currentDatabase == null) {
-            System.out.println("No database selected.");
+            out.println("No database selected.");
             return;
         }
 
         Database db = databases.get(currentDatabase);
         if (db != null) {
             for (Table table : db.getTables()) {
-                System.out.println(table.getTableName());
+                out.println(table.getTableName());
             }
         }
     }
-
 
     private static void handleUseDatabase(String databaseName) {
         Database db = databases.get(databaseName);
@@ -317,44 +315,36 @@ public class Server extends Thread {
             return;
         }
 
-        int startIndex = command.indexOf("(");
-        int endIndex = command.lastIndexOf(")");
-        if (startIndex == -1 || endIndex == -1) {
+        int tableNameIndex = command.toLowerCase().indexOf("insert into") + "insert into".length();
+        int columnsStartIndex = command.indexOf("(", tableNameIndex);
+        int columnsEndIndex = command.indexOf(")", columnsStartIndex);
+        if (columnsStartIndex == -1 || columnsEndIndex == -1) {
+            System.out.println("Invalid INSERT command format: Missing '(' or ')' for column names.");
+            return;
+        }
+
+        String tableName = command.substring(tableNameIndex, columnsStartIndex).trim();
+        String columnsPart = command.substring(columnsStartIndex + 1, columnsEndIndex);
+        String[] columns = columnsPart.split(",");
+
+        int valuesStartIndex = command.indexOf("(", columnsEndIndex);
+        int valuesEndIndex = command.lastIndexOf(")");
+        if (valuesStartIndex == -1 || valuesEndIndex == -1) {
             System.out.println("Invalid INSERT command format: Missing '(' or ')' for values.");
             return;
         }
 
-        String valuesPart = command.substring(startIndex + 1, endIndex);
-
+        String valuesPart = command.substring(valuesStartIndex + 1, valuesEndIndex);
         String[] values = valuesPart.split(",");
 
-        String[] parts = command.trim().split("\\s+");
-        String tableName = parts[2];
-        Table table = databases.get(currentDatabase).getTable(tableName);
-        if (table == null) {
-            System.out.println("Table not found: " + tableName);
+        if (columns.length != values.length) {
+            System.out.println("Number of columns does not match number of values provided.");
             return;
         }
 
-        int index = 0;
-        for (Attribute attribute : table.getAttributes()) {
-            if (index >= values.length) {
-                break;
-            }
-            String value = values[index].trim();
-            String attributeType = attribute.getType();
-            if (attributeType.toLowerCase().startsWith("varchar")) {
-                int maxLength = extractMaxLengthFromType(attributeType);
-                if (value.length() > maxLength) {
-                    System.out.println("Value length exceeds maximum length for attribute " + attribute.getAttributeName());
-                    return;
-                }
-            }
-            index++;
-        }
-
-        if (values.length != table.getAttributes().size()) {
-            System.out.println("Invalid number of values provided.");
+        Table table = databases.get(currentDatabase).getTable(tableName);
+        if (table == null) {
+            System.out.println("Table not found: " + tableName);
             return;
         }
 
@@ -363,14 +353,17 @@ public class Server extends Thread {
         for (int i = 0; i < values.length; i++) {
             String value = values[i].trim();
             Attribute attribute = table.getAttributes().get(i);
+            if (attribute == null) {
+                System.out.println("Column not found: " + columns[i].trim());
+                return;
+            }
             String attributeName = attribute.getAttributeName();
             String attributeType = attribute.getType();
             if (attributeType.toLowerCase().contains("varchar")) {
                 attributeType = "varchar";
             }
 
-
-            if (convertValue(value, attributeType)==null) {
+            if (convertValue(value, attributeType) == null) {
                 System.out.println("Invalid value type for attribute: " + attributeName);
                 return;
             }
@@ -384,7 +377,6 @@ public class Server extends Thread {
                 }
             }
         }
-
 
         if (table.hasPrimaryKeyValue(primaryKeyValue)) {
             System.out.println("Primary key value already exists: " + primaryKeyValue);
@@ -400,9 +392,8 @@ public class Server extends Thread {
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
         mongoDBHandler.close();
-
-        System.out.println("Row inserted into MongoDB collection: " + collectionName);
     }
+
 
     private static void deleteRow(String command) {
         if (!command.toLowerCase().contains("delete from")) {
@@ -435,15 +426,6 @@ public class Server extends Thread {
         } else {
             System.out.println("No document found with primary key value: " + primaryKeyValue);
         }
-    }
-
-
-    private static int extractMaxLengthFromType(String type) {
-        if (type.toLowerCase().startsWith("varchar")) {
-            String maxLengthStr = type.substring(type.indexOf("(") + 1, type.indexOf(")"));
-            return Integer.parseInt(maxLengthStr);
-        }
-        return -1;
     }
 
     private static Object convertValue(String value, String type) {

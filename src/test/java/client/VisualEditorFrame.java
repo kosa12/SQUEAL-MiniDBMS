@@ -100,22 +100,41 @@ public class VisualEditorFrame extends JFrame {
 
     private void insertRow() {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        Object[] rowData = new Object[model.getColumnCount()];
-        for (int i = 0; i < rowData.length; i++) {
-            rowData[i] = JOptionPane.showInputDialog("Enter value for " + model.getColumnName(i));
+        int columnCount = model.getColumnCount();
+        Object[] rowData = new Object[columnCount];
+        String[] columnNames = new String[columnCount];
+
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = model.getColumnName(i);
         }
+
+        for (int i = 0; i < columnCount; i++) {
+            rowData[i] = JOptionPane.showInputDialog("Enter value for " + columnNames[i]);
+        }
+
         model.addRow(rowData);
 
-        StringBuilder command = new StringBuilder("INSERT INTO " + clickedTableName + " VALUES (");
-        for (int i = 0; i < rowData.length; i++) {
-            command.append("'").append(rowData[i]).append("'");
-            if (i < rowData.length - 1) {
+        StringBuilder command = new StringBuilder("INSERT INTO " + clickedTableName + " (");
+
+        for (int i = 0; i < columnCount; i++) {
+            command.append(columnNames[i]);
+            if (i < columnCount - 1) {
                 command.append(", ");
             }
         }
-        command.append(")");
+        command.append(") VALUES (");
+
+        for (int i = 0; i < columnCount; i++) {
+            command.append(rowData[i]);
+            if (i < columnCount - 1) {
+                command.append(",");
+            }
+        }
+        command.append(");");
+        client.sendMessage("USE " + currentDatabase + ";");
         client.sendMessage(command.toString());
     }
+
 
     private String[] getAttributeNamesFromJSON(String databaseName, String tableName) {
         try {

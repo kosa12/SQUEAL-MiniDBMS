@@ -24,7 +24,6 @@ public class Server_GUI extends JFrame {
         start.setPreferredSize(new Dimension(460,50));
         start.setBackground(new Color(239, 240, 243));
 
-
         stop = new JButton("STOP SERVER");
         stop.setPreferredSize(new Dimension(460,50));
         stop.setBackground(new Color(239, 240, 243));

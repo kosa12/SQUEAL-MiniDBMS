@@ -197,6 +197,8 @@ public class Client_GUI extends JFrame {
 
         output.setEditable(false);
 
+        client.setOutputTextArea(output);
+
         JScrollPane oScrollPane = new JScrollPane(output);
         oScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         oScrollPane.setPreferredSize(new Dimension(1350,400));
