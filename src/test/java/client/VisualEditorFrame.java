@@ -112,6 +112,7 @@ public class VisualEditorFrame extends JFrame {
             rowData[i] = JOptionPane.showInputDialog("Enter value for " + columnNames[i]);
         }
 
+
         model.addRow(rowData);
 
         StringBuilder command = new StringBuilder("INSERT INTO " + clickedTableName + " (");

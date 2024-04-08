@@ -74,7 +74,7 @@ public class Client {
     }
 
     public void setOutputTextArea(JTextArea outputTextArea) {
-        this.outputTextArea = outputTextArea;
+        Client.outputTextArea = outputTextArea;
     }
 
     public static void main(String[] args) {

@@ -40,6 +40,10 @@ public class Table {
         return false;
     }
 
+    public boolean removePrimaryKeyValue(Object primaryKeyValue) {
+        return pkList.remove(primaryKeyValue.toString());
+    }
+
     public void addPKtoList(String pkname){
         pkList.add(pkname);
     }
