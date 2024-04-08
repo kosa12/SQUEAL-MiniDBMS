@@ -221,7 +221,7 @@ public class Server extends Thread {
                             if (objectType.equals("database") || objectType.equals("db")) {
                                 handleDatabaseOperation(operation, objectName);
                             } else if (objectType.equals("table") || objectType.equals("index")) {
-                                handleTableOperation(operation, command);
+                                handleTableOperation(operation, command, out);
                             } else {
                                 out.println("Invalid object type: " + objectType);
                             }
@@ -282,7 +282,7 @@ public class Server extends Thread {
         }
     }
 
-    private static void handleTableOperation(String operation, String command) {
+    private static void handleTableOperation(String operation, String command, PrintWriter out) {
         if (currentDatabase == null) {
             System.out.println("No database selected.");
             return;
@@ -292,7 +292,7 @@ public class Server extends Thread {
             if (command.toLowerCase().contains("index")) {
                 createIndex(command);
             } else {
-                createTable(command);
+                createTable(command, out);
             }
         } else if (operation.equalsIgnoreCase("drop")) {
             dropTable(command);}
