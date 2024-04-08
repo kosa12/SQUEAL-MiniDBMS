@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="hatterkod a gomboknak kell">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="j4fun">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/client/VisualEditorFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/VisualEditorFrame.java" afterDir="false" />
     </list>
@@ -146,7 +146,7 @@
       <workItem from="1712185351461" duration="7000" />
       <workItem from="1712472847920" duration="9505000" />
       <workItem from="1712525104055" duration="3537000" />
-      <workItem from="1712603542435" duration="1606000" />
+      <workItem from="1712603542435" duration="6127000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -300,7 +300,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712528909237</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="j4fun">
+      <option name="closed" value="true" />
+      <created>1712605163420</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1712605163420</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -331,7 +339,8 @@
     <MESSAGE value="tudjamelyiktablaranyitodmeg,kezdetlegestablazat" />
     <MESSAGE value="desgign+hatter a gomboknak kell" />
     <MESSAGE value="hatterkod a gomboknak kell" />
-    <option name="LAST_COMMIT_MESSAGE" value="hatterkod a gomboknak kell" />
+    <MESSAGE value="j4fun" />
+    <option name="LAST_COMMIT_MESSAGE" value="j4fun" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
