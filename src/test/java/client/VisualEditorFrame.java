@@ -1,32 +1,26 @@
 package client;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import server.MongoDBHandler;
+
 public class VisualEditorFrame extends JFrame {
-    private JPanel panel,bpanel;
+    private JPanel panel, bpanel;
     private JFrame insertFrame;
     private JTable table;
     private String clickedTableName;
     private String currentDatabase;
-    private JButton delSelRow,insertNewRow,go;
+    private JButton delSelRow, insertNewRow, go;
 
     public VisualEditorFrame(String tableName, String databaseName) {
         this.clickedTableName = tableName;
@@ -34,27 +28,20 @@ public class VisualEditorFrame extends JFrame {
 
         panel = new JPanel();
         panel.setBackground(new Color(100, 0, 0));
-        //this.setLocationRelativeTo(null);
 
         delSelRow = new JButton("Delete Selected Row");
         insertNewRow = new JButton("Insert Row");
 
         table = new JTable();
-
         DefaultTableModel model = new DefaultTableModel();
         table.setModel(model);
 
-        // valahogy bekell tenni a tabla oszlopait + sorait ( tippre egy for )
-        // Spoiler: sok for volt XDDDDDDD
-
         String[] attributeNames = getAttributeNamesFromJSON(databaseName, tableName);
-        //panel.setPreferredSize(new Dimension(attributeNames.length * 100, 300));
 
         if (attributeNames != null && attributeNames.length > 0) {
             for (String attributeName : attributeNames) {
                 model.addColumn(attributeName);
             }
-
 
             List<String[]> rows = fetchRowsFromMongoDB(databaseName, tableName, attributeNames);
             if (rows != null && !rows.isEmpty()) {
@@ -62,65 +49,113 @@ public class VisualEditorFrame extends JFrame {
                     model.addRow(rowData);
                 }
             }
-
         }
-
 
         JScrollPane tscp = new JScrollPane(table);
         tscp.setPreferredSize(new Dimension(attributeNames.length * 200, 300));
 
         panel.add(tscp);
-        panel.setBounds(50,0,attributeNames.length * 200, 300);
+        panel.setBounds(50, 0, attributeNames.length * 200, 300);
 
         bpanel = new JPanel();
-
         bpanel.setLayout(new FlowLayout());
 
-        insertNewRow.setPreferredSize(new Dimension(300,50));
-        delSelRow.setPreferredSize(new Dimension(300,50));
+        insertNewRow.setPreferredSize(new Dimension(300, 50));
+        delSelRow.setPreferredSize(new Dimension(300, 50));
 
-        //kivalasztott sor torlese
-        delSelRow.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        delSelRow.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                DefaultTableModel model_new = (DefaultTableModel) table.getModel();
+                String primaryKeyValue = (String) model_new.getValueAt(row, 0);
 
+                model_new.removeRow(row);
+
+                MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                try {
+                    mongoDBHandler.deleteDocumentByPK(currentDatabase, clickedTableName, primaryKeyValue);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error deleting row from MongoDB.");
+                } finally {
+                    mongoDBHandler.close();
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Please select a row to delete.");
             }
         });
 
-        // uj sor beszurasa
-        insertNewRow.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                insertFrame = new JFrame();
 
-                JPanel insertPanel = new JPanel();
+        insertNewRow.addActionListener(e -> {
+            insertFrame = new JFrame();
+            JPanel insertPanel = new JPanel();
+            DefaultTableModel newModel = (DefaultTableModel) table.getModel();
+            JButton confirmButton = new JButton("Confirm");
+            confirmButton.addActionListener(actionEvent -> {
 
-                go = new JButton("GO");
+                String[] columnNames = new String[newModel.getColumnCount()];
+                for (int i = 0; i < newModel.getColumnCount(); i++) {
+                    columnNames[i] = newModel.getColumnName(i);
+                }
 
-                go.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
+                Object primaryKeyValue = JOptionPane.showInputDialog("Enter value for primary key (_id)");
 
+                StringBuilder concatenatedValue = new StringBuilder();
+                for (int i = 1; i < newModel.getColumnCount(); i++) {
+                    String columnName = newModel.getColumnName(i);
+                    String columnValue = JOptionPane.showInputDialog("Enter value for " + columnName);
+                    concatenatedValue.append(columnValue);
+                    if (i < newModel.getColumnCount() - 1) {
+                        concatenatedValue.append(";");
                     }
-                });
+                }
 
-                insertPanel.add(go);
+                Document document = new Document();
+                document.append("_id", primaryKeyValue);
+                document.append("ertek", concatenatedValue.toString());
 
-                insertFrame.add(insertPanel);
-                insertFrame.setPreferredSize(new Dimension(300,attributeNames.length * 50));
-                insertFrame.setLocationRelativeTo(null);
-                insertFrame.pack();
-                insertFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-                insertFrame.setVisible(true);
-            }
+                String[] splitValues = concatenatedValue.toString().split(";");
+                Object[] rowData = new Object[newModel.getColumnCount()];
+                rowData[0] = primaryKeyValue;
+                for (int i = 1; i < newModel.getColumnCount(); i++) {
+                    rowData[i] = splitValues[i - 1];
+                }
+                newModel.addRow(rowData);
+
+                MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                try {
+                    mongoDBHandler.insertDocument(currentDatabase, clickedTableName, document);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error inserting row into MongoDB.");
+                } finally {
+                    mongoDBHandler.close();
+                }
+
+                insertFrame.dispose();
+            });
+
+            insertPanel.add(confirmButton);
+
+            insertFrame.add(insertPanel);
+            insertFrame.setPreferredSize(new Dimension(300, newModel.getColumnCount() * 50));
+            insertFrame.setLocationRelativeTo(null);
+            insertFrame.pack();
+            insertFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            insertFrame.setVisible(true);
         });
+
+
+
+
+
 
 
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
 
         bpanel.setBackground(new Color(100, 0, 0));
-        bpanel.setBounds((attributeNames.length * 200)/4,300,620,60);
+        bpanel.setBounds((attributeNames.length * 200) / 4, 300, 620, 60);
 
         this.setLayout(null);
         this.add(panel);
@@ -171,56 +206,18 @@ public class VisualEditorFrame extends JFrame {
         return null;
     }
 
-
     private List<String[]> fetchRowsFromMongoDB(String databaseName, String tableName, String[] attributeNames) {
         List<String[]> rows = new ArrayList<>();
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
 
         try {
-            MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
-            MongoDatabase database = mongoClient.getDatabase(databaseName);
-            MongoCollection<Document> collection = database.getCollection(tableName);
-
-            for (Document document : collection.find()) {
-                String[] rowData = new String[attributeNames.length];
-
-                Object idObj = document.get("_id");
-                if (idObj != null) {
-                    rowData[0] = idObj.toString();
-                } else {
-                    System.err.println("Primary key (_id) not found in the document.");
-                    continue;
-                }
-
-                String ertek = document.getString("ertek");
-                if (ertek != null && !ertek.isEmpty()) {
-                    String[] attributeValues = ertek.split(";");
-                    if (attributeValues.length == attributeNames.length - 1) {
-                        for (int i = 0; i < attributeNames.length - 1; i++) {
-                            rowData[i + 1] = attributeValues[i];
-                        }
-                    } else {
-
-                        System.err.println("Number of attribute values does not match the number of attribute names.");
-                        continue;
-                    }
-                } else {
-                    System.err.println("The 'érték' field is empty or null.");
-                    continue;
-                }
-                rows.add(rowData);
-            }
-
-            mongoClient.close();
+            rows = mongoDBHandler.fetchRows(databaseName, tableName, attributeNames);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            mongoDBHandler.close();
         }
-
         return rows;
     }
-
-
-
-
-
 
 }

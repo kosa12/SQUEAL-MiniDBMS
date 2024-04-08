@@ -35,7 +35,6 @@ public class Client {
                 }
             } else {
                 System.err.println("Not connected to the server.");
-
             }
         });
 

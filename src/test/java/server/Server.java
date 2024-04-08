@@ -12,6 +12,7 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -20,6 +21,8 @@ import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
 
+import java.util.UUID;
+
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
@@ -27,6 +30,20 @@ public class Server extends Thread {
     private final boolean isRunning = true;
     private static MongoClient mongoClient;
 
+    private String authToken;
+
+
+    public Server() {
+        this.authToken = generateToken();
+    }
+
+    private String generateToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    boolean validateToken(String token) {
+        return token.equals(authToken);
+    }
     @Override
     public void run() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
@@ -167,12 +184,30 @@ public class Server extends Thread {
     private static void handleClient(Socket clientSocket) {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)
         ) {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.trim().endsWith(";")) {
+
+                    MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                    if (line.startsWith("FETCH")) {
+                        String[] parts = line.split("\\s+");
+                        if (parts.length >= 4) {
+                            String databaseName = parts[1];
+                            String tableName = parts[2];
+                            String[] attributeNames = parts[3].split(",");
+
+                            List<String[]> rows = mongoDBHandler.fetchRows(databaseName, tableName, attributeNames);
+                            if (rows != null) {
+                                for (String[] row : rows) {
+                                    out.println(String.join(",", row));
+                                }
+                            }
+                        }
+                    }
+
                     commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                     String command = commandBuilder.toString().trim();
                     if (command.trim().isEmpty()) {
