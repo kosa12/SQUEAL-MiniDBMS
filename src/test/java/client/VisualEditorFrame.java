@@ -28,7 +28,7 @@ public class VisualEditorFrame extends JFrame {
         this.client = client;
 
         panel = new JPanel();
-        panel.setBackground(new Color(100, 0, 0));
+        panel.setBackground(new Color(75, 104, 178));
 
         delSelRow = new JButton("Delete Selected Row");
         insertNewRow = new JButton("Insert Row");
@@ -53,16 +53,16 @@ public class VisualEditorFrame extends JFrame {
         }
 
         JScrollPane tscp = new JScrollPane(table);
-        tscp.setPreferredSize(new Dimension(attributeNames.length * 200, 300));
+        tscp.setPreferredSize(new Dimension(attributeNames.length * 200, 450));
 
         panel.add(tscp);
-        panel.setBounds(50, 0, attributeNames.length * 200, 300);
+        panel.setBounds(180, 0, attributeNames.length * 200, 470);
 
         bpanel = new JPanel();
         bpanel.setLayout(new FlowLayout());
 
-        insertNewRow.setPreferredSize(new Dimension(300, 50));
-        delSelRow.setPreferredSize(new Dimension(300, 50));
+        insertNewRow.setPreferredSize(new Dimension(160, 100));
+        delSelRow.setPreferredSize(new Dimension(160, 100));
 
         delSelRow.addActionListener(e -> deleteSelectedRow());
         insertNewRow.addActionListener(e -> insertRow());
@@ -70,8 +70,8 @@ public class VisualEditorFrame extends JFrame {
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
 
-        bpanel.setBackground(new Color(100, 0, 0));
-        bpanel.setBounds((attributeNames.length * 200) / 4, 300, 620, 60);
+        bpanel.setBackground(new Color(75, 104, 178));
+        bpanel.setBounds(0, 0, 180, 500);
 
         this.setLayout(null);
         this.add(panel);
@@ -80,6 +80,7 @@ public class VisualEditorFrame extends JFrame {
         this.setPreferredSize(new Dimension(attributeNames.length * 200 + 500, 500));
         this.pack();
         this.setVisible(true);
+        this.setResizable(false);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
