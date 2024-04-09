@@ -21,6 +21,8 @@ public class VisualEditorFrame extends JFrame {
     private JButton delSelRow, insertNewRow;
     private Client client;
 
+    private JButton exit;
+
     public VisualEditorFrame(String tableName, String databaseName, Client client) {
         this.clickedTableName = tableName;
         this.currentDatabase = databaseName;
@@ -31,6 +33,18 @@ public class VisualEditorFrame extends JFrame {
 
         delSelRow = new JButton("Delete Selected Row");
         insertNewRow = new JButton("Insert Row");
+
+        ImageIcon exiticon = new ImageIcon("src/main/resources/exitXD.png");
+
+        Image ximage = exiticon.getImage();
+        Image xnewimg = ximage.getScaledInstance(50, 50,  java.awt.Image.SCALE_SMOOTH);
+        exiticon = new ImageIcon(xnewimg);
+
+        exit = new JButton(exiticon);
+        exit.setBorderPainted(false);
+        exit.setBackground(new Color(75, 104, 178));
+        exit.setFocusPainted(false);
+        exit.setFocusable(false);
 
         table = new JTable();
         DefaultTableModel model = new DefaultTableModel();
@@ -62,12 +76,16 @@ public class VisualEditorFrame extends JFrame {
 
         insertNewRow.setPreferredSize(new Dimension(160, 100));
         delSelRow.setPreferredSize(new Dimension(160, 100));
+        exit.setPreferredSize(new Dimension(160, 100));
 
         delSelRow.addActionListener(e -> deleteSelectedRow());
         insertNewRow.addActionListener(e -> insertRow());
+        exit.addActionListener(e -> exitNOW());
 
+        bpanel.add(exit);
         bpanel.add(insertNewRow);
         bpanel.add(delSelRow);
+
 
         bpanel.setBackground(new Color(75, 104, 178));
         bpanel.setBounds(0, 0, 180, 500);
@@ -81,6 +99,10 @@ public class VisualEditorFrame extends JFrame {
         this.setVisible(true);
         this.setResizable(false);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    }
+
+    private void exitNOW() {
+        this.dispose();
     }
 
     private void deleteSelectedRow() {
