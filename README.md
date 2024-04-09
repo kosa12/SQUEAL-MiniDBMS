@@ -4,6 +4,9 @@ The Database Management System (DBMS) project is a Java-based application that p
 
 
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
+
+The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables. 
 ## Key Features
 
 1. **Database Operations:**
@@ -40,6 +43,7 @@ The Database Management System (DBMS) project is a Java-based application that p
 - **Network Connectivity:** Internet access is required to connect to remote MongoDB servers. Ensure firewall settings allow communication over the specified port (27017).
   
 ## Technologies Used
+[![ForTheBadge built-with-swag](http://ForTheBadge.com/images/badges/built-with-swag.svg)](https://GitHub.com/Naereen/)
 
 1. **Java:** The core programming language used for developing the application logic and server-side functionality.
 2. **MongoDB:** A NoSQL database used for storing and managing the structured data.
