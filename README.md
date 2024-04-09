@@ -35,6 +35,9 @@ The Database Management System (DBMS) project is a Java-based application that p
 6. **Manual Input:** Alternatively, users can input specific commands to perform CRUD operations directly.
 7. **Interact with GUI:** Explore the various features of the GUI, including data visualization, query execution, and database management.
 
+## System Requirements
+- **Java Version:** Java Development Kit (JDK) 8 or later.
+- **Network Connectivity:** Internet access is required to connect to remote MongoDB servers. Ensure firewall settings allow communication over the specified port (27017).
   
 ## Technologies Used
 
