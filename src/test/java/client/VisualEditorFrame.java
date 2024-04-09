@@ -94,7 +94,7 @@ public class VisualEditorFrame extends JFrame {
         this.add(panel);
         this.add(bpanel);
 
-        this.setPreferredSize(new Dimension(attributeNames.length * 200 + 500, 500));
+        this.setPreferredSize(new Dimension(attributeNames.length * 200 + 200, 500));
         this.pack();
         this.setVisible(true);
         this.setResizable(false);
