@@ -3,6 +3,7 @@
 The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables in MongoDB. It allows users to view, insert, update, and delete data in MongoDB collections using a user-friendly interface.
 
 
+![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ## Key Features
 
 1. **Database Operations:**
@@ -42,6 +43,10 @@ The Database Management System (DBMS) project is a Java-based application that p
 3. **JSON:** Used for data interchange between the Java application and the MongoDB database.
 4. **Socket Programming:** Implemented for client-server communication, allowing multiple clients to interact with the server concurrently.
 5. **Swing:** Java's GUI toolkit utilized for building the graphical user interface, providing components such as buttons, text fields, and tables.
+
+## Analytics
+![GitHub repo size](https://img.shields.io/github/repo-size/kosa12/MiniDBMS?style=plastic)
+![GitHub last commit](https://img.shields.io/github/last-commit/kosa12/MiniDBMS?=red&style=plastic)
 
 ## Contributors
 - [Dacz Krisztian](https://github.com/dKriszti15) - FrontEnd
