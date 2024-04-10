@@ -1,4 +1,4 @@
-# Database Management System (DBMS)
+# Database Management System (DBMS) 📂
 
 The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables in MongoDB. It allows users to view, insert, update, and delete data in MongoDB collections using a user-friendly interface.
 
@@ -7,7 +7,8 @@ The Database Management System (DBMS) project is a Java-based application that p
 ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
 
 The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables. 
-## Key Features
+
+## Key Features 🔑
 
 1. **Database Operations:**
    - **Create Database:** Users can create new databases.
@@ -26,7 +27,7 @@ The Database Management System (DBMS) project is a Java-based application that p
     - **Insert Data:** Data can be inserted with a visual editor into the MongoDB collection.
     - **Delete Data:** The user can delete the data from the MongoDB via selecting the row.
   
-## How to Use
+## How to Use 💡
 
 1. **Installation:** Clone the repository to your local machine.
    ```bash
@@ -38,11 +39,11 @@ The Database Management System (DBMS) project is a Java-based application that p
 6. **Manual Input:** Alternatively, users can input specific commands to perform CRUD operations directly.
 7. **Interact with GUI:** Explore the various features of the GUI, including data visualization, query execution, and database management.
 
-## System Requirements
+## System Requirements 🛠️
 - **Java Version:** Java Development Kit (JDK) 8 or later.
 - **Network Connectivity:** Internet access is required to connect to remote MongoDB servers. Ensure firewall settings allow communication over the specified port (27017).
   
-## Technologies Used
+## Technologies Used ⚛
 [![ForTheBadge built-with-swag](http://ForTheBadge.com/images/badges/built-with-swag.svg)](https://GitHub.com/Naereen/)
 
 1. **Java:** The core programming language used for developing the application logic and server-side functionality.
@@ -51,14 +52,14 @@ The Database Management System (DBMS) project is a Java-based application that p
 4. **Socket Programming:** Implemented for client-server communication, allowing multiple clients to interact with the server concurrently.
 5. **Swing:** Java's GUI toolkit utilized for building the graphical user interface, providing components such as buttons, text fields, and tables.
 
-## Analytics
+## Analytics 📊
 ![GitHub repo size](https://img.shields.io/github/repo-size/kosa12/MiniDBMS?style=plastic)
 ![GitHub last commit](https://img.shields.io/github/last-commit/kosa12/MiniDBMS?=red&style=plastic)
 
-## Contributors
+## Contributors 🤝
 - [Dacz Krisztian](https://github.com/dKriszti15) - FrontEnd
 - [Kosa Matyas](https://github.com/kosa12) - BackEnd
 
-## License
+## License 🎫
 
 This project is licensed under the MIT License
