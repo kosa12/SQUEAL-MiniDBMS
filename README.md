@@ -1,4 +1,4 @@
-# Database Management System (DBMS) 📂
+# SQUEL Database Management System (DBMS) 📂
 
 The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables in MongoDB. It allows users to view, insert, update, and delete data in MongoDB collections using a user-friendly interface.
 
