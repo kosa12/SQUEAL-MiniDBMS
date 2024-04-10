@@ -54,6 +54,8 @@ The Database Management System (DBMS) project is a Java-based application that p
 ![GitHub repo size](https://img.shields.io/github/repo-size/kosa12/MiniDBMS?style=for-the-badge)
 ![GitHub last commit](https://img.shields.io/github/last-commit/kosa12/MiniDBMS?=red&style=for-the-badge)
 ![GitHub top language](https://img.shields.io/github/languages/top/kosa12/SQUEL-MiniDBMS?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/kosa12/SQUEL-MiniDBMS?style=for-the-badge)
+
 
 
 ## Contributors 🤝
