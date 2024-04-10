@@ -6,8 +6,6 @@ The Database Management System (DBMS) project is a Java-based application that p
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
 
-The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables. 
-
 ## Key Features 🔑
 
 1. **Database Operations:**
