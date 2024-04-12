@@ -27,7 +27,6 @@ public class MongoDBHandler {
 
     }
 
-
     public long deleteDocumentByPK(String databaseName, String collectionName, String primaryKeyValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
