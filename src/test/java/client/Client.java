@@ -10,11 +10,6 @@ import javax.swing.*;
 public class Client {
     private Socket socket;
     private static JTextArea outputTextArea;
-
-    public BufferedReader getServerInput() {
-        return serverInput;
-    }
-
     private BufferedReader serverInput;
     private volatile boolean running;
 

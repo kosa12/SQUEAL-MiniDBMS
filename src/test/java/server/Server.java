@@ -99,10 +99,6 @@ public class Server extends Thread {
             }
 
             for (File databaseFile : databaseFiles) {
-                if (databaseFile.length() == 0) {
-                    databaseFile.delete();
-                    continue;
-                }
 
                 reader = new FileReader(databaseFile);
 
@@ -173,6 +169,9 @@ public class Server extends Thread {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
+
+
+
                 if (line.trim().endsWith(";")) {
                     MongoDBHandler mongoDBHandler = new MongoDBHandler();
                     if (line.startsWith("FETCH")) {
@@ -191,11 +190,14 @@ public class Server extends Thread {
                         }
                     }
 
+                    out.println(line);
                     commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                     String command = commandBuilder.toString().trim();
                     if (command.trim().isEmpty()) {
                         return;
                     }
+
+
 
                     String[] parts = command.trim().split("\\s+");
                     if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
@@ -869,7 +871,6 @@ public class Server extends Thread {
             }
         }
     }
-
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
