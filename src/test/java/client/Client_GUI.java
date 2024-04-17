@@ -32,7 +32,7 @@ public class Client_GUI extends JFrame {
         this.setLayout(new BorderLayout());
 
         if(System.getProperty("os.name").equals("Linux")){
-            this.setPreferredSize(new Dimension(1600, 800));
+            this.setPreferredSize(new Dimension(1600, 850));
         } else {
             this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
