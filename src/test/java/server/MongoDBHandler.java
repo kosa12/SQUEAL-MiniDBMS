@@ -1,7 +1,12 @@
 package server;
 
 import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +29,36 @@ public class MongoDBHandler {
         }
 
         collection.insertOne(document);
+    }
 
+    public void insertDocument(String databaseName, String collectionName, JSONObject jsonObject) {
+        Document document = Document.parse(jsonObject.toString());
+        insertDocument(databaseName, collectionName, document);
+    }
+
+    public Document getDocumentByIndex(String databaseName, String collectionName, String indexKey, String indexValue) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        Bson filter = Filters.eq(indexKey, indexValue);
+
+        Document document = collection.find(filter).first();
+
+        return document;
     }
 
 
+
+    public void updateDocument(String databaseName, String collectionName, String primaryKey, String primaryKeyValue, String fieldToUpdate, String newValue) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        Bson filter = Filters.eq(primaryKey, primaryKeyValue);
+
+        Bson updateOperation = Updates.set(fieldToUpdate, newValue);
+
+        collection.updateOne(filter, updateOperation);
+    }
     public long deleteDocumentByPK(String databaseName, String collectionName, String primaryKeyValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
@@ -71,6 +102,23 @@ public class MongoDBHandler {
         }
 
         return rows;
+    }
+
+    public List<Document> fetchDocuments(String databaseName, String collectionName) {
+        List<Document> documents = new ArrayList<>();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        MongoCursor<Document> cursor = collection.find().iterator();
+        try {
+            while (cursor.hasNext()) {
+                documents.add(cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
+
+        return documents;
     }
 
     public void close() {

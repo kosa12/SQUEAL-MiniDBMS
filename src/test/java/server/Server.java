@@ -65,20 +65,23 @@ public class Server extends Thread {
         for (String collectionName : mongoDatabase.listCollectionNames()) {
             MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
             Table table = databases.getOrDefault(databaseName, new Database(databaseName)).getTable(collectionName);
-            if (table == null) {
+            if (table == null && !collectionName.contains("index")) {
                 System.out.println("Table not found in database: " + collectionName);
                 continue;
             }
-            FindIterable<Document> documents = collection.find();
-            for (Document document : documents) {
-                Object idValue = document.get("_id");
-                if (idValue != null) {
-                    String primaryKeyAttribute = idValue.toString();
-                    table.addPKtoList(primaryKeyAttribute);
-                } else {
-                    System.out.println("No value found for _id field in document.");
+            if(!collectionName.contains("index")){
+                FindIterable<Document> documents = collection.find();
+                for (Document document : documents) {
+                    Object idValue = document.get("_id");
+                    if (idValue != null) {
+                        String primaryKeyAttribute = idValue.toString();
+                        table.addPKtoList(primaryKeyAttribute);
+                    } else {
+                        System.out.println("No value found for _id field in document.");
+                    }
                 }
             }
+
         }
     }
 
@@ -99,10 +102,6 @@ public class Server extends Thread {
             }
 
             for (File databaseFile : databaseFiles) {
-                if (databaseFile.length() == 0) {
-                    databaseFile.delete();
-                    continue;
-                }
 
                 reader = new FileReader(databaseFile);
 
@@ -191,11 +190,14 @@ public class Server extends Thread {
                         }
                     }
 
+                    out.println(line);
                     commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                     String command = commandBuilder.toString().trim();
                     if (command.trim().isEmpty()) {
                         return;
                     }
+
+
 
                     String[] parts = command.trim().split("\\s+");
                     if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
@@ -692,43 +694,107 @@ public class Server extends Thread {
 
         String indexName = parts[2];
         String tableName = parts[4];
-        String[] columns = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).split(",");
 
-        for (int i = 0; i < columns.length; i++) {
-            columns[i] = columns[i].trim();
-        }
+        String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim(); // Columns between parentheses
+        String column = columnsStr.split(",")[0].trim();
 
-        Database currentDB = databases.get(currentDatabase);
-        if (currentDB == null || !currentDB.hasTable(tableName)) {
-            System.out.println("Table not found: " + tableName);
-            return;
-        }
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+        try {
+            List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
 
-        Table table = currentDB.getTable(tableName);
-
-        for (String column : columns) {
-            if (!table.hasAttribute(column)) {
-                System.out.println("Column not found in table " + tableName + ": " + column);
+            if (records.isEmpty()) {
+                System.out.println("No records found in MongoDB for table " + tableName);
                 return;
             }
-        }
 
-        JSONObject indexObj = new JSONObject();
-        indexObj.put("index_name", indexName);
-        indexObj.put("table_name", tableName);
-        JSONArray columnsArray = new JSONArray();
-        columnsArray.addAll(Arrays.asList(columns));
+            JSONObject tableFormat = readTableFormat(currentDatabase, tableName);
+            if (tableFormat == null) {
+                System.out.println("Table format not found for table " + tableName);
+                return;
+            }
 
-        indexObj.put("columns", columnsArray);
+            int indexKey = getIndexKey(tableFormat, column);
+            if (indexKey == -1) {
+                System.out.println("Column not found in table format for table " + tableName + ": " + column);
+                return;
+            }
 
-        String fileName = currentDatabase + "-" + tableName + "-" + indexName + "-index.json";
-        try (FileWriter fileWriter = new FileWriter("src/test/java/databases/" + fileName)) {
-            fileWriter.write(indexObj.toJSONString());
-            System.out.println("Index created: " + indexName + " on table " + tableName);
-        } catch (IOException e) {
-            System.out.println("Failed to create index file: " + e.getMessage());
+            for (Document record : records) {
+                String primaryKeyValue = record.getString("_id");
+                String indexKeyValue = record.getString("ertek");
+                String[] values = indexKeyValue.split(";");
+                String indexedValue = values[indexKey - 1];
+
+                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-index", "_id", indexedValue);
+
+                if (existingDocument != null) {
+                    String existingPrimaryKey = existingDocument.getString("ertek");
+                    existingPrimaryKey += ";" + primaryKeyValue;
+                    existingDocument.put("ertek", existingPrimaryKey);
+                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-index", "_id", indexedValue, "ertek", existingPrimaryKey);
+                } else {
+                    Document document = new Document();
+                    document.append("_id", indexedValue);
+                    document.append("ertek", primaryKeyValue);
+                    mongoDBHandler.insertDocument(currentDatabase, indexName + "-index", document);
+                }
+            }
+
+            System.out.println("Index created: " + indexName + " on column " + column + " in table " + tableName);
+        } catch (Exception ex) {
+            System.out.println("Failed to create index in MongoDB: " + ex.getMessage());
+        } finally {
+            mongoDBHandler.close();
         }
     }
+
+
+
+
+    public static JSONObject readTableFormat(String databaseName, String tableName) {
+        JSONParser parser = new JSONParser();
+        try {
+            String filePath = "src/test/java/databases/" + databaseName + ".json";
+            FileReader reader = new FileReader(filePath);
+            Object obj = parser.parse(reader);
+
+            JSONArray databaseArray = (JSONArray) obj;
+
+            for (Object databaseObj : databaseArray) {
+                JSONObject database = (JSONObject) databaseObj;
+                String dbName = (String) database.get("database_name");
+                if (dbName.equals(databaseName)) {
+                    JSONArray tables = (JSONArray) database.get("tables");
+                    for (Object tableObj : tables) {
+                        JSONObject table = (JSONObject) tableObj;
+                        String tableNameInJson = (String) table.get("table_name");
+                        if (tableNameInJson.equals(tableName)) {
+                            return table;
+                        }
+                    }
+                }
+            }
+            return null; // Table format not found
+        } catch (IOException | ParseException e) {
+            System.out.println("Error reading table format JSON file: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static int getIndexKey(JSONObject tableFormat, String column) {
+        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
+        for (int i = 0; i < attributes.size(); i++) {
+            JSONObject attribute = (JSONObject) attributes.get(i);
+            if (attribute.get("name").equals(column)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+
+
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
@@ -869,7 +935,6 @@ public class Server extends Thread {
             }
         }
     }
-
 
     private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
         try (FileWriter writer = new FileWriter(databaseFile)) {
