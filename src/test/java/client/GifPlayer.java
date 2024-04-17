@@ -9,17 +9,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public class GifPlayer extends JFrame{
+public class GifPlayer extends JFrame {
     private JPanel panel;
-    private JLabel giflabel;
+    private JLabel gifLabel;
 
     public GifPlayer(){
         panel = new JPanel();
         this.add(panel);
 
         ImageIcon gif = new ImageIcon("src/main/resources/introgif.gif");
-        giflabel = new JLabel(gif);
-        panel.add(giflabel);
+        gifLabel = new JLabel(gif);
+
+        panel.add(gifLabel);
 
         Timer timer = new Timer(2000, new ActionListener() {
             @Override
@@ -39,7 +40,6 @@ public class GifPlayer extends JFrame{
         this.setResizable(false);
 
         this.setLocationRelativeTo(null);
-
         this.setVisible(true);
     }
 
