@@ -1,0 +1,65 @@
+[
+  {
+    "tables": [
+      {
+        "attributes": [
+          {
+            "not_null": false,
+            "name": "ID",
+            "type": "INT",
+            "is_pk": true
+          },
+          {
+            "not_null": false,
+            "name": "KG",
+            "type": "INT",
+            "is_pk": false
+          }
+        ],
+        "table_name": "uh"
+      },
+      {
+        "attributes": [
+          {
+            "not_null": false,
+            "name": "KID",
+            "type": "INT",
+            "is_pk": true
+          },
+          {
+            "not_null": false,
+            "name": "KG",
+            "type": "INT",
+            "is_pk": false
+          },
+          {
+            "not_null": false,
+            "name": "Nev",
+            "type": "varchar(50)",
+            "is_pk": false
+          },
+          {
+            "not_null": false,
+            "name": "Savale",
+            "type": "INT",
+            "is_pk": false
+          },
+          {
+            "not_null": false,
+            "name": "uf",
+            "type": "INT",
+            "is_pk": false
+          },
+          {
+            "not_null": false,
+            "name": "siuuu",
+            "type": "INT",
+            "is_pk": false
+          }
+        ],
+        "table_name": "kula"
+      }
+    ],
+    "database_name": "huh2"
+  }
+]

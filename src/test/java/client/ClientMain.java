@@ -24,6 +24,7 @@ public class ClientMain {
 
         Timer timer = new Timer(1700, new ActionListener() {
             @Override
+
             public void actionPerformed(ActionEvent o) {
                 Client_GUI gui = new Client_GUI(client);
 
