@@ -235,4 +235,7 @@ public class Client_GUI extends JFrame {
     }
 
 
+    public JTextArea getOutputTextArea() {
+        return output;
+    }
 }
