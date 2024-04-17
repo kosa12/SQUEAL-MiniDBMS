@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.PrintStream;
 
 public class Client_GUI extends JFrame {
     private final JPanel jPanel;
@@ -27,7 +26,11 @@ public class Client_GUI extends JFrame {
 
         this.setLayout(new BorderLayout());
 
-        this.setPreferredSize(new Dimension(1600, 800));
+        if(System.getProperty("os.name").equals("Linux")){
+            this.setPreferredSize(new Dimension(1600, 800));
+        } else {
+            this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
 
         int padding = 15;
         Insets insets = new Insets(padding,padding,padding,padding);
@@ -41,7 +44,10 @@ public class Client_GUI extends JFrame {
         exit = new JMenuItem("   EXIT",exiticon);
         exit.setPreferredSize(new Dimension(60,40));
         exit.setBackground(new Color(75, 104, 178));
-        //exit.setBorder(new EmptyBorder(insets));
+
+
+
+
 
         exit.addMouseListener(new MouseAdapter() {
             @Override
