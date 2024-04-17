@@ -5,9 +5,15 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -16,8 +22,10 @@ import org.json.simple.parser.ParseException;
 public class FileExplorer extends JPanel {
     private final JTree tree;
     private final OurNode root;
+    private JButton odi;
 
-    String currentDatabase;
+    private JButton matyasButton,krisztiButton;
+    private String currentDatabase;
 
     private Client client;
 
@@ -45,11 +53,34 @@ public class FileExplorer extends JPanel {
 
         JScrollPane scrollPane = new JScrollPane(tree);
 
-        scrollPane.setPreferredSize(new Dimension(175,700));
+        scrollPane.setPreferredSize(new Dimension(175,640));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         this.add(scrollPane);
+        matyasButton = new JButton("Kósa Mátyás" );
+        matyasButton.setPreferredSize(new Dimension(200,35));
+        matyasButton.setBackground(new Color(239, 240, 243));
+        matyasButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openWebpage(URI.create("https://github.com/kosa12"));
+            }
+        });
 
+
+        krisztiButton = new JButton("Dácz Krisztián");
+        krisztiButton.setPreferredSize(new Dimension(200,37));
+        krisztiButton.setBackground(new Color(239, 240, 243));
+        krisztiButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openWebpage(URI.create("https://github.com/dKriszti15"));
+            }
+        });
+
+        this.add(matyasButton);
+
+        this.add(krisztiButton);
         setVisible(true);
     }
 
@@ -119,5 +150,27 @@ public class FileExplorer extends JPanel {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static boolean openWebpage(URI uri) {
+        Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+            try {
+                desktop.browse(uri);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public static boolean openWebpage(URL url) {
+        try {
+            return openWebpage(url.toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
