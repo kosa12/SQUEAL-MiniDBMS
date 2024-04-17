@@ -8,7 +8,7 @@ import java.net.Socket;
 import javax.swing.*;
 
 public class Client {
-    private Socket socket;
+    Socket socket;
     private static JTextArea outputTextArea;
     private BufferedReader serverInput;
     private volatile boolean running;
@@ -17,7 +17,7 @@ public class Client {
         try {
             socket = new Socket(serverAddress, serverPort);
             serverInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            outputTextArea = new JTextArea();
             running = true;
 
             Thread responseListener = new Thread(this::listenForServerResponses);
@@ -73,33 +73,6 @@ public class Client {
     }
 
     public void setOutputTextArea(JTextArea outputTextArea) {
-        Client.outputTextArea = outputTextArea;
-    }
-
-    public static void main(String[] args) {
-        String serverAddress = "localhost";
-        int serverPort = 10000;
-
-        Client client = new Client(serverAddress, serverPort);
-
-        if (client.socket == null) {
-            System.out.println("Failed to connect to the server.");
-            return;
-        }
-
-        Client_GUI gui = new Client_GUI(client);
-
-        JMenuItem executeButton = gui.getExecuteButton();
-        executeButton.addActionListener(e -> {
-            String message = gui.getjTextField();
-            client.sendMessage(message);
-            SwingUtilities.invokeLater(() -> outputTextArea.setText(""));
-        });
-
-        JMenuItem exitButton = gui.getExitButton();
-        exitButton.addActionListener(e -> {
-            client.close();
-            gui.dispose();
-        });
+        this.outputTextArea = outputTextArea;
     }
 }
