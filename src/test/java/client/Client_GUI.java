@@ -5,13 +5,18 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.io.PrintStream;
+
+
 public class Client_GUI extends JFrame {
     private final JPanel jPanel;
     private final JMenuItem execute;
     private final JMenuItem clear;
     private final JMenuItem refresh;
     private final JTextArea querry, output;
-    private JLabel jLabel;
     private final JMenuBar jMenuBar;
 
     private final JMenuItem exit;
@@ -219,6 +224,9 @@ public class Client_GUI extends JFrame {
         this.add(jPanel, BorderLayout.CENTER);
 
         jPanel.setBackground(new Color(75, 104, 178));
+
+        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/dbicon.png");
+        setIconImage(icon);
 
         this.setVisible(true);
         this.pack();
