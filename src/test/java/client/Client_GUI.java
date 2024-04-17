@@ -31,8 +31,8 @@ public class Client_GUI extends JFrame {
 
         this.setLayout(new BorderLayout());
 
-        if(System.getProperty("os.name").equals("Linux")){
-            this.setPreferredSize(new Dimension(1600, 800));
+        if(System.getProperty("os.name").equalsIgnoreCase("linux")){
+            this.setPreferredSize(new Dimension(1600, 850));
         } else {
             this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
@@ -104,7 +104,6 @@ public class Client_GUI extends JFrame {
                 clear.setBackground(new Color(75, 104, 178));
             }
         });
-
 
         ImageIcon ricon = new ImageIcon("src/main/resources/refric.png");
 

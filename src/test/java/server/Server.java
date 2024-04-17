@@ -197,8 +197,6 @@ public class Server extends Thread {
                         return;
                     }
 
-
-
                     String[] parts = command.trim().split("\\s+");
                     if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
                         String objectType = parts[1].toUpperCase();
@@ -698,7 +696,7 @@ public class Server extends Thread {
         String indexName = parts[2];
         String tableName = parts[4];
 
-        String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim(); // Columns between parentheses
+        String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim();
         String column = columnsStr.split(",")[0].trim();
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
