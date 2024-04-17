@@ -31,6 +31,9 @@ public class GifPlayer extends JFrame{
 
         timer.start();
 
+        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/dbicon.png");
+        setIconImage(icon);
+
         this.setUndecorated(true);
         this.setSize(865, 650);
         this.setResizable(false);

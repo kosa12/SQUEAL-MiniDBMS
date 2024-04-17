@@ -61,6 +61,9 @@ public class Server_GUI extends JFrame {
 
         buttonPanel.setBackground(new Color(75, 104, 178));
 
+        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/server.png");
+        setIconImage(icon);
+
         this.setResizable(false);
         setLocationRelativeTo(null);
         setVisible(true);

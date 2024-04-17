@@ -1,5 +1,7 @@
 package client;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -72,11 +74,6 @@ public class Client {
             }
         }
     }
-
-    public void playGIF(String filePath){
-
-    }
-
 
     public void setOutputTextArea(JTextArea outputTextArea) {
         this.outputTextArea = outputTextArea;
