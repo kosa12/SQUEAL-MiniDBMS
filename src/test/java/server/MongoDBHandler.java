@@ -2,11 +2,9 @@ package server;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +17,18 @@ public class MongoDBHandler {
     }
 
     public void insertDocument(String databaseName, String collectionName, Document document) {
+
+        /*
+         	Isten, áldd meg a magyart
+            Jó kedvvel, bőséggel,
+            Nyújts feléje védő kart,
+            Ha küzd ellenséggel;
+            Bal sors akit régen tép,
+            Hozz rá víg esztendőt,
+            Megbünhödte már e nép
+            A multat s jövendőt!
+        */
+
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
@@ -30,35 +40,24 @@ public class MongoDBHandler {
 
         collection.insertOne(document);
     }
-
-    public void insertDocument(String databaseName, String collectionName, JSONObject jsonObject) {
-        Document document = Document.parse(jsonObject.toString());
-        insertDocument(databaseName, collectionName, document);
-    }
-
     public Document getDocumentByIndex(String databaseName, String collectionName, String indexKey, String indexValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
         Bson filter = Filters.eq(indexKey, indexValue);
 
-        Document document = collection.find(filter).first();
-
-        return document;
+        return collection.find(filter).first();
     }
-
-
 
     public void updateDocument(String databaseName, String collectionName, String primaryKey, String primaryKeyValue, String fieldToUpdate, String newValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
-
         Bson filter = Filters.eq(primaryKey, primaryKeyValue);
-
         Bson updateOperation = Updates.set(fieldToUpdate, newValue);
-
         collection.updateOne(filter, updateOperation);
     }
+
+
     public long deleteDocumentByPK(String databaseName, String collectionName, String primaryKeyValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);

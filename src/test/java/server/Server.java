@@ -1,6 +1,7 @@
 package server;
 
 import com.mongodb.client.*;
+
 import data.Attribute;
 import data.Database;
 import data.Table;
@@ -9,7 +10,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -454,6 +454,9 @@ public class Server extends Thread {
 
 
     private static void createTable(String command, PrintWriter out) {
+
+        //TODO Foreign key
+
         String[] parts = command.split("\\s+");
         for (int i = 0; i < parts.length; i++) {
             parts[i] = parts[i].trim();
@@ -721,9 +724,9 @@ public class Server extends Thread {
 
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
-                String indexKeyValue = record.getString("ertek");
-                String[] values = indexKeyValue.split(";");
-                String indexedValue = values[indexKey - 1];
+                String valuesFromRecord = record.getString("ertek");
+                String[] values = valuesFromRecord.split(";");
+                String indexedValue = values[indexKey - 1];   // -1 mert beleaszomoldik a json-bol a pk, ami elso, igy -1 kell
 
                 Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-index", "_id", indexedValue);
 
@@ -774,7 +777,7 @@ public class Server extends Thread {
                     }
                 }
             }
-            return null; // Table format not found
+            return null;
         } catch (IOException | ParseException e) {
             System.out.println("Error reading table format JSON file: " + e.getMessage());
             return null;
@@ -791,10 +794,6 @@ public class Server extends Thread {
         }
         return -1;
     }
-
-
-
-
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
         JSONParser parser = new JSONParser();
