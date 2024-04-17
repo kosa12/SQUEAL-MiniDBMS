@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="visualeditor_lilupdate">
-      <change afterPath="$PROJECT_DIR$/src/test/java/client/GifPlayer.java" afterDir="false" />
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="githublinkek+iconok">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,6 +36,9 @@
       </UrlAndAccount>
     </option>
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -57,41 +58,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Client.executor": "Run",
-    "Application.Client_GUI.executor": "Run",
-    "Application.FileExplorer.executor": "Run",
-    "Application.FolderExplorerDemo.executor": "Run",
-    "Application.GifPlayer.executor": "Run",
-    "Application.Main.executor": "Run",
-    "Application.OurNode.executor": "Run",
-    "Application.Server.executor": "Run",
-    "Application.Server_GUI.executor": "Run",
-    "Maven.DBMS [-Dtest=org.example.Main...].executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "kriszti",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/Egyetem/III/Java/mySnake",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.settings.project.maven.repository.indices",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Client.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ClientMain.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Client_GUI.executor&quot;: &quot;Run&quot;,
+    &quot;Application.FileExplorer.executor&quot;: &quot;Run&quot;,
+    &quot;Application.FolderExplorerDemo.executor&quot;: &quot;Run&quot;,
+    &quot;Application.GifPlayer.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Application.OurNode.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Server.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Server_GUI.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.DBMS [-Dtest=org.example.Main...].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;kriszti&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Egyetem/III/Java/mySnake&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.repository.indices&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Matyas\Desktop\DBMS\src\test\java\databases" />
       <recent name="C:\Users\Matyas\Desktop\DBMS\src\test\java" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Client">
     <configuration name="Client" type="Application" factoryName="Application">
-      <option name="MAIN_CLASS_NAME" value="client.Client" />
+      <option name="MAIN_CLASS_NAME" value="client.ClientMain" />
       <module name="SQUEL_maven" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -151,7 +153,7 @@
       <workItem from="1712603542435" duration="6374000" />
       <workItem from="1712650305281" duration="591000" />
       <workItem from="1712675549224" duration="1121000" />
-      <workItem from="1713347743418" duration="6053000" />
+      <workItem from="1713347743418" duration="12862000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -329,15 +331,29 @@
       <option name="project" value="LOCAL" />
       <updated>1712650817042</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="gifplayer :))">
+      <option name="closed" value="true" />
+      <created>1713361286028</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1713361286028</updated>
+    </task>
+    <task id="LOCAL-00024" summary="githublinkek+iconok">
+      <option name="closed" value="true" />
+      <created>1713366181719</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1713366181719</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fileexp_kulonjson" />
-    <MESSAGE value="fileexp_szinteOK" />
     <MESSAGE value="gui_kisupd" />
     <MESSAGE value="gui_iconok" />
     <MESSAGE value="gui_daslmkm" />
@@ -361,7 +377,9 @@
     <MESSAGE value="j4fun" />
     <MESSAGE value="visualeditor kesz" />
     <MESSAGE value="visualeditor_lilupdate" />
-    <option name="LAST_COMMIT_MESSAGE" value="visualeditor_lilupdate" />
+    <MESSAGE value="gifplayer :))" />
+    <MESSAGE value="githublinkek+iconok" />
+    <option name="LAST_COMMIT_MESSAGE" value="githublinkek+iconok" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
