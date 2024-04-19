@@ -172,7 +172,7 @@ public class Server extends Thread {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
-                if(!line.trim().startsWith("#")){
+                if(!line.trim().startsWith("--")){
                     if (line.trim().endsWith(";")) {
                         MongoDBHandler mongoDBHandler = new MongoDBHandler();
                         if (line.startsWith("FETCH")) {
