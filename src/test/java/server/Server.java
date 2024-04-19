@@ -172,79 +172,81 @@ public class Server extends Thread {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
-                if (line.trim().endsWith(";")) {
-                    MongoDBHandler mongoDBHandler = new MongoDBHandler();
-                    if (line.startsWith("FETCH")) {
-                        String[] parts = line.split("\\s+");
-                        if (parts.length >= 4) {
-                            String databaseName = parts[1];
-                            String tableName = parts[2];
-                            String[] attributeNames = parts[3].split(",");
+                if(!line.trim().startsWith("#")){
+                    if (line.trim().endsWith(";")) {
+                        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                        if (line.startsWith("FETCH")) {
+                            String[] parts = line.split("\\s+");
+                            if (parts.length >= 4) {
+                                String databaseName = parts[1];
+                                String tableName = parts[2];
+                                String[] attributeNames = parts[3].split(",");
 
-                            List<String[]> rows = mongoDBHandler.fetchRows(databaseName, tableName, attributeNames);
-                            if (rows != null) {
-                                for (String[] row : rows) {
-                                    out.println(String.join(",", row));
+                                List<String[]> rows = mongoDBHandler.fetchRows(databaseName, tableName, attributeNames);
+                                if (rows != null) {
+                                    for (String[] row : rows) {
+                                        out.println(String.join(",", row));
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    out.println(line);
-                    commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
-                    String command = commandBuilder.toString().trim();
-                    if (command.trim().isEmpty()) {
-                        return;
-                    }
-
-                    String[] parts = command.trim().split("\\s+");
-                    if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
-                        String objectType = parts[1].toUpperCase();
-                        if (objectType.equals("DATABASES")) {
-                            showDatabases(out);
-                        } else if (objectType.equals("TABLES")) {
-                            showTables(out);
-                        } else {
-                            out.println("Invalid SHOW command: " + command);
+                        out.println(line);
+                        commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
+                        String command = commandBuilder.toString().trim();
+                        if (command.trim().isEmpty()) {
+                            return;
                         }
-                    } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
-                        insertRow(command, out, clientSocket);
-                    } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
-                        deleteRow(command, out);
-                    }
-                    else if (parts.length >= 3) {
-                        String operation = parts[0].toLowerCase();
-                        String objectType = parts[1].toLowerCase();
-                        String objectName = parts[2];
 
-                        if (operation.equals("create") || operation.equals("drop")) {
-                            if (objectType.equals("database") || objectType.equals("db")) {
-                                handleDatabaseOperation(operation, objectName);
-                            } else if (objectType.equals("table") || objectType.equals("index")) {
-                                handleTableOperation(operation, command, out);
+                        String[] parts = command.trim().split("\\s+");
+                        if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
+                            String objectType = parts[1].toUpperCase();
+                            if (objectType.equals("DATABASES")) {
+                                showDatabases(out);
+                            } else if (objectType.equals("TABLES")) {
+                                showTables(out);
                             } else {
-                                out.println("Invalid object type: " + objectType);
+                                out.println("Invalid SHOW command: " + command);
                             }
-                        }  else {
-                            out.println("Invalid operation: " + operation);
+                        } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
+                            insertRow(command, out, clientSocket);
+                        } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
+                            deleteRow(command, out);
                         }
-                    } else if(parts.length == 2){
-                        String operation = parts[0].toLowerCase();
-                        String objectName = parts[1];
-                        if (operation.equals("use")) {
-                            handleUseDatabase(objectName);
-                        } else {
-                            out.println("Invalid operation: " + operation);
-                        }
-                    } else {
-                        out.println("Invalid message format: " + command);
-                    }
-                    commandBuilder.setLength(0);
-                } else {
-                    commandBuilder.append(line);
-                }
-            }
+                        else if (parts.length >= 3) {
+                            String operation = parts[0].toLowerCase();
+                            String objectType = parts[1].toLowerCase();
+                            String objectName = parts[2];
 
+                            if (operation.equals("create") || operation.equals("drop")) {
+                                if (objectType.equals("database") || objectType.equals("db")) {
+                                    handleDatabaseOperation(operation, objectName);
+                                } else if (objectType.equals("table") || objectType.equals("index")) {
+                                    handleTableOperation(operation, command, out);
+                                } else {
+                                    out.println("Invalid object type: " + objectType);
+                                }
+                            }  else {
+                                out.println("Invalid operation: " + operation);
+                            }
+                        } else if(parts.length == 2){
+                            String operation = parts[0].toLowerCase();
+                            String objectName = parts[1];
+                            if (operation.equals("use")) {
+                                handleUseDatabase(objectName);
+                            } else {
+                                out.println("Invalid operation: " + operation);
+                            }
+                        } else {
+                            out.println("Invalid message format: " + command);
+                        }
+                        commandBuilder.setLength(0);
+                    } else {
+                        commandBuilder.append(line);
+                    }
+                }
+
+            }
             clientSocket.close();
             out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
         } catch (IOException e) {
