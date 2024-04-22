@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="githublinkek+iconok">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="822ig megvan a kiiras">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/databases/huh.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/databases/huh.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,6 +157,11 @@
       <workItem from="1712650305281" duration="591000" />
       <workItem from="1712675549224" duration="1121000" />
       <workItem from="1713347743418" duration="12862000" />
+      <workItem from="1713380019935" duration="664000" />
+      <workItem from="1713392638279" duration="121000" />
+      <workItem from="1713737170279" duration="714000" />
+      <workItem from="1713785059587" duration="5191000" />
+      <workItem from="1713799598050" duration="2894000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -347,15 +355,29 @@
       <option name="project" value="LOCAL" />
       <updated>1713366181719</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="stabilizalo push">
+      <option name="closed" value="true" />
+      <created>1713380165596</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1713380165596</updated>
+    </task>
+    <task id="LOCAL-00026" summary="822ig megvan a kiiras">
+      <option name="closed" value="true" />
+      <created>1713790252602</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1713790252602</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="gui_kisupd" />
-    <MESSAGE value="gui_iconok" />
     <MESSAGE value="gui_daslmkm" />
     <MESSAGE value="kell_Scrollserverbe2" />
     <MESSAGE value="valami" />
@@ -379,7 +401,9 @@
     <MESSAGE value="visualeditor_lilupdate" />
     <MESSAGE value="gifplayer :))" />
     <MESSAGE value="githublinkek+iconok" />
-    <option name="LAST_COMMIT_MESSAGE" value="githublinkek+iconok" />
+    <MESSAGE value="stabilizalo push" />
+    <MESSAGE value="822ig megvan a kiiras" />
+    <option name="LAST_COMMIT_MESSAGE" value="822ig megvan a kiiras" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -186,20 +186,9 @@ public class Client_GUI extends JFrame {
 
 
         output = new JTextArea();
-        output.setFont(new Font("Cfont", Font.ITALIC, 20));
-
-        output.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                output.setText("");
-                output.setFont(new Font("Cfont", Font.PLAIN, 20));
-
-            }
-        });
+        output.setFont(new Font("Cfont", Font.PLAIN, 20));
 
         output.setBorder(new EmptyBorder(insets));
-
-        output.setText("Output");
 
         querry.setBackground(new Color(239, 240, 243));
 

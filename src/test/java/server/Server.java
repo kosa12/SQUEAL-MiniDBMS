@@ -27,6 +27,7 @@ public class Server extends Thread {
     private static String currentDatabase;
     private final boolean isRunning = true;
     private static MongoClient mongoClient;
+    private Socket clientSocket;
 
     @Override
     public void run() {
@@ -42,7 +43,7 @@ public class Server extends Thread {
             System.out.println("Server is running...");
             while (isRunning) {
                 try {
-                    Socket clientSocket = serverSocket.accept();
+                    clientSocket = serverSocket.accept();
                     if (isRunning) {
                         System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     }
@@ -69,7 +70,7 @@ public class Server extends Thread {
                 System.out.println("Table not found in database: " + collectionName);
                 continue;
             }
-            if(!collectionName.contains("index")){
+            if (!collectionName.contains("index")) {
                 FindIterable<Document> documents = collection.find();
                 for (Document document : documents) {
                     Object idValue = document.get("_id");
@@ -160,7 +161,7 @@ public class Server extends Thread {
         }
     }
 
-    public ServerSocket getServerSocket(){
+    public ServerSocket getServerSocket() {
         return serverSocket;
     }
 
@@ -172,7 +173,7 @@ public class Server extends Thread {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
-                if(!line.trim().startsWith("--")){
+                if (!line.trim().startsWith("--")) {
                     if (line.trim().endsWith(";")) {
                         MongoDBHandler mongoDBHandler = new MongoDBHandler();
                         if (line.startsWith("FETCH")) {
@@ -212,28 +213,27 @@ public class Server extends Thread {
                             insertRow(command, out, clientSocket);
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                             deleteRow(command, out);
-                        }
-                        else if (parts.length >= 3) {
+                        } else if (parts.length >= 3) {
                             String operation = parts[0].toLowerCase();
                             String objectType = parts[1].toLowerCase();
                             String objectName = parts[2];
 
                             if (operation.equals("create") || operation.equals("drop")) {
                                 if (objectType.equals("database") || objectType.equals("db")) {
-                                    handleDatabaseOperation(operation, objectName);
+                                    handleDatabaseOperation(operation, objectName,out);
                                 } else if (objectType.equals("table") || objectType.equals("index")) {
                                     handleTableOperation(operation, command, out);
                                 } else {
                                     out.println("Invalid object type: " + objectType);
                                 }
-                            }  else {
+                            } else {
                                 out.println("Invalid operation: " + operation);
                             }
-                        } else if(parts.length == 2){
+                        } else if (parts.length == 2) {
                             String operation = parts[0].toLowerCase();
                             String objectName = parts[1];
                             if (operation.equals("use")) {
-                                handleUseDatabase(objectName);
+                                handleUseDatabase(objectName, out);
                             } else {
                                 out.println("Invalid operation: " + operation);
                             }
@@ -274,43 +274,47 @@ public class Server extends Thread {
         }
     }
 
-    private static void handleUseDatabase(String databaseName) {
+    private static void handleUseDatabase(String databaseName, PrintWriter out) {
         Database db = databases.get(databaseName);
         if (db != null) {
             currentDatabase = databaseName;
-            System.out.println("Switched to database: " + databaseName);
+            System.out.println("Using database: " + databaseName);
+            out.println("> Using database: " + databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
+            out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");
         }
     }
 
     private static void handleTableOperation(String operation, String command, PrintWriter out) {
         if (currentDatabase == null) {
             System.out.println("No database selected.");
+            out.println("> No database selected. Please select one.\nNote: you can see the existing databases using command: 'show databases'");
             return;
         }
 
         if (operation.equalsIgnoreCase("create")) {
             if (command.toLowerCase().contains("index")) {
-                createIndex(command);
+                createIndex(command, out);
             } else {
                 createTable(command, out);
             }
         } else if (operation.equalsIgnoreCase("drop")) {
-            dropTable(command);}
-        else {
+            dropTable(command, out);
+        } else {
             System.out.println("Invalid table operation: " + operation);
+            out.println("> Invalid table operation: " + operation);
         }
     }
 
     private static void insertRow(String command, PrintWriter out, Socket clientSocket) {
         if (!command.toLowerCase().contains("insert into")) {
-            out.println("Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
+            out.println("> Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
             return;
         }
 
         if (!command.toLowerCase().contains("values")) {
-            out.println("Invalid INSERT command format: Missing 'VALUES' keyword.");
+            out.println("> Invalid INSERT command format: Missing 'VALUES' keyword.");
             return;
         }
 
@@ -318,7 +322,7 @@ public class Server extends Thread {
         int columnsStartIndex = command.indexOf("(", tableNameIndex);
         int columnsEndIndex = command.indexOf(")", columnsStartIndex);
         if (columnsStartIndex == -1 || columnsEndIndex == -1) {
-            out.println("Invalid INSERT command format: Missing '(' or ')' for column names.");
+            out.println("> Invalid INSERT command format: Missing '(' or ')' for column names.");
             return;
         }
 
@@ -329,7 +333,7 @@ public class Server extends Thread {
         int valuesStartIndex = command.indexOf("(", columnsEndIndex);
         int valuesEndIndex = command.lastIndexOf(")");
         if (valuesStartIndex == -1 || valuesEndIndex == -1) {
-            out.println("Invalid INSERT command format: Missing '(' or ')' for values.");
+            out.println("> Invalid INSERT command format: Missing '(' or ')' for values.");
             return;
         }
 
@@ -337,13 +341,13 @@ public class Server extends Thread {
         String[] values = valuesPart.split(",");
 
         if (columns.length != values.length) {
-            out.println("Number of columns does not match number of values provided.");
+            out.println("> Number of columns does not match number of values provided.");
             return;
         }
 
         Table table = databases.get(currentDatabase).getTable(tableName);
         if (table == null) {
-            out.println("Table not found: " + tableName);
+            out.println("> Table '" + tableName + "' does not exist.\nNote: you can see the existing tables using command 'show tables'");
             return;
         }
 
@@ -353,7 +357,7 @@ public class Server extends Thread {
             String value = values[i].trim();
             Attribute attribute = table.getAttributes().get(i);
             if (attribute == null) {
-                out.println("Column not found: " + columns[i].trim());
+                out.println("> Column '" + columns[i].trim() + "' does not exist.");
                 return;
             }
             String attributeName = attribute.getAttributeName();
@@ -363,7 +367,7 @@ public class Server extends Thread {
             }
 
             if (convertValue(value, attributeType) == null) {
-                out.println("Invalid value type for attribute: " + attributeName);
+                out.println("> Invalid value type for attribute: " + attributeName);
                 return;
             }
 
@@ -378,7 +382,7 @@ public class Server extends Thread {
         }
 
         if (table.hasPrimaryKeyValue(primaryKeyValue)) {
-            out.println("Primary key value already exists: " + primaryKeyValue);
+            out.println("> Primary key value " + primaryKeyValue + " already exists. It has to be unique.");
             return;
         }
 
@@ -391,18 +395,18 @@ public class Server extends Thread {
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
         mongoDBHandler.close();
-        out.println("Row inserted into MongoDB collection: " + collectionName);
+        out.println("> Row inserted into MongoDB collection: " + collectionName);
     }
 
 
     private static void deleteRow(String command, PrintWriter out) {
         if (!command.toLowerCase().contains("delete from")) {
-            out.println("Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
+            out.println("> Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
             return;
         }
 
         if (!command.toLowerCase().contains("where")) {
-           out.println("Invalid DELETE command format: Missing 'WHERE' keyword.");
+            out.println("> Invalid DELETE command format: Missing 'WHERE' keyword.");
             return;
         }
 
@@ -411,7 +415,7 @@ public class Server extends Thread {
         String condition = parts[parts.length - 1];
 
         if (!condition.startsWith("_id")) {
-           out.println("Invalid DELETE condition: Must be based on primary key (_id).");
+            out.println("> Invalid DELETE condition: Must be based on primary key (_id).");
             return;
         }
 
@@ -425,15 +429,15 @@ public class Server extends Thread {
         if (table != null) {
             if (table.removePrimaryKeyValue(primaryKeyValue)) {
                 if (deletedCount > 0) {
-                    out.println("Deleted " + deletedCount + " document(s) from table: " + tableName);
+                    out.println("> Deleted " + deletedCount + " document(s) from table: " + tableName);
                 } else {
-                    out.println("No document found with primary key value: " + primaryKeyValue);
+                    out.println("> No document found with primary key value: " + primaryKeyValue);
                 }
             } else {
-                out.println("Primary key value not found in table: " + tableName);
+                out.println("> Primary key value not found in table: " + tableName);
             }
         } else {
-            out.println("Table not found: " + tableName);
+            out.println("> Table '" + tableName + "' does not exist.\nNote: you can see the existing tables using command 'show tables'");
         }
     }
 
@@ -463,14 +467,14 @@ public class Server extends Thread {
         }
 
         if (parts.length < 4 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("TABLE")) {
-            out.println("Invalid CREATE TABLE command format.");
+            out.println("> Invalid CREATE TABLE command format.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
             return;
         }
 
         String tableName = parts[2];
 
         if (!command.contains("(") || !command.contains(")")) {
-            out.println("Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.");
+            out.println("> Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
             return;
         }
 
@@ -479,12 +483,12 @@ public class Server extends Thread {
         String[] columns = columnDefinitions.split(",(?![^(]*\\))");
 
         if (columns.length == 0) {
-            out.println("Invalid CREATE TABLE command format: No column definitions found.");
+            out.println("> Invalid CREATE TABLE command format: No column definitions found.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
             return;
         }
 
         if (databases.get(currentDatabase).hasTable(tableName)) {
-            out.println("Table already exists: " + tableName);
+            out.println("> Table '" + tableName + "already exists.");
             return;
         }
 
@@ -500,7 +504,7 @@ public class Server extends Thread {
         if (primaryKeyAttributeName != null) {
             for (Table table : databases.get(currentDatabase).getTables()) {
                 if (table.hasAttribute(primaryKeyAttributeName)) {
-                    out.println("Primary key attribute already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
+                    out.println("> Primary key attribute '" + primaryKeyAttributeName + "' already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
                     return;
                 }
             }
@@ -512,7 +516,7 @@ public class Server extends Thread {
         for (String column : columns) {
             String[] columnParts = column.trim().split("\\s+");
             if (columnParts.length < 2) {
-                out.println("Invalid column definition: " + column);
+                out.println("> Invalid column definition: " + column);
                 return;
             }
 
@@ -525,16 +529,16 @@ public class Server extends Thread {
                 try {
                     int length = Integer.parseInt(lengthStr);
                     if (length <= 0) {
-                        out.println("Invalid length for varchar: " + length);
+                        out.println("> Invalid length for varchar: " + length);
                         return;
                     }
                     goodSyntax = true;
                 } catch (NumberFormatException e) {
-                    out.println("Invalid length for varchar: " + lengthStr);
+                    out.println("> Invalid length for varchar: " + lengthStr);
                     return;
                 }
             } else {
-                out.println("Invalid column type: " + columnParts[1]);
+                out.println("> Invalid column type: " + columnParts[1]);
             }
 
             if (!goodSyntax) {
@@ -551,16 +555,16 @@ public class Server extends Thread {
             for (int i = 2; i < columnParts.length; i++) {
                 String keyword = columnParts[i].toUpperCase();
                 if (keyword.equalsIgnoreCase("NOT")) {
-                    if (i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("NULL")) {
+                    if (i + 1 < columnParts.length && columnParts[i + 1].equalsIgnoreCase("NULL")) {
                         notNull = true;
                         i++;
                     } else {
-                        out.println("Invalid keyword after NOT: " + columnParts[i+1]);
+                        out.println("> Invalid keyword after NOT: " + columnParts[i + 1]);
                         return;
                     }
-                } else if (keyword.equalsIgnoreCase("PRIMARY") && i + 1 < columnParts.length && columnParts[i+1].equalsIgnoreCase("KEY")) {
+                } else if (keyword.equalsIgnoreCase("PRIMARY") && i + 1 < columnParts.length && columnParts[i + 1].equalsIgnoreCase("KEY")) {
                     if (hasPrimaryKey) {
-                        out.println("Only one primary key is allowed.");
+                        out.println("> Only one primary key is allowed.");
                         return;
                     }
                     table.setpKAttrName(columnParts[0]);
@@ -569,7 +573,7 @@ public class Server extends Thread {
                     table.addPKtoList(primaryKeyAttributeName);
                     i++;
                 } else {
-                    out.println("Invalid keyword in column definition: " + columnParts[i]);
+                    out.println("> Invalid keyword in column definition: " + columnParts[i]);
                     return;
                 }
             }
@@ -585,7 +589,7 @@ public class Server extends Thread {
             JSONObject column = (JSONObject) obj;
             String attributeName = (String) column.get("name");
             if (!columnNames.add(attributeName)) {
-                out.println("Duplicate column name: " + attributeName);
+                out.println("> Duplicate column name: " + attributeName);
                 return;
             }
         }
@@ -603,7 +607,7 @@ public class Server extends Thread {
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
         tableObj.put("attributes", tableColumns);
-        updateDatabaseWithTable(tableName, tableObj);
+        updateDatabaseWithTable(tableName, tableObj, out);
     }
 
 
@@ -617,7 +621,7 @@ public class Server extends Thread {
         return false;
     }
 
-    private static void dropTable(String command) {
+    private static void dropTable(String command, PrintWriter out) {
         String[] parts = command.split("\\s+");
         for (int i = 0; i < parts.length; i++) {
             parts[i] = parts[i].trim();
@@ -625,6 +629,7 @@ public class Server extends Thread {
 
         if (parts.length != 3 || !parts[0].equalsIgnoreCase("DROP") || !parts[1].equalsIgnoreCase("TABLE")) {
             System.out.println("Invalid DROP TABLE command format.");
+            out.println("> Invalid DROP TABLE command format.\nCorrect format: drop table _tablename_;");
             return;
         }
 
@@ -638,6 +643,7 @@ public class Server extends Thread {
             File databaseFile = new File("src/test/java/databases/" + currentDatabase + ".json");
             if (!databaseFile.exists()) {
                 System.out.println("Database not found: " + currentDatabase);
+                out.println("> Database " + "'" + currentDatabase + "'" + " does not exist. Make sure you entered the name correctly.");
                 return;
             }
 
@@ -669,7 +675,7 @@ public class Server extends Thread {
                 }
 
                 System.out.println("Table dropped: " + tableName);
-
+                out.println("> Table '" + tableName + "' dropped.");
                 databases.get(currentDatabase).dropTable(tableName);
             }
         } catch (IOException | ParseException e) {
@@ -688,10 +694,11 @@ public class Server extends Thread {
         }
     }
 
-    private static void createIndex(String command) {
+    private static void createIndex(String command, PrintWriter out) {
         String[] parts = command.split("\\s+");
         if (parts.length < 5 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("INDEX")) {
             System.out.println("Invalid CREATE INDEX command format.");
+            out.println("> Invalid CREATE INDEX command format.");
             return;
         }
 
@@ -706,19 +713,22 @@ public class Server extends Thread {
             List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
 
             if (records.isEmpty()) {
-                System.out.println("No records found in MongoDB for table " + tableName);
+                System.out.println("No records found in MongoDB for table '" + tableName + "'");
+                out.println("No records found in MongoDB for table '" + tableName + "'");
                 return;
             }
 
-            JSONObject tableFormat = readTableFormat(currentDatabase, tableName);
+            JSONObject tableFormat = readTableFormat(currentDatabase, tableName, out);
             if (tableFormat == null) {
-                System.out.println("Table format not found for table " + tableName);
+                System.out.println("Table format not found for table '" + tableName + "'");
+                out.println("Table format not found for table '" + tableName + "'");
                 return;
             }
 
             int indexKey = getIndexKey(tableFormat, column);
             if (indexKey == -1) {
                 System.out.println("Column not found in table format for table " + tableName + ": " + column);
+                out.println("Column not found in table format for table " + tableName + ": " + column);
                 return;
             }
 
@@ -744,17 +754,17 @@ public class Server extends Thread {
             }
 
             System.out.println("Index created: " + indexName + " on column " + column + " in table " + tableName);
+            out.println("> Index created: " + indexName + " on column " + column + " in table " + tableName);
         } catch (Exception ex) {
             System.out.println("Failed to create index in MongoDB: " + ex.getMessage());
+            out.println("> Failed to create index in MongoDB: " + ex.getMessage());
         } finally {
             mongoDBHandler.close();
         }
     }
 
 
-
-
-    public static JSONObject readTableFormat(String databaseName, String tableName) {
+    public static JSONObject readTableFormat(String databaseName, String tableName, PrintWriter out) {
         JSONParser parser = new JSONParser();
         try {
             String filePath = "src/test/java/databases/" + databaseName + ".json";
@@ -780,6 +790,7 @@ public class Server extends Thread {
             return null;
         } catch (IOException | ParseException e) {
             System.out.println("Error reading table format JSON file: " + e.getMessage());
+            out.println("> Error reading table format JSON file: " + e.getMessage());
             return null;
         }
     }
@@ -795,7 +806,7 @@ public class Server extends Thread {
         return -1;
     }
 
-    private static void updateDatabaseWithTable(String tableName, JSONObject tableObj) {
+    private static void updateDatabaseWithTable(String tableName, JSONObject tableObj, PrintWriter out) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
         FileWriter fileWriter = null;
@@ -804,6 +815,7 @@ public class Server extends Thread {
             File databaseFile = new File("src/test/java/databases/" + currentDatabase + ".json");
             if (!databaseFile.exists()) {
                 System.out.println("Database not found: " + currentDatabase);
+                out.println("> Database " + "'" + currentDatabase + "'" + " does not exist. Make sure you entered the database name correctly.");
                 return;
             }
 
@@ -824,7 +836,8 @@ public class Server extends Thread {
             for (Object table : tablesArray) {
                 JSONObject tableJson = (JSONObject) table;
                 if (tableJson.get("table_name").equals(tableName)) {
-                    System.out.println("Table already exists: " + tableName);
+                    System.out.println("Table '" + tableName + " already exists.");
+                    out.println("> Table '" + tableName + " already exists.");
                     return;
                 }
             }
@@ -834,7 +847,8 @@ public class Server extends Thread {
             fileWriter = new FileWriter(databaseFile);
             fileWriter.write(databaseJson.toJSONString() + "\n");
 
-            System.out.println("Table created: " + tableName);
+            System.out.println("Table '" + tableName + "' created.");
+            out.println("> Table '" + tableName + "' created.");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
@@ -851,7 +865,7 @@ public class Server extends Thread {
         }
     }
 
-    public static synchronized void handleDatabaseOperation(String operation, String databaseName) {
+    public static synchronized void handleDatabaseOperation(String operation, String databaseName, PrintWriter out) {
         JSONParser parser = new JSONParser();
         FileReader fileReader = null;
 
@@ -878,6 +892,7 @@ public class Server extends Thread {
                     JSONObject db = (JSONObject) dbObj;
                     if (db.get("database_name").equals(databaseName)) {
                         System.out.println("Database already exists: " + databaseName);
+                        out.println("> Database '" + databaseName + "' already exists.");
                         return;
                     }
                 }
@@ -889,6 +904,7 @@ public class Server extends Thread {
                 databases.put(databaseName, new Database(databaseName));
 
                 System.out.println("Database created: " + databaseName);
+                out.println("> Database '" + databaseName + "' created.");
             } else if (operation.equals("drop")) {
                 boolean found = false;
                 for (int i = 0; i < databasesCurr.size(); i++) {
@@ -901,7 +917,8 @@ public class Server extends Thread {
                 }
 
                 if (!found) {
-                    System.out.println("Database not found: " + databaseName);
+                    System.out.println("Database '" + databaseName + "' not found.");
+                    out.println("> Database '" + databaseName + "' not found.");
                 } else {
                     //
                     //EZ ITT KELL LEGYEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -911,16 +928,20 @@ public class Server extends Thread {
                     try {
                         if (databaseFile.delete()) {
                             System.out.println("Database dropped: " + databaseName);
+                            out.println("> Database '" + databaseName + "' dropped.");
                             databases.remove(databaseName);
                         } else {
                             System.out.println("Failed to drop database: " + databaseName);
+                            out.println("> Failed to drop database: " + databaseName);
                         }
                     } catch (SecurityException e) {
                         System.out.println("Security exception occurred: " + e.getMessage());
+                        out.println("> Security exception occurred: " + e.getMessage());
                     }
                 }
             } else {
                 System.out.println("Invalid operation: " + operation);
+                out.println("> Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
@@ -941,6 +962,10 @@ public class Server extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private Socket getClientSocket() {
+        return this.clientSocket;
     }
 
 }

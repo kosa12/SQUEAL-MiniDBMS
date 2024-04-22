@@ -1,1 +1,1 @@
-[{"database_name":"huh"}]
+[{"tables":[{"attributes":[{"not_null":false,"name":"ID","type":"INT","is_pk":false},{"not_null":false,"name":"KOR","type":"INT","is_pk":false}],"table_name":"szoszi(ID"},{"attributes":[{"not_null":false,"name":"ID","type":"INT","is_pk":false},{"not_null":false,"name":"KOR","type":"INT","is_pk":false}],"table_name":"szoszi"}],"database_name":"huh"}]
