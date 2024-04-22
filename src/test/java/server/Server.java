@@ -10,9 +10,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -220,7 +218,7 @@ public class Server extends Thread {
 
                             if (operation.equals("create") || operation.equals("drop")) {
                                 if (objectType.equals("database") || objectType.equals("db")) {
-                                    handleDatabaseOperation(operation, objectName,out);
+                                    handleDatabaseOperation(operation, objectName, out);
                                 } else if (objectType.equals("table") || objectType.equals("index")) {
                                     handleTableOperation(operation, command, out);
                                 } else {
@@ -467,14 +465,14 @@ public class Server extends Thread {
         }
 
         if (parts.length < 4 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("TABLE")) {
-            out.println("> Invalid CREATE TABLE command format.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
+            out.println("> Invalid CREATE TABLE command format.\nCorrect format: create table _tablename_ (attr_1 type_1, ..., attr_n type_n);");
             return;
         }
 
         String tableName = parts[2];
 
         if (!command.contains("(") || !command.contains(")")) {
-            out.println("> Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
+            out.println("> Invalid CREATE TABLE command format: Missing '(' or ')' for column definitions.\nCorrect format: create table _tablename_ (attr_1 type_1, ..., attr_n type_n);");
             return;
         }
 
@@ -483,7 +481,7 @@ public class Server extends Thread {
         String[] columns = columnDefinitions.split(",(?![^(]*\\))");
 
         if (columns.length == 0) {
-            out.println("> Invalid CREATE TABLE command format: No column definitions found.\nCorrect format: create table _tablename_ (attr1 type1, ..., attrn typen);");
+            out.println("> Invalid CREATE TABLE command format: No column definitions found.\nCorrect format: create table _tablename_ (attr_1 type_1, ..., attr_n type_n);");
             return;
         }
 
@@ -698,7 +696,7 @@ public class Server extends Thread {
         String[] parts = command.split("\\s+");
         if (parts.length < 5 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("INDEX")) {
             System.out.println("Invalid CREATE INDEX command format.");
-            out.println("> Invalid CREATE INDEX command format.");
+            out.println("> Invalid CREATE INDEX command format.\nCorrect format: create index _indexname_ on _tablename_ (attr_1, ..., attr_n)");
             return;
         }
 
@@ -706,7 +704,7 @@ public class Server extends Thread {
         String tableName = parts[4];
 
         String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim();
-        String column = columnsStr.split(",")[0].trim();
+        String[] columns = columnsStr.split(",");
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         try {
@@ -714,21 +712,21 @@ public class Server extends Thread {
 
             if (records.isEmpty()) {
                 System.out.println("No records found in MongoDB for table '" + tableName + "'");
-                out.println("No records found in MongoDB for table '" + tableName + "'");
+                out.println("> No records found in MongoDB for table '" + tableName + "'");
                 return;
             }
 
             JSONObject tableFormat = readTableFormat(currentDatabase, tableName, out);
             if (tableFormat == null) {
                 System.out.println("Table format not found for table '" + tableName + "'");
-                out.println("Table format not found for table '" + tableName + "'");
+                out.println("> Table format not found for table '" + tableName + "'");
                 return;
             }
 
-            int indexKey = getIndexKey(tableFormat, column);
-            if (indexKey == -1) {
-                System.out.println("Column not found in table format for table " + tableName + ": " + column);
-                out.println("Column not found in table format for table " + tableName + ": " + column);
+            List<Integer> indexKeys = getIndexKeys(tableFormat, columns);
+            if (indexKeys.contains(-1)) {
+                System.out.println("One or more columns not found in table format for table " + tableName);
+                out.println("> One or more columns not found in table format for table '" + tableName + "'");
                 return;
             }
 
@@ -736,31 +734,50 @@ public class Server extends Thread {
                 String primaryKeyValue = record.getString("_id");
                 String valuesFromRecord = record.getString("ertek");
                 String[] values = valuesFromRecord.split(";");
-                String indexedValue = values[indexKey - 1];   // -1 mert beleaszomoldik a json-bol a pk, ami elso, igy -1 kell
 
-                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-index", "_id", indexedValue);
+                // Generate the composite index key
+                StringBuilder indexKeyBuilder = new StringBuilder();
+                for (int indexKey : indexKeys) {
+                    indexKeyBuilder.append(values[indexKey - 1]).append(";");
+                }
+                String compositeIndexKey = indexKeyBuilder.toString();
+
+                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-index", "_id", compositeIndexKey);
 
                 if (existingDocument != null) {
                     String existingPrimaryKey = existingDocument.getString("ertek");
                     existingPrimaryKey += ";" + primaryKeyValue;
                     existingDocument.put("ertek", existingPrimaryKey);
-                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-index", "_id", indexedValue, "ertek", existingPrimaryKey);
+                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-index", "_id", compositeIndexKey, "ertek", existingPrimaryKey);
                 } else {
                     Document document = new Document();
-                    document.append("_id", indexedValue);
+                    document.append("_id", compositeIndexKey);
                     document.append("ertek", primaryKeyValue);
                     mongoDBHandler.insertDocument(currentDatabase, indexName + "-index", document);
                 }
             }
 
-            System.out.println("Index created: " + indexName + " on column " + column + " in table " + tableName);
-            out.println("> Index created: " + indexName + " on column " + column + " in table " + tableName);
+            System.out.println("Index created: " + indexName + " on columns " + columnsStr + " in table " + tableName);
+            out.println("> Index '" + indexName + "' created on column(s) " + columnsStr + " in table '" + tableName + "'");
         } catch (Exception ex) {
             System.out.println("Failed to create index in MongoDB: " + ex.getMessage());
             out.println("> Failed to create index in MongoDB: " + ex.getMessage());
         } finally {
             mongoDBHandler.close();
         }
+    }
+
+    private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
+        List<Integer> indexKeys = new ArrayList<>();
+        for (String column : columns) {
+            column = column.trim();
+            int indexKey = getIndexKey(tableFormat, column);
+            if (indexKey == -1) {
+                return Collections.singletonList(-1);
+            }
+            indexKeys.add(indexKey);
+        }
+        return indexKeys;
     }
 
 
