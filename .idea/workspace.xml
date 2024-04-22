@@ -4,24 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="stabilizalo push">
+    <list default="true" id="ce9fd272-a445-41c0-ac4b-5fcfe3ddc2ca" name="Changes" comment="822ig megvan a kiiras">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/databases/asd.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/databases/asd.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/client/Client_GUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/databases/huh.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/databases/huh.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/server/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/introgif.gif" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/introgif.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$2.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$3.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$4.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$5.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$5.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$6.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$6.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$7.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$7.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$8.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$8.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$9.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI$9.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/Client_GUI.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/Client_GUI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/GifPlayer$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/GifPlayer$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/client/GifPlayer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/client/GifPlayer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/server/Server.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/server/Server.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -173,7 +160,8 @@
       <workItem from="1713380019935" duration="664000" />
       <workItem from="1713392638279" duration="121000" />
       <workItem from="1713737170279" duration="714000" />
-      <workItem from="1713785059587" duration="5168000" />
+      <workItem from="1713785059587" duration="5191000" />
+      <workItem from="1713799598050" duration="2894000" />
     </task>
     <task id="LOCAL-00001" summary="fileexp">
       <option name="closed" value="true" />
@@ -375,14 +363,21 @@
       <option name="project" value="LOCAL" />
       <updated>1713380165596</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="822ig megvan a kiiras">
+      <option name="closed" value="true" />
+      <created>1713790252602</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1713790252602</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="gui_iconok" />
     <MESSAGE value="gui_daslmkm" />
     <MESSAGE value="kell_Scrollserverbe2" />
     <MESSAGE value="valami" />
@@ -407,7 +402,8 @@
     <MESSAGE value="gifplayer :))" />
     <MESSAGE value="githublinkek+iconok" />
     <MESSAGE value="stabilizalo push" />
-    <option name="LAST_COMMIT_MESSAGE" value="stabilizalo push" />
+    <MESSAGE value="822ig megvan a kiiras" />
+    <option name="LAST_COMMIT_MESSAGE" value="822ig megvan a kiiras" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
