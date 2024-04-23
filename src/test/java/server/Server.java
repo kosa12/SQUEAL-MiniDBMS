@@ -508,6 +508,28 @@ public class Server extends Thread {
             }
         }
 
+        // FK
+        String foreignKeyAttributeName = null;
+        for (String column : columns) {
+            String[] columnParts = column.trim().split("\\s+");
+            if (columnParts.length > 2 && columnParts[2].equalsIgnoreCase("FOREIGN")) {
+                foreignKeyAttributeName = columnParts[0];
+                break;
+            }
+        }
+
+        if (primaryKeyAttributeName != null) {
+            for (Table table : databases.get(currentDatabase).getTables()) {
+                if (table.hasAttribute(primaryKeyAttributeName)) {
+                    out.println("> Primary key attribute '" + primaryKeyAttributeName + "' already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
+                    return;
+                }
+            }
+        }
+
+
+
+
         JSONArray tableColumns = new JSONArray();
         boolean hasPrimaryKey = false;
         Table table = new Table(tableName, "", null);
@@ -712,8 +734,8 @@ public class Server extends Thread {
             List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
 
             if (mongoDBHandler.indexExists(currentDatabase, indexName + "-" + String.join("-", columns) + "-index")) {
-                System.out.println("Index name '" + indexName + "-" + String.join("_", columns) + "-index' already exists in MongoDB");
-                out.println("> Index name '" + indexName + "-" + String.join("_", columns) + "-index' already exists in MongoDB");
+                System.out.println("Index name '" + indexName + "-" + String.join("-", columns) + "-index' already exists in MongoDB");
+                out.println("> Index name '" + indexName + "-" + String.join("-", columns) + "-index' already exists in MongoDB");
                 return;
             }
 
@@ -748,7 +770,7 @@ public class Server extends Thread {
                 }
                 String compositeIndexKey = indexKeyBuilder.toString();
 
-                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-index", "_id", compositeIndexKey);
+                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", "_id", compositeIndexKey);
 
                 if (existingDocument != null) {
                     String existingPrimaryKey = existingDocument.getString("ertek");
