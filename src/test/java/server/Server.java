@@ -130,12 +130,13 @@ public class Server extends Thread {
                                     String attributeType = (String) attributeJson.get("type");
                                     boolean attributeNotNull = (boolean) attributeJson.get("not_null");
                                     boolean attributeIsPK = (boolean) attributeJson.get("is_pk");
+                                    boolean attributeIsFK = (boolean) attributeJson.get("is_fk");
 
                                     if (attributeIsPK) {
                                         table.setpKAttrName(attributeName);
                                     }
 
-                                    table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK));
+                                    table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK, attributeIsFK));
                                 }
                                 database.addTable(table);
 
@@ -456,9 +457,6 @@ public class Server extends Thread {
 
 
     private static void createTable(String command, PrintWriter out) {
-
-        //TODO Foreign key
-
         String[] parts = command.split("\\s+");
         for (int i = 0; i < parts.length; i++) {
             parts[i] = parts[i].trim();
@@ -486,49 +484,12 @@ public class Server extends Thread {
         }
 
         if (databases.get(currentDatabase).hasTable(tableName)) {
-            out.println("> Table '" + tableName + "already exists.");
+            out.println("> Table '" + tableName + " already exists.");
             return;
         }
 
         String primaryKeyAttributeName = null;
-        for (String column : columns) {
-            String[] columnParts = column.trim().split("\\s+");
-            if (columnParts.length > 2 && columnParts[2].equalsIgnoreCase("PRIMARY")) {
-                primaryKeyAttributeName = columnParts[0];
-                break;
-            }
-        }
-
-        if (primaryKeyAttributeName != null) {
-            for (Table table : databases.get(currentDatabase).getTables()) {
-                if (table.hasAttribute(primaryKeyAttributeName)) {
-                    out.println("> Primary key attribute '" + primaryKeyAttributeName + "' already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
-                    return;
-                }
-            }
-        }
-
-        // FK
-        String foreignKeyAttributeName = null;
-        for (String column : columns) {
-            String[] columnParts = column.trim().split("\\s+");
-            if (columnParts.length > 2 && columnParts[2].equalsIgnoreCase("FOREIGN")) {
-                foreignKeyAttributeName = columnParts[0];
-                break;
-            }
-        }
-
-        if (primaryKeyAttributeName != null) {
-            for (Table table : databases.get(currentDatabase).getTables()) {
-                if (table.hasAttribute(primaryKeyAttributeName)) {
-                    out.println("> Primary key attribute '" + primaryKeyAttributeName + "' already exists in another table: " + databases.get(currentDatabase).getTable(tableName).getTableName());
-                    return;
-                }
-            }
-        }
-
-
-
+        HashSet<String> foreignKeyAttributeNames = new HashSet<>();
 
         JSONArray tableColumns = new JSONArray();
         boolean hasPrimaryKey = false;
@@ -565,12 +526,11 @@ public class Server extends Thread {
                 return;
             }
 
-            JSONObject columnObj = new JSONObject();
-            columnObj.put("name", columnParts[0]);
-            columnObj.put("type", columnParts[1]);
-
+            String attributeName = columnParts[0];
+            String attributeType = columnParts[1];
             boolean notNull = false;
             boolean isPK = false;
+            boolean isForeignKey = false;
 
             for (int i = 2; i < columnParts.length; i++) {
                 String keyword = columnParts[i].toUpperCase();
@@ -587,22 +547,55 @@ public class Server extends Thread {
                         out.println("> Only one primary key is allowed.");
                         return;
                     }
-                    table.setpKAttrName(columnParts[0]);
+                    primaryKeyAttributeName = attributeName;
                     isPK = true;
                     hasPrimaryKey = true;
-                    table.addPKtoList(primaryKeyAttributeName);
                     i++;
+                } else if (keyword.equalsIgnoreCase("FOREIGN") && i + 1 < columnParts.length && columnParts[i + 1].equalsIgnoreCase("KEY")) {
+                    if (columnParts.length < 7 || !columnParts[5].equalsIgnoreCase("REFERENCES")) {
+                        out.println("> Invalid FOREIGN KEY syntax.");
+                        return;
+                    }
+
+                    String referencedTableAndAttr = columnParts[6];
+                    String[] referencedParts = referencedTableAndAttr.split("[()]");
+                    if (referencedParts.length != 2) {
+                        out.println("> Invalid syntax for referenced table and attribute: " + referencedTableAndAttr);
+                        return;
+                    }
+                    String referencedTableName = referencedParts[0];
+                    String referencedAttributeName = referencedParts[1];
+
+                    if (!databases.get(currentDatabase).hasTable(referencedTableName)) {
+                        out.println("> Referenced table '" + referencedTableName + "' does not exist.");
+                        return;
+                    }
+
+                    if (!databases.get(currentDatabase).getTable(referencedTableName).hasAttribute(referencedAttributeName)) {
+                        out.println("> Referenced attribute '" + referencedAttributeName + "' does not exist in table '" + referencedTableName + "'.");
+                        return;
+                    }
+
+                    isForeignKey = true;
+                    foreignKeyAttributeNames.add(attributeName);
+
+                    i += 5;
                 } else {
                     out.println("> Invalid keyword in column definition: " + columnParts[i]);
                     return;
                 }
             }
 
+            JSONObject columnObj = new JSONObject();
+            columnObj.put("name", attributeName);
+            columnObj.put("type", attributeType);
             columnObj.put("is_pk", isPK);
             columnObj.put("not_null", notNull);
+            columnObj.put("is_fk", isForeignKey);
 
             tableColumns.add(columnObj);
         }
+
 
         HashSet<String> columnNames = new HashSet<>();
         for (Object obj : tableColumns) {
@@ -620,7 +613,8 @@ public class Server extends Thread {
             String attributeType = (String) column.get("type");
             boolean notNull = (boolean) column.get("not_null");
             boolean isPK = (boolean) column.get("is_pk");
-            table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK));
+            boolean isfk = (boolean) column.get("is_fk");
+            table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK, isfk));
         }
 
         databases.get(currentDatabase).addTable(table);
@@ -629,6 +623,7 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj, out);
     }
+
 
 
     private static boolean isValidColumnType(String type) {
