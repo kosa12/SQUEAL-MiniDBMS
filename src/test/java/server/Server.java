@@ -10,6 +10,10 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.json.simple.JSONArray;
@@ -86,7 +90,7 @@ public class Server extends Thread {
 
     public void recreateFromJson(String jsonPath) {
         JSONParser parser = new JSONParser();
-        FileReader reader = null;
+
         try {
             File databasesDir = new File(jsonPath);
             if (!databasesDir.exists() || !databasesDir.isDirectory()) {
@@ -102,9 +106,10 @@ public class Server extends Thread {
 
             for (File databaseFile : databaseFiles) {
 
-                reader = new FileReader(databaseFile);
 
-                try {
+
+                try (FileReader reader = new FileReader(databaseFile);){
+
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
 
@@ -144,20 +149,17 @@ public class Server extends Thread {
                         }
                         databases.put(databaseName, database);
                         recreateFromMongoDB(databaseName);
+
                     }
                 } catch (IOException | ParseException e) {
                     throw new RuntimeException(e);
-                } finally {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
+
             }
-        } catch (FileNotFoundException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public ServerSocket getServerSocket() {
@@ -907,103 +909,103 @@ public class Server extends Thread {
 
     public static synchronized void handleDatabaseOperation(String operation, String databaseName, PrintWriter out) {
         JSONParser parser = new JSONParser();
-        FileReader fileReader = null;
+        Path databasePath = Paths.get("src/test/java/databases", databaseName + ".json");
 
         try {
-            File databasesDir = new File("src/test/java/databases");
-            if (!databasesDir.exists()) {
-                databasesDir.mkdirs();
+            // Ellenőrizzük, hogy létezik-e a mappa, ha nem, akkor létrehozzuk
+            Path databasesDir = Paths.get("src/test/java/databases");
+            if (!Files.exists(databasesDir)) {
+                Files.createDirectories(databasesDir);
             }
 
-            File databaseFile = new File(databasesDir, databaseName + ".json");
-            if (!databaseFile.exists()) {
-                try (FileWriter tempWriter = new FileWriter(databaseFile)) {
+            // Ellenőrizzük, hogy létezik-e a JSON fájl, ha nem, akkor létrehozzuk
+            if (!Files.exists(databasePath)) {
+                Files.createFile(databasePath);
+                try (BufferedWriter writer = Files.newBufferedWriter(databasePath)) {
                     JSONArray jsonArray = new JSONArray();
-                    tempWriter.write(jsonArray.toJSONString());
+                    writer.write(jsonArray.toJSONString());
                 }
             }
 
-            fileReader = new FileReader(databaseFile);
-            Object obj = parser.parse(fileReader);
-            JSONArray databasesCurr = (JSONArray) obj;
+            // A JSON fájl tartalmának beolvasása
+            try (BufferedReader reader = Files.newBufferedReader(databasePath)) {
+                Object obj = parser.parse(reader);
+                JSONArray databasesCurr = (JSONArray) obj;
 
-            if (operation.equals("create")) {
-                for (Object dbObj : databasesCurr) {
-                    JSONObject db = (JSONObject) dbObj;
-                    if (db.get("database_name").equals(databaseName)) {
-                        System.out.println("Database already exists: " + databaseName);
-                        out.println("> Database '" + databaseName + "' already exists.");
-                        return;
+                if (operation.equals("create")) {
+                    for (Object dbObj : databasesCurr) {
+                        JSONObject db = (JSONObject) dbObj;
+                        if (db.get("database_name").equals(databaseName)) {
+                            System.out.println("Database already exists: " + databaseName);
+                            out.println("> Database '" + databaseName + "' already exists.");
+                            return;
+                        }
                     }
-                }
 
-                JSONObject newDB = new JSONObject();
-                newDB.put("database_name", databaseName);
-                databasesCurr.add(newDB);
-                saveDatabaseJSON(databasesCurr, databaseFile);
-                databases.put(databaseName, new Database(databaseName));
+                    JSONObject newDB = new JSONObject();
+                    newDB.put("database_name", databaseName);
+                    databasesCurr.add(newDB);
 
-                System.out.println("Database created: " + databaseName);
-                out.println("> Database '" + databaseName + "' created.");
-            } else if (operation.equals("drop")) {
-                boolean found = false;
-                for (int i = 0; i < databasesCurr.size(); i++) {
-                    JSONObject db = (JSONObject) databasesCurr.get(i);
-                    if (db.get("database_name").equals(databaseName)) {
-                        databasesCurr.remove(i);
-                        found = true;
-                        break;
+                    // Frissítjük a JSON fájlt a megváltozott adatbázislistával
+                    saveDatabaseJSON(databasesCurr, databasePath);
+
+                    // Új adatbázis hozzáadása a memóriabeli listához
+                    databases.put(databaseName, new Database(databaseName));
+
+                    System.out.println("Database created: " + databaseName);
+                    out.println("> Database '" + databaseName + "' created.");
+                } else if (operation.equals("drop")) {
+                    boolean found = false;
+                    for (int i = 0; i < databasesCurr.size(); i++) {
+                        JSONObject db = (JSONObject) databasesCurr.get(i);
+                        if (db.get("database_name").equals(databaseName)) {
+                            databasesCurr.remove(i);
+                            found = true;
+                            break;
+                        }
                     }
-                }
 
-                if (!found) {
-                    System.out.println("Database '" + databaseName + "' not found.");
-                    out.println("> Database '" + databaseName + "' not found.");
-                } else {
-                    //
-                    //EZ ITT KELL LEGYEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    //
-                    fileReader.close();
-                    currentDatabase = null;
-                    try {
-                        if (databaseFile.delete()) {
+                    if (!found) {
+                        System.out.println("Database '" + databaseName + "' not found.");
+                        out.println("> Database '" + databaseName + "' not found.");
+                    } else {
+                        // Fájlolvasó bezárása
+                        reader.close();
+
+                        currentDatabase = null;
+                        try {
+                            // Fájl törlése
+                            Files.deleteIfExists(databasePath);
                             System.out.println("Database dropped: " + databaseName);
                             out.println("> Database '" + databaseName + "' dropped.");
+
+                            // Adatbázis eltávolítása a memóriabeli listából
                             databases.remove(databaseName);
-                        } else {
+                        } catch (NoSuchFileException e) {
                             System.out.println("Failed to drop database: " + databaseName);
                             out.println("> Failed to drop database: " + databaseName);
+                        } catch (SecurityException e) {
+                            System.out.println("Security exception occurred: " + e.getMessage());
+                            out.println("> Security exception occurred: " + e.getMessage());
                         }
-                    } catch (SecurityException e) {
-                        System.out.println("Security exception occurred: " + e.getMessage());
-                        out.println("> Security exception occurred: " + e.getMessage());
                     }
+                } else {
+                    System.out.println("Invalid operation: " + operation);
+                    out.println("> Invalid operation: " + operation);
                 }
-            } else {
-                System.out.println("Invalid operation: " + operation);
-                out.println("> Invalid operation: " + operation);
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (fileReader != null) {
-                    fileReader.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
-    private static void saveDatabaseJSON(JSONArray databases, File databaseFile) {
-        try (FileWriter writer = new FileWriter(databaseFile)) {
-            writer.write(databases.toJSONString() + "\n");
+    private static void saveDatabaseJSON(JSONArray databasesCurr, Path databasePath) {
+        try (BufferedWriter writer = Files.newBufferedWriter(databasePath)) {
+            writer.write(databasesCurr.toJSONString());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
     private Socket getClientSocket() {
         return this.clientSocket;
     }
