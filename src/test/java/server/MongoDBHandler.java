@@ -40,6 +40,18 @@ public class MongoDBHandler {
 
         collection.insertOne(document);
     }
+
+    public boolean indexExists(String databaseName, String indexName) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        for (String name : database.listCollectionNames()) {
+            if (name.equals(indexName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     public Document getDocumentByIndex(String databaseName, String collectionName, String indexKey, String indexValue) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);

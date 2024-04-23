@@ -706,9 +706,17 @@ public class Server extends Thread {
         String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim();
         String[] columns = columnsStr.split(",");
 
+
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         try {
             List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
+
+            if (mongoDBHandler.indexExists(currentDatabase, indexName + "-index")) {
+                System.out.println("Index name '" + indexName + "-index' already exists in MongoDB");
+                out.println("> Index name '" + indexName + "-index' already exists in MongoDB");
+                return;
+            }
+
 
             if (records.isEmpty()) {
                 System.out.println("No records found in MongoDB for table '" + tableName + "'");
