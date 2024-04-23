@@ -5,12 +5,18 @@ public class Attribute {
     private boolean isnull;
 
     private boolean ispk;
+    private boolean isfk;
 
-    public Attribute(String attributeName, String type, boolean isnull, boolean ispk) {
+    public Attribute(String attributeName, String type, boolean isnull, boolean ispk, boolean isfk) {
         this.attributeName = attributeName;
         this.type = type;
         this.isnull = isnull;
         this.ispk = ispk;
+        this.isfk = isfk;
+    }
+
+    public boolean isIsfk() {
+        return isfk;
     }
 
     public boolean isIspk() {
