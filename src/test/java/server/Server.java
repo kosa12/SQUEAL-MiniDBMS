@@ -711,12 +711,11 @@ public class Server extends Thread {
         try {
             List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
 
-            if (mongoDBHandler.indexExists(currentDatabase, indexName + "-index")) {
-                System.out.println("Index name '" + indexName + "-index' already exists in MongoDB");
-                out.println("> Index name '" + indexName + "-index' already exists in MongoDB");
+            if (mongoDBHandler.indexExists(currentDatabase, indexName + "-" + String.join("-", columns) + "-index")) {
+                System.out.println("Index name '" + indexName + "-" + String.join("_", columns) + "-index' already exists in MongoDB");
+                out.println("> Index name '" + indexName + "-" + String.join("_", columns) + "-index' already exists in MongoDB");
                 return;
             }
-
 
             if (records.isEmpty()) {
                 System.out.println("No records found in MongoDB for table '" + tableName + "'");
@@ -743,7 +742,6 @@ public class Server extends Thread {
                 String valuesFromRecord = record.getString("ertek");
                 String[] values = valuesFromRecord.split(";");
 
-                // Generate the composite index key
                 StringBuilder indexKeyBuilder = new StringBuilder();
                 for (int indexKey : indexKeys) {
                     indexKeyBuilder.append(values[indexKey - 1]).append(";");
@@ -756,12 +754,12 @@ public class Server extends Thread {
                     String existingPrimaryKey = existingDocument.getString("ertek");
                     existingPrimaryKey += ";" + primaryKeyValue;
                     existingDocument.put("ertek", existingPrimaryKey);
-                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-index", "_id", compositeIndexKey, "ertek", existingPrimaryKey);
+                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", "_id", compositeIndexKey, "ertek", existingPrimaryKey);
                 } else {
                     Document document = new Document();
                     document.append("_id", compositeIndexKey);
                     document.append("ertek", primaryKeyValue);
-                    mongoDBHandler.insertDocument(currentDatabase, indexName + "-index", document);
+                    mongoDBHandler.insertDocument(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", document);
                 }
             }
 
