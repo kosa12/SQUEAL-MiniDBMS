@@ -756,14 +756,16 @@ public class Server extends Thread {
                 return;
             }
 
+
+
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
                 String valuesFromRecord = record.getString("ertek");
                 String[] values = valuesFromRecord.split(";");
 
                 StringBuilder indexKeyBuilder = new StringBuilder();
-                for (int indexKey : indexKeys) {
-                    indexKeyBuilder.append(values[indexKey - 1]).append(";");
+                for (int i=0; i< values.length; i++) {
+                    indexKeyBuilder.append(values[i]).append(";");
                 }
                 String compositeIndexKey = indexKeyBuilder.toString();
 
@@ -792,18 +794,18 @@ public class Server extends Thread {
         }
     }
 
-    private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
-        List<Integer> indexKeys = new ArrayList<>();
-        for (String column : columns) {
-            column = column.trim();
-            int indexKey = getIndexKey(tableFormat, column);
-            if (indexKey == -1) {
-                return Collections.singletonList(-1);
+        private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
+            List<Integer> indexKeys = new ArrayList<>();
+            for (String column : columns) {
+                column = column.trim();
+                int indexKey = getIndexKey(tableFormat, column);
+                if (indexKey == -1) {
+                    return Collections.singletonList(-1);
+                }
+                indexKeys.add(indexKey);
             }
-            indexKeys.add(indexKey);
+            return indexKeys;
         }
-        return indexKeys;
-    }
 
 
     public static JSONObject readTableFormat(String databaseName, String tableName, PrintWriter out) {
@@ -842,6 +844,7 @@ public class Server extends Thread {
         for (int i = 0; i < attributes.size(); i++) {
             JSONObject attribute = (JSONObject) attributes.get(i);
             if (attribute.get("name").equals(column)) {
+                System.out.println(i + column);
                 return i;
             }
         }
