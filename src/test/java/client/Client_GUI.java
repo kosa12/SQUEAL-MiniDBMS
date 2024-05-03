@@ -5,11 +5,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.io.PrintStream;
-
 
 public class Client_GUI extends JFrame {
     private final JPanel jPanel;
@@ -21,7 +16,7 @@ public class Client_GUI extends JFrame {
 
     private final JMenuItem exit;
 
-    private FileExplorer fileExplorer;
+    private final FileExplorer fileExplorer;
 
     private Client client;
 
@@ -139,12 +134,7 @@ public class Client_GUI extends JFrame {
 
 
 
-        exit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
+        exit.addActionListener(_ -> dispose());
 
         clear.addActionListener(new ActionListener() {
             @Override

@@ -1,7 +1,6 @@
 package data;
 
 import org.bson.Document;
-import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,20 +8,14 @@ import java.util.List;
 import com.mongodb.client.MongoCollection;
 
 public class Table {
-    private String tableName;
+    private final String tableName;
     private final ArrayList<Attribute> attributes;
-    private String pKAttrName;
     private final List<String> pkList;
-    private String primaryKeyAttributeName;
-
-    private MongoCollection<Document> collection;
-    private JSONObject referencingInfo;
+    private String pkName;
 
     public Table(String tableName, String pKAttrName, MongoCollection<Document> collection) {
         this.tableName = tableName;
-        this.pKAttrName = pKAttrName;
         attributes = new ArrayList<>();
-        this.collection = collection;
         this.pkList = new ArrayList<>();
     }
 
@@ -48,7 +41,7 @@ public class Table {
     }
 
     public void setpKAttrName(String pKAttrName) {
-        this.pKAttrName = pKAttrName;
+        this.pkName = pKAttrName;
     }
 
     public ArrayList<Attribute> getAttributes() {
@@ -66,10 +59,6 @@ public class Table {
             }
         }
         return false;
-    }
-
-    public void setReferencingInfo(JSONObject referencingInfo) {
-        this.referencingInfo = referencingInfo;
     }
 
 
