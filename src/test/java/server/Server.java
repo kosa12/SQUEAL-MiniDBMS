@@ -9,6 +9,7 @@ import data.Table;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
+    private final boolean isRunning = true;
     private static MongoClient mongoClient;
     private Socket clientSocket;
 
@@ -41,7 +43,6 @@ public class Server extends Thread {
         try {
             serverSocket = new ServerSocket(10000);
             System.out.println("Server is running...");
-            boolean isRunning = true;
             while (isRunning) {
                 try {
                     clientSocket = serverSocket.accept();
@@ -72,7 +73,6 @@ public class Server extends Thread {
                     Object idValue = document.get("_id");
                     if (idValue != null) {
                         String primaryKeyAttribute = idValue.toString();
-                        assert table != null;
                         table.addPKtoList(primaryKeyAttribute);
                     } else {
                         System.out.println("No value found for _id field in document.");
@@ -92,7 +92,7 @@ public class Server extends Thread {
                 return;
             }
 
-            File[] databaseFiles = databasesDir.listFiles((_, name) -> name.endsWith(".json") && !name.contains("index"));
+            File[] databaseFiles = databasesDir.listFiles((dir, name) -> name.endsWith(".json") && !name.contains("index"));
             if (databaseFiles == null) {
                 System.out.println("No database files found in directory: " + jsonPath);
                 return;
@@ -102,7 +102,7 @@ public class Server extends Thread {
 
 
 
-                try (FileReader reader = new FileReader(databaseFile)){
+                try (FileReader reader = new FileReader(databaseFile);){
 
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
@@ -206,7 +206,7 @@ public class Server extends Thread {
                                 out.println("Invalid SHOW command: " + command);
                             }
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
-                            insertRow(command, out);
+                            insertRow(command, out, clientSocket);
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                             deleteRow(command, out);
                         } else if (parts.length >= 3) {
@@ -303,7 +303,7 @@ public class Server extends Thread {
         }
     }
 
-    private static void insertRow(String command, PrintWriter out) {
+    private static void insertRow(String command, PrintWriter out, Socket clientSocket) {
         if (!command.toLowerCase().contains("insert into")) {
             out.println("> Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
             return;
@@ -438,13 +438,18 @@ public class Server extends Thread {
     }
 
     private static Object convertValue(String value, String type) {
-        return switch (type.toLowerCase()) {
-            case "int" -> Integer.parseInt(value);
-            case "float" -> Float.parseFloat(value);
-            case "bit" -> Boolean.parseBoolean(value);
-            case "date", "datetime", "varchar" -> value;
-            default -> null;
-        };
+        switch (type.toLowerCase()) {
+            case "int":
+                return Integer.parseInt(value);
+            case "float":
+                return Float.parseFloat(value);
+            case "bit":
+                return Boolean.parseBoolean(value);
+            case "date", "datetime", "varchar":
+                return value;
+            default:
+                return null;
+        }
     }
 
 
@@ -480,6 +485,7 @@ public class Server extends Thread {
             return;
         }
 
+        String primaryKeyAttributeName = null;
         HashSet<String> foreignKeyAttributeNames = new HashSet<>();
 
         JSONArray tableColumns = new JSONArray();
@@ -599,7 +605,7 @@ public class Server extends Thread {
                     return;
                 }
 
-                JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.getFirst()).get("tables");
+                JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.get(0)).get("tables");
 
                 JSONObject referencedTableJson = null;
 
@@ -721,8 +727,9 @@ public class Server extends Thread {
 
         try (FileReader reader = new FileReader(jsonPath)) {
             Object obj = jsonParser.parse(reader);
-            if (obj instanceof JSONArray jsonArray) {
-                if (!jsonArray.isEmpty()) {
+            if (obj instanceof JSONArray) {
+                JSONArray jsonArray = (JSONArray) obj;
+                if (jsonArray.size() > 0) {
                     return jsonArray;
                 } else {
                     System.err.println("Error: The database JSON array is empty.");
@@ -869,8 +876,6 @@ public class Server extends Thread {
                 return;
             }
 
-
-
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
                 String valuesFromRecord = record.getString("ertek");
@@ -878,10 +883,8 @@ public class Server extends Thread {
                 String[] values = everything.split(";");
 
                 StringBuilder indexKeyBuilder = new StringBuilder();
-
                 for (int indexKey : indexKeys) {
                     indexKeyBuilder.append(values[indexKey]).append(";");
-
                 }
 
                 String compositeIndexKey = indexKeyBuilder.toString();
@@ -911,18 +914,19 @@ public class Server extends Thread {
         }
     }
 
-        private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
-            List<Integer> indexKeys = new ArrayList<>();
-            for (String column : columns) {
-                column = column.trim();
-                int indexKey = getIndexKey(tableFormat, column);
-                if (indexKey == -1) {
-                    return Collections.singletonList(-1);
-                }
-                indexKeys.add(indexKey);
+    private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
+        List<Integer> indexKeys = new ArrayList<>();
+        for (String column : columns) {
+            column = column.trim();
+            int indexKey = getIndexKey(tableFormat, column);
+            if (indexKey == -1) {
+                return Collections.singletonList(-1);
             }
-            return indexKeys;
+            indexKeys.add(indexKey);
         }
+        return indexKeys;
+    }
+
 
     private static int getIndexKey(JSONObject tableFormat, String column) {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
@@ -936,7 +940,6 @@ public class Server extends Thread {
     }
 
 
-    
     public static JSONObject readTableFormat(String databaseName, String tableName, PrintWriter out) {
         JSONParser parser = new JSONParser();
         try {
@@ -967,20 +970,6 @@ public class Server extends Thread {
             return null;
         }
     }
-
-
-    private static int getIndexKey(JSONObject tableFormat, String column) {
-        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
-        for (int i = 0; i < attributes.size(); i++) {
-            JSONObject attribute = (JSONObject) attributes.get(i);
-            if (attribute.get("name").equals(column)) {
-                System.out.println(i + column);
-                return i;
-            }
-        }
-        return -1;
-    }
-
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj, PrintWriter out) {
         JSONParser parser = new JSONParser();
@@ -1139,6 +1128,9 @@ public class Server extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    private Socket getClientSocket() {
+        return this.clientSocket;
     }
 
 }
