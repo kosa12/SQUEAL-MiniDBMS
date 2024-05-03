@@ -9,19 +9,20 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.*;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 public class VisualEditorFrame extends JFrame {
-    private JPanel panel, bpanel;
-    private JTable table;
-    private String clickedTableName;
-    private String currentDatabase;
-    private JButton delSelRow, insertNewRow;
-    private Client client;
+    private final JPanel panel;
+    private final JPanel bpanel;
+    private final JTable table;
+    private final String clickedTableName;
+    private final String currentDatabase;
+    private final JButton delSelRow;
+    private final JButton insertNewRow;
+    private final Client client;
 
-    private JButton exit;
+    private final JButton exit;
 
     public VisualEditorFrame(String tableName, String databaseName, Client client) {
         this.clickedTableName = tableName;
@@ -66,6 +67,7 @@ public class VisualEditorFrame extends JFrame {
         }
 
         JScrollPane tscp = new JScrollPane(table);
+        assert attributeNames != null;
         tscp.setPreferredSize(new Dimension(attributeNames.length * 200, 450));
 
         panel.add(tscp);
@@ -78,9 +80,9 @@ public class VisualEditorFrame extends JFrame {
         delSelRow.setPreferredSize(new Dimension(160, 100));
         exit.setPreferredSize(new Dimension(160, 100));
 
-        delSelRow.addActionListener(e -> deleteSelectedRow());
-        insertNewRow.addActionListener(e -> insertRow());
-        exit.addActionListener(e -> exitNOW());
+        delSelRow.addActionListener(_ -> deleteSelectedRow());
+        insertNewRow.addActionListener(_ -> insertRow());
+        exit.addActionListener(_ -> exitNOW());
 
         bpanel.add(exit);
         bpanel.add(insertNewRow);
