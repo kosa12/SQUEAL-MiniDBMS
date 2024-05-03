@@ -1,5 +1,7 @@
 # SQUEAL - Database Management System (DBMS) 📂
 
+![GIF](https://github.com/kosa12/SQUEAL-MiniDBMS/blob/master/src/main/resources/introgif-ezgif.com-crop.gif)
+
 The Database Management System (DBMS) project is a Java-based application that provides essential functionalities for managing databases and tables in MongoDB. It allows users to view, insert, update, and delete data in MongoDB collections using a user-friendly interface.
 
 
