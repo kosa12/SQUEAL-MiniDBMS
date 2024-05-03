@@ -2,6 +2,7 @@ package data;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import org.json.simple.JSONObject;
 
 public class Database {
     private String dataBaseName;
@@ -52,5 +53,12 @@ public class Database {
 
     public ArrayList<Table> getTables() {
         return tables;
+    }
+
+    public void setReferencingInfo(String tableName, JSONObject referencingInfo) {
+        Table table = getTable(tableName);
+        if (table != null) {
+            table.setReferencingInfo(referencingInfo);
+        }
     }
 }
