@@ -939,6 +939,8 @@ public class Server extends Thread {
         return -1;
     }
 
+
+    
     public static JSONObject readTableFormat(String databaseName, String tableName, PrintWriter out) {
         JSONParser parser = new JSONParser();
         try {
