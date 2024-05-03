@@ -2,15 +2,11 @@ package server;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class Server_GUI extends JFrame {
-    private final JButton start;
-    private final JButton stop;
     private final JTextArea logTextArea;
     private Server server;
 
@@ -20,27 +16,17 @@ public class Server_GUI extends JFrame {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(950, 350));
 
-        start = new JButton("START SERVER");
+        JButton start = new JButton("START SERVER");
         start.setPreferredSize(new Dimension(460,50));
         start.setBackground(new Color(239, 240, 243));
 
-        stop = new JButton("STOP SERVER");
+        JButton stop = new JButton("STOP SERVER");
         stop.setPreferredSize(new Dimension(460,50));
         stop.setBackground(new Color(239, 240, 243));
 
-        start.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                startServer();
-            }
-        });
+        start.addActionListener(_ -> startServer());
 
-        stop.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopServer();
-            }
-        });
+        stop.addActionListener(_ -> stopServer());
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(start);
@@ -112,10 +98,6 @@ public class Server_GUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new Server_GUI();
-            }
-        });
+        SwingUtilities.invokeLater(() -> new Server_GUI());
     }
 }

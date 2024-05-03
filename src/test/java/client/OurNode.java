@@ -8,8 +8,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class OurNode extends DefaultMutableTreeNode {
-    private String currentDatabase;
-    private Client client;
+    private final String currentDatabase;
+    private final Client client;
 
     public OurNode(Object userObject, String currentDatabase, Client client) {
         super(userObject);
@@ -18,7 +18,7 @@ public class OurNode extends DefaultMutableTreeNode {
     }
 
     public static class OurMouseListener extends MouseAdapter {
-        private Client client;
+        private final Client client;
 
         public OurMouseListener(Client client) {
             this.client = client;
@@ -42,7 +42,7 @@ public class OurNode extends DefaultMutableTreeNode {
         private void showPopupMenu(Component component, int x, int y, String name, String currentDatabase, Client client) {
             JPopupMenu popupMenu = new JPopupMenu();
             JMenuItem menuItem = new JMenuItem("Visual Editor");
-            menuItem.addActionListener(e -> {
+            menuItem.addActionListener(_ -> {
                 System.out.println("Visual Editor - selected: " + name);
                 System.out.println("Current Database: " + currentDatabase);
 

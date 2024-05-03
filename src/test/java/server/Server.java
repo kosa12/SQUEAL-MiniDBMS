@@ -9,7 +9,6 @@ import data.Table;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -27,7 +26,6 @@ public class Server extends Thread {
     private ServerSocket serverSocket;
     private static final HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
-    private final boolean isRunning = true;
     private static MongoClient mongoClient;
     private Socket clientSocket;
 
@@ -43,6 +41,7 @@ public class Server extends Thread {
         try {
             serverSocket = new ServerSocket(10000);
             System.out.println("Server is running...");
+            boolean isRunning = true;
             while (isRunning) {
                 try {
                     clientSocket = serverSocket.accept();
@@ -73,6 +72,7 @@ public class Server extends Thread {
                     Object idValue = document.get("_id");
                     if (idValue != null) {
                         String primaryKeyAttribute = idValue.toString();
+                        assert table != null;
                         table.addPKtoList(primaryKeyAttribute);
                     } else {
                         System.out.println("No value found for _id field in document.");
@@ -92,7 +92,7 @@ public class Server extends Thread {
                 return;
             }
 
-            File[] databaseFiles = databasesDir.listFiles((dir, name) -> name.endsWith(".json") && !name.contains("index"));
+            File[] databaseFiles = databasesDir.listFiles((_, name) -> name.endsWith(".json") && !name.contains("index"));
             if (databaseFiles == null) {
                 System.out.println("No database files found in directory: " + jsonPath);
                 return;
@@ -102,7 +102,7 @@ public class Server extends Thread {
 
 
 
-                try (FileReader reader = new FileReader(databaseFile);){
+                try (FileReader reader = new FileReader(databaseFile)){
 
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
@@ -206,7 +206,7 @@ public class Server extends Thread {
                                 out.println("Invalid SHOW command: " + command);
                             }
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("INSERT") && parts[1].equalsIgnoreCase("INTO")) {
-                            insertRow(command, out, clientSocket);
+                            insertRow(command, out);
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                             deleteRow(command, out);
                         } else if (parts.length >= 3) {
@@ -303,7 +303,7 @@ public class Server extends Thread {
         }
     }
 
-    private static void insertRow(String command, PrintWriter out, Socket clientSocket) {
+    private static void insertRow(String command, PrintWriter out) {
         if (!command.toLowerCase().contains("insert into")) {
             out.println("> Invalid INSERT command format: Missing 'INSERT INTO' keyword.");
             return;
@@ -438,18 +438,13 @@ public class Server extends Thread {
     }
 
     private static Object convertValue(String value, String type) {
-        switch (type.toLowerCase()) {
-            case "int":
-                return Integer.parseInt(value);
-            case "float":
-                return Float.parseFloat(value);
-            case "bit":
-                return Boolean.parseBoolean(value);
-            case "date", "datetime", "varchar":
-                return value;
-            default:
-                return null;
-        }
+        return switch (type.toLowerCase()) {
+            case "int" -> Integer.parseInt(value);
+            case "float" -> Float.parseFloat(value);
+            case "bit" -> Boolean.parseBoolean(value);
+            case "date", "datetime", "varchar" -> value;
+            default -> null;
+        };
     }
 
 
@@ -485,7 +480,6 @@ public class Server extends Thread {
             return;
         }
 
-        String primaryKeyAttributeName = null;
         HashSet<String> foreignKeyAttributeNames = new HashSet<>();
 
         JSONArray tableColumns = new JSONArray();
@@ -605,7 +599,7 @@ public class Server extends Thread {
                     return;
                 }
 
-                JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.get(0)).get("tables");
+                JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.getFirst()).get("tables");
 
                 JSONObject referencedTableJson = null;
 
@@ -727,9 +721,8 @@ public class Server extends Thread {
 
         try (FileReader reader = new FileReader(jsonPath)) {
             Object obj = jsonParser.parse(reader);
-            if (obj instanceof JSONArray) {
-                JSONArray jsonArray = (JSONArray) obj;
-                if (jsonArray.size() > 0) {
+            if (obj instanceof JSONArray jsonArray) {
+                if (!jsonArray.isEmpty()) {
                     return jsonArray;
                 } else {
                     System.err.println("Error: The database JSON array is empty.");
@@ -1129,9 +1122,6 @@ public class Server extends Thread {
         }
     }
 
-    private Socket getClientSocket() {
-        return this.clientSocket;
-    }
 
 }
 

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MongoDBHandler {
-    private MongoClient mongoClient;
+    private final MongoClient mongoClient;
 
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
@@ -120,13 +120,10 @@ public class MongoDBHandler {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
-        MongoCursor<Document> cursor = collection.find().iterator();
-        try {
+        try (MongoCursor<Document> cursor = collection.find().iterator()) {
             while (cursor.hasNext()) {
                 documents.add(cursor.next());
             }
-        } finally {
-            cursor.close();
         }
 
         return documents;
