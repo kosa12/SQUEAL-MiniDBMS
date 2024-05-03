@@ -27,7 +27,6 @@ public class ClientMain {
 
             public void actionPerformed(ActionEvent o) {
                 Client_GUI gui = new Client_GUI(client);
-
                 JMenuItem executeButton = gui.getExecuteButton();
                 JTextArea outputTextArea = gui.getOutputTextArea();
                 executeButton.addActionListener(e -> {

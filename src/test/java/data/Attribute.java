@@ -1,4 +1,8 @@
 package data;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 public class Attribute {
     private String attributeName;
     private String type;
@@ -6,13 +10,15 @@ public class Attribute {
 
     private boolean ispk;
     private boolean isfk;
+    private JSONArray fkKeys;
 
-    public Attribute(String attributeName, String type, boolean isnull, boolean ispk, boolean isfk) {
+    public Attribute(String attributeName, String type, boolean isnull, boolean ispk, boolean isfk, JSONArray fkKeys) {
         this.attributeName = attributeName;
         this.type = type;
         this.isnull = isnull;
         this.ispk = ispk;
         this.isfk = isfk;
+        this.fkKeys = fkKeys;
     }
 
     public boolean isIsfk() {
@@ -51,5 +57,4 @@ public class Attribute {
     public void setIsnull(boolean isnull) {
         this.isnull = isnull;
     }
-
 }

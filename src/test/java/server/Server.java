@@ -46,16 +46,11 @@ public class Server extends Thread {
             while (isRunning) {
                 try {
                     clientSocket = serverSocket.accept();
-                    if (isRunning) {
-                        System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
-                    }
+                    System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
                     clientSocket.setSoTimeout(500000);
-                } catch (SocketException se) {
-                    if (!isRunning) {
-                        System.out.println("Server is shutting down...");
-                        break;
-                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         } catch (IOException e) {
@@ -84,7 +79,6 @@ public class Server extends Thread {
                     }
                 }
             }
-
         }
     }
 
@@ -136,12 +130,13 @@ public class Server extends Thread {
                                     boolean attributeNotNull = (boolean) attributeJson.get("not_null");
                                     boolean attributeIsPK = (boolean) attributeJson.get("is_pk");
                                     boolean attributeIsFK = (boolean) attributeJson.get("is_fk");
+                                    JSONArray fkKeys = (JSONArray) attributeJson.get("is_referenced_by_fk");
 
                                     if (attributeIsPK) {
                                         table.setpKAttrName(attributeName);
                                     }
 
-                                    table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK, attributeIsFK));
+                                    table.addAttribute(new Attribute(attributeName, attributeType, attributeNotNull, attributeIsPK, attributeIsFK, fkKeys));
                                 }
                                 database.addTable(table);
 
@@ -527,12 +522,17 @@ public class Server extends Thread {
             if (!goodSyntax) {
                 return;
             }
-
+            JSONObject columnObj = new JSONObject();
             String attributeName = columnParts[0];
             String attributeType = columnParts[1];
             boolean notNull = false;
             boolean isPK = false;
             boolean isForeignKey = false;
+
+            String referencedTableName = "";
+            String referencedAttributeName = "";
+            String fkName = "";
+            String fkTableName = "";
 
             for (int i = 2; i < columnParts.length; i++) {
                 String keyword = columnParts[i].toUpperCase();
@@ -549,24 +549,23 @@ public class Server extends Thread {
                         out.println("> Only one primary key is allowed.");
                         return;
                     }
-                    primaryKeyAttributeName = attributeName;
                     isPK = true;
                     hasPrimaryKey = true;
                     i++;
                 } else if (keyword.equalsIgnoreCase("FOREIGN") && i + 1 < columnParts.length && columnParts[i + 1].equalsIgnoreCase("KEY")) {
-                    if (columnParts.length < 7 || !columnParts[5].equalsIgnoreCase("REFERENCES")) {
+                    if (columnParts.length < 6 || !columnParts[4].equalsIgnoreCase("REFERENCES")) {
                         out.println("> Invalid FOREIGN KEY syntax.");
                         return;
                     }
 
-                    String referencedTableAndAttr = columnParts[6];
+                    String referencedTableAndAttr = columnParts[5];
                     String[] referencedParts = referencedTableAndAttr.split("[()]");
                     if (referencedParts.length != 2) {
                         out.println("> Invalid syntax for referenced table and attribute: " + referencedTableAndAttr);
                         return;
                     }
-                    String referencedTableName = referencedParts[0];
-                    String referencedAttributeName = referencedParts[1];
+                    referencedTableName = referencedParts[0];
+                    referencedAttributeName = referencedParts[1];
 
                     if (!databases.get(currentDatabase).hasTable(referencedTableName)) {
                         out.println("> Referenced table '" + referencedTableName + "' does not exist.");
@@ -580,20 +579,103 @@ public class Server extends Thread {
 
                     isForeignKey = true;
                     foreignKeyAttributeNames.add(attributeName);
+                    fkName = attributeName;
+                    fkTableName = tableName;
 
-                    i += 5;
+                    i+=5;
                 } else {
                     out.println("> Invalid keyword in column definition: " + columnParts[i]);
                     return;
                 }
             }
 
-            JSONObject columnObj = new JSONObject();
             columnObj.put("name", attributeName);
             columnObj.put("type", attributeType);
             columnObj.put("is_pk", isPK);
             columnObj.put("not_null", notNull);
             columnObj.put("is_fk", isForeignKey);
+            columnObj.put("is_referenced_by_fk", new JSONArray());
+
+
+            if (isForeignKey) {
+                String path = "src/test/java/databases/" + currentDatabase + ".json";
+                JSONArray currentDatabaseJson = getCurrentDatabaseJson(path);
+                if (currentDatabaseJson == null) {
+                    out.println("> Error: Unable to load current database JSON.");
+                    return;
+                }
+
+                JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.get(0)).get("tables");
+
+                JSONObject referencedTableJson = null;
+
+                for (Object tableObj : tablesArray) {
+                    JSONObject tableJson = (JSONObject) tableObj;
+                    String tableName2 = (String) tableJson.get("table_name");
+
+                    if (tableName2.equals(referencedTableName)) {
+                        referencedTableJson = tableJson;
+                        break;
+                    }
+                }
+
+                if (referencedTableJson == null) {
+                    out.println("> Error: Referenced table '" + referencedTableName + "' not found.");
+                    return;
+                }
+
+                JSONArray columnsArray = (JSONArray) referencedTableJson.get("attributes");
+                int attributeIndex = -1;
+
+                for (int i = 0; i < columnsArray.size(); i++) {
+                    JSONObject columnJson = (JSONObject) columnsArray.get(i);
+                    String columnName = (String) columnJson.get("name");
+
+                    if (columnName.equals(referencedAttributeName)) {
+                        attributeIndex = i;
+                        break;
+                    }
+                }
+
+                if (attributeIndex == -1) {
+                    out.println("> Error: Referenced attribute '" + referencedAttributeName + "' not found in the referenced table.");
+                    return;
+                }
+
+                JSONObject fkReferenceJson = new JSONObject();
+                fkReferenceJson.put("fkName", fkName);
+                fkReferenceJson.put("fkTableName", fkTableName);
+
+                JSONArray isReferencedByFkArray = getJsonArray(columnsArray, attributeIndex);
+                isReferencedByFkArray.add(fkReferenceJson);
+
+                FileWriter writer = null;
+                try {
+                    writer = new FileWriter(path);
+
+                    for (int i = 0; i < tablesArray.size(); i++) {
+                        JSONObject tableObj = (JSONObject) tablesArray.get(i);
+                        String tableName2 = (String) tableObj.get("table_name");
+                        if (tableName2.equals(referencedTableName)) {
+                            tablesArray.set(i, referencedTableJson);
+                            break;
+                        }
+                    }
+
+                    writer.write(currentDatabaseJson.toJSONString());
+                } catch (IOException e) {
+                    out.println("> Error: Unable to write to current database JSON file.");
+                    return;
+                } finally {
+                    if (writer != null) {
+                        try {
+                            writer.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
 
             tableColumns.add(columnObj);
         }
@@ -616,7 +698,8 @@ public class Server extends Thread {
             boolean notNull = (boolean) column.get("not_null");
             boolean isPK = (boolean) column.get("is_pk");
             boolean isfk = (boolean) column.get("is_fk");
-            table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK, isfk));
+            JSONArray fkKeys = (JSONArray) column.get("is_referenced_by_fk") ;
+            table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK, isfk, fkKeys));
         }
 
         databases.get(currentDatabase).addTable(table);
@@ -625,6 +708,43 @@ public class Server extends Thread {
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj, out);
     }
+
+    private static JSONArray getJsonArray(JSONArray columnsArray, int attributeIndex) {
+        JSONArray isReferencedByFkArray;
+        JSONObject attributeJson = (JSONObject) columnsArray.get(attributeIndex);
+        if (attributeJson.containsKey("is_referenced_by_fk")) {
+            Object isReferencedByFkObj = attributeJson.get("is_referenced_by_fk");
+            isReferencedByFkArray = (JSONArray) isReferencedByFkObj;
+        } else {
+            isReferencedByFkArray = new JSONArray();
+            attributeJson.put("is_referenced_by_fk", isReferencedByFkArray);
+        }
+        return isReferencedByFkArray;
+    }
+
+    private static JSONArray getCurrentDatabaseJson(String jsonPath) {
+        JSONParser jsonParser = new JSONParser();
+
+        try (FileReader reader = new FileReader(jsonPath)) {
+            Object obj = jsonParser.parse(reader);
+            if (obj instanceof JSONArray) {
+                JSONArray jsonArray = (JSONArray) obj;
+                if (jsonArray.size() > 0) {
+                    return jsonArray;
+                } else {
+                    System.err.println("Error: The database JSON array is empty.");
+                    return null;
+                }
+            } else {
+                System.err.println("Error: The database JSON file does not contain a valid JSON array.");
+                return null;
+            }
+        } catch (IOException | ParseException e) {
+            System.err.println("Error reading database JSON file: " + e.getMessage());
+            return null;
+        }
+    }
+
 
 
 
@@ -759,12 +879,14 @@ public class Server extends Thread {
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
                 String valuesFromRecord = record.getString("ertek");
-                String[] values = valuesFromRecord.split(";");
+                String everything = primaryKeyValue + ";" +valuesFromRecord;
+                String[] values = everything.split(";");
 
                 StringBuilder indexKeyBuilder = new StringBuilder();
                 for (int indexKey : indexKeys) {
-                    indexKeyBuilder.append(values[indexKey - 1]).append(";");
+                    indexKeyBuilder.append(values[indexKey]).append(";");
                 }
+
                 String compositeIndexKey = indexKeyBuilder.toString();
 
                 Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", "_id", compositeIndexKey);
@@ -806,6 +928,17 @@ public class Server extends Thread {
     }
 
 
+    private static int getIndexKey(JSONObject tableFormat, String column) {
+        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
+        for (int i = 0; i < attributes.size(); i++) {
+            JSONObject attribute = (JSONObject) attributes.get(i);
+            if (attribute.get("name").equals(column)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static JSONObject readTableFormat(String databaseName, String tableName, PrintWriter out) {
         JSONParser parser = new JSONParser();
         try {
@@ -835,17 +968,6 @@ public class Server extends Thread {
             out.println("> Error reading table format JSON file: " + e.getMessage());
             return null;
         }
-    }
-
-    private static int getIndexKey(JSONObject tableFormat, String column) {
-        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
-        for (int i = 0; i < attributes.size(); i++) {
-            JSONObject attribute = (JSONObject) attributes.get(i);
-            if (attribute.get("name").equals(column)) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private static void updateDatabaseWithTable(String tableName, JSONObject tableObj, PrintWriter out) {

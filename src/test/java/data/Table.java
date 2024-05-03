@@ -8,7 +8,6 @@ import java.util.List;
 
 import com.mongodb.client.MongoCollection;
 
-
 public class Table {
     private String tableName;
     private final ArrayList<Attribute> attributes;
@@ -20,6 +19,7 @@ public class Table {
     private String primaryKeyAttributeName;
 
     private MongoCollection<Document> collection;
+    private JSONObject referencingInfo;
 
     public Table(String tableName, String pKAttrName, MongoCollection<Document> collection) {
         this.tableName = tableName;
@@ -95,6 +95,23 @@ public class Table {
 
     public void addIndexFile(IndexFile indexFile) {
         indexFiles.add(indexFile);
+    }
+
+    public Attribute getAttribute(String attributeName) {
+        for (Attribute attribute : attributes) {
+            if (attribute.getAttributeName().equals(attributeName)) {
+                return attribute;
+            }
+        }
+        return null; // Return null if attribute not found
+    }
+
+    public JSONObject getReferencingInfo() {
+        return referencingInfo;
+    }
+
+    public void setReferencingInfo(JSONObject referencingInfo) {
+        this.referencingInfo = referencingInfo;
     }
 
 

@@ -82,7 +82,6 @@ public class Server_GUI extends JFrame {
                 logMessage("Server is shutting down...");
                 System.exit(0);
             }
-
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
