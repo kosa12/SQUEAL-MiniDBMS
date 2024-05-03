@@ -12,9 +12,6 @@ public class Table {
     private String tableName;
     private final ArrayList<Attribute> attributes;
     private String pKAttrName;
-    private final ArrayList<ForeignKey> foreignKeys;
-    private final ArrayList<IndexFile> indexFiles;
-
     private final List<String> pkList;
     private String primaryKeyAttributeName;
 
@@ -25,8 +22,6 @@ public class Table {
         this.tableName = tableName;
         this.pKAttrName = pKAttrName;
         attributes = new ArrayList<>();
-        indexFiles = new ArrayList<>();
-        foreignKeys = new ArrayList<>();
         this.collection = collection;
         this.pkList = new ArrayList<>();
     }
@@ -52,14 +47,6 @@ public class Table {
         return tableName;
     }
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public String getpKAttrName() {
-        return pKAttrName;
-    }
-
     public void setpKAttrName(String pKAttrName) {
         this.pKAttrName = pKAttrName;
     }
@@ -79,35 +66,6 @@ public class Table {
             }
         }
         return false;
-    }
-
-    public ArrayList<ForeignKey> getForeignKeys() {
-        return foreignKeys;
-    }
-
-    public void addForeignKey(ForeignKey foreignKey) {
-        foreignKeys.add(foreignKey);
-    }
-
-    public ArrayList<IndexFile> getIndexFiles() {
-        return indexFiles;
-    }
-
-    public void addIndexFile(IndexFile indexFile) {
-        indexFiles.add(indexFile);
-    }
-
-    public Attribute getAttribute(String attributeName) {
-        for (Attribute attribute : attributes) {
-            if (attribute.getAttributeName().equals(attributeName)) {
-                return attribute;
-            }
-        }
-        return null; // Return null if attribute not found
-    }
-
-    public JSONObject getReferencingInfo() {
-        return referencingInfo;
     }
 
     public void setReferencingInfo(JSONObject referencingInfo) {

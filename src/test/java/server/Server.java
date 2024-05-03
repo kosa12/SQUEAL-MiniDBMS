@@ -927,7 +927,6 @@ public class Server extends Thread {
         return indexKeys;
     }
 
-
     private static int getIndexKey(JSONObject tableFormat, String column) {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         for (int i = 0; i < attributes.size(); i++) {
@@ -1129,6 +1128,7 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+
     private Socket getClientSocket() {
         return this.clientSocket;
     }
