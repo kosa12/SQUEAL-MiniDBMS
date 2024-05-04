@@ -100,8 +100,6 @@ public class Server extends Thread {
 
             for (File databaseFile : databaseFiles) {
 
-
-
                 try (FileReader reader = new FileReader(databaseFile)){
 
                     Object obj = parser.parse(reader);
@@ -780,6 +778,7 @@ public class Server extends Thread {
             fileReader = new FileReader(databaseFile);
             Object obj = parser.parse(fileReader);
             JSONArray databaseJson = (JSONArray) obj;
+            JSONArray updatedFKJson = new JSONArray();
 
             JSONObject databaseObj = (JSONObject) databaseJson.getFirst();
             JSONArray tablesArray = (JSONArray) databaseObj.get("tables");
@@ -790,15 +789,36 @@ public class Server extends Thread {
                 if (tableObj.get("table_name").equals(tableName)) {
                     tableFound = true;
                     tableIndex = i;
+                    JSONArray attributesArray = (JSONArray) tableObj.get("attributes");
+                    for (Object attributeObj : attributesArray) {
+                        JSONObject attribute = (JSONObject) attributeObj;
+                        if (attribute.containsKey("is_fk") && (boolean) attribute.get("is_fk")) {
+                            updatedFKJson=removeReferencesFromOtherTables(tableName, (String) attribute.get("name"), out);
+                        }
+                        if (attribute.containsKey("is_referenced_by_fk") && attribute.get("is_referenced_by_fk") != null) {
+                            System.out.println("Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
+                            out.println("> Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
+                            return;
+                        }
+                    }
                     break;
                 }
             }
 
             if (tableFound) {
-                tablesArray.remove(tableIndex);
                 try {
                     fileReader.close();
                     fileWriter = new FileWriter(databaseFile);
+
+                    if (!updatedFKJson.isEmpty() || updatedFKJson==null || updatedFKJson.size()==0) {
+                        databaseJson = updatedFKJson;
+                        databaseObj = (JSONObject) databaseJson.getFirst();
+                        tablesArray = (JSONArray) databaseObj.get("tables");
+                    }
+
+
+                    tablesArray.remove(tableIndex);
+
                     fileWriter.write(databaseJson.toJSONString() + "\n");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -808,6 +828,7 @@ public class Server extends Thread {
                 out.println("> Table '" + tableName + "' dropped.");
                 databases.get(currentDatabase).dropTable(tableName);
             }
+
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         } finally {
@@ -823,6 +844,74 @@ public class Server extends Thread {
             }
         }
     }
+
+    private static JSONArray removeReferencesFromOtherTables(String tableName, String attributeName, PrintWriter out) {
+        JSONParser parser = new JSONParser();
+
+        String path = "src/test/java/databases/" + currentDatabase + ".json";
+        JSONArray currentDatabaseJson = getCurrentDatabaseJson(path);
+        if (currentDatabaseJson == null) {
+            out.println("> Error: Unable to load current database JSON.");
+            return null;
+        }
+
+        for (Object databaseObj : currentDatabaseJson) {
+            JSONObject databaseJson = (JSONObject) databaseObj;
+            JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
+
+            if (tablesArray != null) {
+                for (Object tableObj : tablesArray) {
+                    JSONObject tableJson = (JSONObject) tableObj;
+                    JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+
+                    if (attributesArray != null) {
+                        for (Object attributeObj : attributesArray) {
+                            JSONObject attributeJson = (JSONObject) attributeObj;
+
+                            if (attributeJson.containsKey("is_fk") && (boolean) attributeJson.get("is_fk")) {
+                                JSONArray tablesArray2 = (JSONArray) databaseJson.get("tables");
+
+                                for (Object tableObj2 : tablesArray2) {
+                                    JSONObject tableJson2 = (JSONObject) tableObj2;
+                                    JSONArray attributesArray2 = (JSONArray) tableJson2.get("attributes");
+
+                                    if (attributesArray2 != null) {
+                                        for (Object attributeObj2 : attributesArray2) {
+                                            JSONObject attributeJson2 = (JSONObject) attributeObj2;
+
+                                            if (attributeJson2.containsKey("is_referenced_by_fk")) {
+                                                JSONArray referencedByFkArray = (JSONArray) attributeJson2.get("is_referenced_by_fk");
+                                                if (referencedByFkArray != null) {
+
+                                                    for (int i = 0; i < referencedByFkArray.size(); i++) {
+                                                        JSONObject referenceJson = (JSONObject) referencedByFkArray.get(i);
+                                                        String fkTableName = (String) referenceJson.get("fkTableName");
+                                                        String fkAttributeName = (String) referenceJson.get("fkName");
+
+                                                        if (fkTableName.equals(tableName) && fkAttributeName.equals(attributeName)) {
+                                                            referencedByFkArray.remove(i);
+                                                            i--;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return currentDatabaseJson;
+    }
+
+
+
+
+
 
     private static void createIndex(String command, PrintWriter out) {
         String[] parts = command.split("\\s+");

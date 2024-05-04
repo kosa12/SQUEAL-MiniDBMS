@@ -1,0 +1,8 @@
+drop database asd;
+create database asd;
+
+use asd;
+create table odi (ID int primary key, text varchar(20), kuki int);
+create table lol2 (ID22 int primary key, fasz2 int FOREIGN KEY REFERENCES odi(ID));
+create table lol (ID2 int primary key, fasz int FOREIGN KEY REFERENCES lol2(ID22));
+drop odi;
