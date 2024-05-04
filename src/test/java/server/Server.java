@@ -24,7 +24,7 @@ import org.bson.Document;
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
-    private static final HashMap<String, Database> databases = new HashMap<>();
+    private static HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
     private static MongoClient mongoClient;
     private Socket clientSocket;
@@ -413,7 +413,13 @@ public class Server extends Thread {
             return;
         }
 
+
+
         String primaryKeyValue = condition.substring(4);
+
+        if (isRowReferenced(tableName, out)) {
+            return; // If referenced, exit the method
+        }
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         long deletedCount = mongoDBHandler.deleteDocumentByPK(currentDatabase, tableName, primaryKeyValue);
@@ -434,6 +440,47 @@ public class Server extends Thread {
             out.println("> Table '" + tableName + "' does not exist.\nNote: you can see the existing tables using command 'show tables'");
         }
     }
+
+    private static boolean isRowReferenced(String tableName, PrintWriter out) {
+        String path = "src/test/java/databases/" + currentDatabase + ".json";
+        JSONArray currentDatabaseJson = getCurrentDatabaseJson(path);
+        if (currentDatabaseJson == null) {
+            out.println("> Error: Unable to load current database JSON.");
+            return true;
+        }
+
+        for (Object databaseObj : currentDatabaseJson) {
+            JSONObject databaseJson = (JSONObject) databaseObj;
+            JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
+
+            if (tablesArray != null) {
+                for (Object tableObj : tablesArray) {
+                    JSONObject tableJson = (JSONObject) tableObj;
+                    if (tableJson.get("table_name").equals(tableName)) {
+                        JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+
+                        if (attributesArray != null) {
+                            for (Object attributeObj : attributesArray) {
+                                JSONObject attributeJson = (JSONObject) attributeObj;
+
+                                if (attributeJson.containsKey("is_referenced_by_fk")) {
+                                    JSONArray referencedByFkArray = (JSONArray) attributeJson.get("is_referenced_by_fk");
+                                    if (!referencedByFkArray.isEmpty()) {
+                                        out.println("> Error: Cannot delete row because it is referenced by another table.");
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
 
     private static Object convertValue(String value, String type) {
         return switch (type.toLowerCase()) {
@@ -795,10 +842,13 @@ public class Server extends Thread {
                         if (attribute.containsKey("is_fk") && (boolean) attribute.get("is_fk")) {
                             updatedFKJson=removeReferencesFromOtherTables(tableName, (String) attribute.get("name"), out);
                         }
-                        if (attribute.containsKey("is_referenced_by_fk") && attribute.get("is_referenced_by_fk") != null) {
-                            System.out.println("Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
-                            out.println("> Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
-                            return;
+                        if (attribute.containsKey("is_referenced_by_fk")) {
+                            JSONArray referencedArray = (JSONArray) attribute.get("is_referenced_by_fk");
+                            if(!referencedArray.isEmpty()) {
+                                System.out.println("Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
+                                out.println("> Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
+                                return;
+                            }
                         }
                     }
                     break;
@@ -882,7 +932,6 @@ public class Server extends Thread {
                                             if (attributeJson2.containsKey("is_referenced_by_fk")) {
                                                 JSONArray referencedByFkArray = (JSONArray) attributeJson2.get("is_referenced_by_fk");
                                                 if (referencedByFkArray != null) {
-
                                                     for (int i = 0; i < referencedByFkArray.size(); i++) {
                                                         JSONObject referenceJson = (JSONObject) referencedByFkArray.get(i);
                                                         String fkTableName = (String) referenceJson.get("fkTableName");
