@@ -100,7 +100,7 @@ public class Server extends Thread {
 
             for (File databaseFile : databaseFiles) {
 
-                try (FileReader reader = new FileReader(databaseFile)){
+                try (FileReader reader = new FileReader(databaseFile)) {
 
                     Object obj = parser.parse(reader);
                     JSONArray databaseArray = (JSONArray) obj;
@@ -388,8 +388,95 @@ public class Server extends Thread {
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
+        updateIndexes(tableName, values, mongoDBHandler, out, primaryKeyValue);
         mongoDBHandler.close();
-        out.println("> Row inserted into MongoDB collection: " + collectionName);
+        out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
+    }
+
+    private static void updateIndexes(String tableName, String[] values, MongoDBHandler mongoDBHandler, PrintWriter out, String primaryKeyValue) {
+        List<String> relevantCollections = getRelevantCollections(tableName, mongoDBHandler);
+
+        List<List<String>> attributeNamesList = new ArrayList<>();
+
+        for (String collectionName : relevantCollections) {
+            String[] parts = collectionName.split("-");
+            if (parts.length > 2 && parts[parts.length - 2].equalsIgnoreCase(tableName)) {
+                List<String> attributes = new ArrayList<>();
+                for (int i = 1; i < parts.length - 2; i++) {
+                    attributes.add(parts[i]);
+                }
+                attributeNamesList.add(attributes);
+            }
+        }
+
+
+        String[][] attributeNames = new String[attributeNamesList.size()][];
+        for (int i = 0; i < attributeNamesList.size(); i++) {
+            List<String> sublist = attributeNamesList.get(i);
+            attributeNames[i] = sublist.toArray(new String[0]);
+        }
+
+        int nrIndexes = 0;
+        for (String collectionName : relevantCollections) {
+            List<Document> documents = mongoDBHandler.fetchDocuments(currentDatabase, collectionName);
+            for (Document doc : documents) {
+                JSONObject tableFormat = readTableFormat(currentDatabase, tableName, out);
+                if (tableFormat == null) {
+                    System.out.println("Table format not found for table '" + tableName + "'");
+                    out.println("> Table format not found for table '" + tableName + "'");
+                    return;
+                }
+
+                List<Integer> indexKeys = getIndexKeys(tableFormat, attributeNames[nrIndexes]);
+                nrIndexes++;
+                if (indexKeys.contains(-1)) {
+                    System.out.println("One or more columns not found in table format for table " + tableName);
+                    out.println("> One or more columns not found in table format for table '" + tableName + "'");
+                    return;
+                }
+
+
+                StringBuilder valueBuilder = new StringBuilder();
+                for (int i = 0; i < indexKeys.size(); i++) {
+                    int indexKey = indexKeys.get(i);
+                    String value = values[indexKey].trim();
+                    if (!value.isEmpty()) {
+                        valueBuilder.append(value);
+                        if (i < indexKeys.size() - 1) {
+                            valueBuilder.append(";");
+                        }
+                    }
+                }
+
+                String valueAtIndex = valueBuilder.toString().trim();
+
+                String docId = doc.get("_id").toString().trim();
+
+                if (docId.equals(valueAtIndex)) {
+                    String existingErtek = doc.getString("ertek");
+                    String concatValue = existingErtek + ";" + primaryKeyValue;
+                    doc.put("ertek", concatValue);
+                    mongoDBHandler.updateDocument(currentDatabase, collectionName, "_id", docId, "ertek", concatValue);
+                } else {
+                    Document document = new Document();
+                    document.append("_id", valueAtIndex);
+                    document.append("ertek", primaryKeyValue);
+                    mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
+                }
+
+            }
+        }
+    }
+
+    private static List<String> getRelevantCollections(String tableName, MongoDBHandler mongoDBHandler) {
+        List<String> relevantCollections = new ArrayList<>();
+        String indexSuffix = "-" + tableName + "-index";
+        for (String collection : mongoDBHandler.getAllCollections(currentDatabase)) {
+            if (collection.endsWith(indexSuffix)) {
+                relevantCollections.add(collection);
+            }
+        }
+        return relevantCollections;
     }
 
 
@@ -412,7 +499,6 @@ public class Server extends Thread {
             out.println("> Invalid DELETE condition: Must be based on primary key (_id).");
             return;
         }
-
 
 
         String primaryKeyValue = condition.substring(4);
@@ -479,7 +565,6 @@ public class Server extends Thread {
         }
         return false;
     }
-
 
 
     private static Object convertValue(String value, String type) {
@@ -621,7 +706,7 @@ public class Server extends Thread {
                     fkName = attributeName;
                     fkTableName = tableName;
 
-                    i+=5;
+                    i += 5;
                 } else {
                     out.println("> Invalid keyword in column definition: " + columnParts[i]);
                     return;
@@ -737,7 +822,7 @@ public class Server extends Thread {
             boolean notNull = (boolean) column.get("not_null");
             boolean isPK = (boolean) column.get("is_pk");
             boolean isfk = (boolean) column.get("is_fk");
-            JSONArray fkKeys = (JSONArray) column.get("is_referenced_by_fk") ;
+            JSONArray fkKeys = (JSONArray) column.get("is_referenced_by_fk");
             table.addAttribute(new Attribute(attributeName, attributeType, notNull, isPK, isfk, fkKeys));
         }
 
@@ -782,8 +867,6 @@ public class Server extends Thread {
             return null;
         }
     }
-
-
 
 
     private static boolean isValidColumnType(String type) {
@@ -840,11 +923,11 @@ public class Server extends Thread {
                     for (Object attributeObj : attributesArray) {
                         JSONObject attribute = (JSONObject) attributeObj;
                         if (attribute.containsKey("is_fk") && (boolean) attribute.get("is_fk")) {
-                            updatedFKJson=removeReferencesFromOtherTables(tableName, (String) attribute.get("name"), out);
+                            updatedFKJson = removeReferencesFromOtherTables(tableName, (String) attribute.get("name"), out);
                         }
                         if (attribute.containsKey("is_referenced_by_fk")) {
                             JSONArray referencedArray = (JSONArray) attribute.get("is_referenced_by_fk");
-                            if(!referencedArray.isEmpty()) {
+                            if (!referencedArray.isEmpty()) {
                                 System.out.println("Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
                                 out.println("> Error: The attribute '" + attribute.get("name") + "' in table '" + tableName + "' has references in other tables.");
                                 return;
@@ -860,7 +943,7 @@ public class Server extends Thread {
                     fileReader.close();
                     fileWriter = new FileWriter(databaseFile);
 
-                    if (!updatedFKJson.isEmpty() || updatedFKJson==null || updatedFKJson.size()==0) {
+                    if (!updatedFKJson.isEmpty() || updatedFKJson == null || updatedFKJson.size() == 0) {
                         databaseJson = updatedFKJson;
                         databaseObj = (JSONObject) databaseJson.getFirst();
                         tablesArray = (JSONArray) databaseObj.get("tables");
@@ -957,11 +1040,6 @@ public class Server extends Thread {
         return currentDatabaseJson;
     }
 
-
-
-
-
-
     private static void createIndex(String command, PrintWriter out) {
         String[] parts = command.split("\\s+");
         if (parts.length < 5 || !parts[0].equalsIgnoreCase("CREATE") || !parts[1].equalsIgnoreCase("INDEX")) {
@@ -976,14 +1054,18 @@ public class Server extends Thread {
         String columnsStr = command.substring(command.indexOf("(") + 1, command.lastIndexOf(")")).trim();
         String[] columns = columnsStr.split(",");
 
-
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         try {
             List<Document> records = mongoDBHandler.fetchDocuments(currentDatabase, tableName);
 
-            if (mongoDBHandler.indexExists(currentDatabase, indexName + "-" + String.join("-", columns) + "-index")) {
-                System.out.println("Index name '" + indexName + "-" + String.join("-", columns) + "-index' already exists in MongoDB");
-                out.println("> Index name '" + indexName + "-" + String.join("-", columns) + "-index' already exists in MongoDB");
+            String[] trimmedColumns = new String[columns.length];
+            for (int i = 0; i < columns.length; i++) {
+                trimmedColumns[i] = columns[i].trim();
+            }
+            String indexName1 = indexName + "-" + String.join("-", trimmedColumns) + "-" + tableName + "-index";
+            if (mongoDBHandler.indexExists(currentDatabase, indexName1)) {
+                System.out.println("Index name '" + indexName + "-" + String.join("-", columns) + "-" + tableName + "-index' already exists in MongoDB");
+                out.println("> Index name '" + indexName + "-" + String.join("-", columns) + "-" + tableName + "-index' already exists in MongoDB");
                 return;
             }
 
@@ -1010,28 +1092,31 @@ public class Server extends Thread {
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
                 String valuesFromRecord = record.getString("ertek");
-                String everything = primaryKeyValue + ";" +valuesFromRecord;
+                String everything = primaryKeyValue + ";" + valuesFromRecord;
                 String[] values = everything.split(";");
 
                 StringBuilder indexKeyBuilder = new StringBuilder();
-                for (int indexKey : indexKeys) {
-                    indexKeyBuilder.append(values[indexKey]).append(";");
+                for (int i = 0; i < indexKeys.size(); i++) {
+                    indexKeyBuilder.append(values[indexKeys.get(i)]);
+                    if (i < indexKeys.size() - 1) {
+                        indexKeyBuilder.append(";");
+                    }
                 }
 
                 String compositeIndexKey = indexKeyBuilder.toString();
 
-                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", "_id", compositeIndexKey);
+                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, indexName1, "_id", compositeIndexKey);
 
                 if (existingDocument != null) {
                     String existingPrimaryKey = existingDocument.getString("ertek");
                     existingPrimaryKey += ";" + primaryKeyValue;
                     existingDocument.put("ertek", existingPrimaryKey);
-                    mongoDBHandler.updateDocument(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", "_id", compositeIndexKey, "ertek", existingPrimaryKey);
+                    mongoDBHandler.updateDocument(currentDatabase, indexName1, "_id", compositeIndexKey, "ertek", existingPrimaryKey);
                 } else {
                     Document document = new Document();
                     document.append("_id", compositeIndexKey);
                     document.append("ertek", primaryKeyValue);
-                    mongoDBHandler.insertDocument(currentDatabase, indexName + "-" + String.join("-", columns) + "-index", document);
+                    mongoDBHandler.insertDocument(currentDatabase, indexName1, document);
                 }
             }
 

@@ -41,6 +41,15 @@ public class MongoDBHandler {
         collection.insertOne(document);
     }
 
+    public List<String> getAllCollections(String databaseName) {
+        List<String> collections = new ArrayList<>();
+        MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
+        for (String collection : iterable) {
+            collections.add(collection);
+        }
+        return collections;
+    }
+
     public boolean indexExists(String databaseName, String indexName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         for (String name : database.listCollectionNames()) {
