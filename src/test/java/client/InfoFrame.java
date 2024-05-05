@@ -14,9 +14,13 @@ public class InfoFrame extends JFrame {
 
         textArea = new JTextArea();
 
-        textArea.setText("DATABASE\n-select: use  _name_\n-create: create database  _name_\n-delete: drop database  _name_\n\n" +
+        textArea.setText("SYNTAXES\n\n\nDATABASE\n-select: use  _name_\n-create: create database  _name_\n-delete: drop database  _name_\n\n" +
                 "TABLE\n-create: create table  _name_ (attributes)\n-delete: drop table  _name_\n\nINDEX\n-create: create index  _name_  on  _tablename_  (attributes)\n\n" +
-                "INSERT NEW ROW\ninsert into  _tablename_  values (attributes)");
+                "INSERT NEW ROW\ninsert into  _tablename_  values (attributes)\n\nDELETE ROW\ndelete from _tablename_ where _id=VALUE");
+
+
+        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/infoic.png");
+        setIconImage(icon);
 
         panel.add(textArea);
         this.setLayout(new FlowLayout());
