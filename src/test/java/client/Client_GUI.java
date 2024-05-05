@@ -12,11 +12,12 @@ public class Client_GUI extends JFrame {
     private final JMenuItem clear;
     private final JMenuItem refresh;
     private final JMenuItem info;
+    private final JMenuItem queryD;
     private final JTextArea querry, output;
     private final JMenuBar jMenuBar;
     private final JMenuItem exit;
     private final FileExplorer fileExplorer;
-
+    private QueryDesignerFrame queryDesignerFrame;
     private InfoFrame infoFrame;
     private Client client;
 
@@ -146,14 +147,42 @@ public class Client_GUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 infoFrame = new InfoFrame();
-                System.out.println("asd");
             }
         });
+
+        ImageIcon qdicon = new ImageIcon("src/main/resources/qdic.png");
+
+        Image qdimage = qdicon.getImage();
+        Image qdnewimg = qdimage.getScaledInstance(50, 50,  java.awt.Image.SCALE_SMOOTH);
+        qdicon = new ImageIcon(qdnewimg);
+
+        queryD = new JMenuItem("QUERY DESIGNER",qdicon);
+        queryD.setBackground(new Color(75, 104, 178));
+        queryD.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                queryD.setBackground(Color.LIGHT_GRAY);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                queryD.setBackground(new Color(75, 104, 178));
+            }
+        });
+
+        queryD.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                queryDesignerFrame = new QueryDesignerFrame();
+            }
+        });
+
 
         jMenuBar = new JMenuBar();
 
         jMenuBar.add(refresh);
         jMenuBar.add(clear);
+        jMenuBar.add(queryD);
         jMenuBar.add(execute);
         jMenuBar.add(info);
         jMenuBar.add(exit);
@@ -242,8 +271,6 @@ public class Client_GUI extends JFrame {
         return execute;
     }
 
-
-
     public String getjTextField() {
         return querry.getText();
     }
@@ -251,7 +278,6 @@ public class Client_GUI extends JFrame {
     public JMenuItem getExitButton() {
         return exit;
     }
-
 
     public JTextArea getOutputTextArea() {
         return output;

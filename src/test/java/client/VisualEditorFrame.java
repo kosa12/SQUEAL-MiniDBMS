@@ -95,7 +95,8 @@ public class VisualEditorFrame extends JFrame {
         this.setLayout(null);
         this.add(panel);
         this.add(bpanel);
-
+        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/dbicon.png");
+        setIconImage(icon);
         this.setPreferredSize(new Dimension(attributeNames.length * 200 + 200, 500));
         this.pack();
         this.setVisible(true);
