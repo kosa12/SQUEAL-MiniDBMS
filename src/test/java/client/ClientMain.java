@@ -26,6 +26,7 @@ public class ClientMain {
             executeButton.addActionListener(_ -> {
                 String message = gui.getjTextField();
                 client.sendMessage(message);
+
                 SwingUtilities.invokeLater(() -> outputTextArea.setText(""));
             });
 

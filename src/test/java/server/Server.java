@@ -167,7 +167,7 @@ public class Server extends Thread {
             StringBuilder commandBuilder = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
-                if (!line.trim().startsWith("--")) {
+                if (!line.trim().startsWith("/*")) {
                     if (line.trim().endsWith(";")) {
                         MongoDBHandler mongoDBHandler = new MongoDBHandler();
                         if (line.startsWith("FETCH")) {
@@ -186,12 +186,14 @@ public class Server extends Thread {
                             }
                         }
 
-                        out.println(line);
+
                         commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                         String command = commandBuilder.toString().trim();
                         if (command.trim().isEmpty()) {
                             return;
                         }
+
+                        out.println(command);
 
                         String[] parts = command.trim().split("\\s+");
                         if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
@@ -1255,6 +1257,8 @@ public class Server extends Thread {
             fileWriter = new FileWriter(databaseFile);
             fileWriter.write(databaseJson.toJSONString() + "\n");
 
+
+
             System.out.println("Table '" + tableName + "' created.");
             out.println("> Table '" + tableName + "' created.");
         } catch (IOException | ParseException e) {
@@ -1308,6 +1312,7 @@ public class Server extends Thread {
                         }
                     }
 
+                    mongoClient.getDatabase(databaseName);
                     JSONObject newDB = new JSONObject();
                     newDB.put("database_name", databaseName);
                     databasesCurr.add(newDB);
