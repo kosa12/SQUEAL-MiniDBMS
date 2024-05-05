@@ -339,6 +339,11 @@ public class Server extends Thread {
             return;
         }
 
+        if (currentDatabase == null) {
+            out.println("> No database found.");
+            out.println("NOTE: 'USE <database_name>;'");
+            return;
+        }
         Table table = databases.get(currentDatabase).getTable(tableName);
         if (table == null) {
             out.println("> Table '" + tableName + "' does not exist.\nNote: you can see the existing tables using command 'show tables'");
@@ -415,7 +420,6 @@ public class Server extends Thread {
             List<String> sublist = attributeNamesList.get(i);
             attributeNames[i] = sublist.toArray(new String[0]);
         }
-
         int nrIndexes = 0;
         for (String collectionName : relevantCollections) {
             List<Document> documents = mongoDBHandler.fetchDocuments(currentDatabase, collectionName);
@@ -428,13 +432,12 @@ public class Server extends Thread {
                 }
 
                 List<Integer> indexKeys = getIndexKeys(tableFormat, attributeNames[nrIndexes]);
-                nrIndexes++;
+
                 if (indexKeys.contains(-1)) {
                     System.out.println("One or more columns not found in table format for table " + tableName);
                     out.println("> One or more columns not found in table format for table '" + tableName + "'");
                     return;
                 }
-
 
                 StringBuilder valueBuilder = new StringBuilder();
                 for (int i = 0; i < indexKeys.size(); i++) {
@@ -451,13 +454,15 @@ public class Server extends Thread {
                 String valueAtIndex = valueBuilder.toString().trim();
 
                 String docId = doc.get("_id").toString().trim();
+                String existingErtek = doc.getString("ertek");
+                String concatValue = existingErtek + ";" + primaryKeyValue;
+
+                Document existingDocument = mongoDBHandler.getDocumentByIndex(currentDatabase, collectionName, "_id", concatValue);
 
                 if (docId.equals(valueAtIndex)) {
-                    String existingErtek = doc.getString("ertek");
-                    String concatValue = existingErtek + ";" + primaryKeyValue;
                     doc.put("ertek", concatValue);
                     mongoDBHandler.updateDocument(currentDatabase, collectionName, "_id", docId, "ertek", concatValue);
-                } else {
+                } else if (existingDocument == null) {
                     Document document = new Document();
                     document.append("_id", valueAtIndex);
                     document.append("ertek", primaryKeyValue);
@@ -465,6 +470,7 @@ public class Server extends Thread {
                 }
 
             }
+            nrIndexes++;
         }
     }
 
@@ -500,31 +506,53 @@ public class Server extends Thread {
             return;
         }
 
-
         String primaryKeyValue = condition.substring(4);
 
         if (isRowReferenced(tableName, out)) {
-            return; // If referenced, exit the method
+            return;
         }
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         long deletedCount = mongoDBHandler.deleteDocumentByPK(currentDatabase, tableName, primaryKeyValue);
-        mongoDBHandler.close();
+        List<String> relevantCollections = getRelevantCollections(tableName, mongoDBHandler);
+
+
+
 
         Table table = databases.get(currentDatabase).getTable(tableName);
         if (table != null) {
-            if (table.removePrimaryKeyValue(primaryKeyValue)) {
-                if (deletedCount > 0) {
-                    out.println("> Deleted " + deletedCount + " document(s) from table: " + tableName);
-                } else {
-                    out.println("> No document found with primary key value: " + primaryKeyValue);
+
+            if (deletedCount > 0) {
+                out.println("> Deleted " + deletedCount + " document(s) from table: " + tableName);
+                for (String collectionName : relevantCollections) {
+                    List<Document> documents = mongoDBHandler.fetchDocuments(currentDatabase, collectionName);
+
+                    for (Document doc : documents) {
+                        String ertek = doc.getString("ertek");
+                        if (ertek != null && ertek.contains(primaryKeyValue)) {
+                            String updatedErtek = ertek.replace(primaryKeyValue, "");
+                            if (updatedErtek.contains(";;")) {
+                                updatedErtek = updatedErtek.replace(";;", ";");
+                            } else if (updatedErtek.startsWith(";")){
+                                updatedErtek = updatedErtek.replaceFirst(";", "");
+                            }
+                            doc.put("ertek", updatedErtek);
+                            mongoDBHandler.updateDocument(currentDatabase, collectionName, "_id", doc.get("_id").toString(), "ertek", updatedErtek);
+                            out.println("> Deleted document(s) from indexes too: " + collectionName);
+                        }
+                    }
+
+
                 }
+
             } else {
-                out.println("> Primary key value not found in table: " + tableName);
+                out.println("> No document found with primary key value: " + primaryKeyValue);
             }
+
         } else {
             out.println("> Table '" + tableName + "' does not exist.\nNote: you can see the existing tables using command 'show tables'");
         }
+        mongoDBHandler.close();
     }
 
     private static boolean isRowReferenced(String tableName, PrintWriter out) {
@@ -1316,6 +1344,10 @@ public class Server extends Thread {
                             Files.deleteIfExists(databasePath);
                             System.out.println("Database dropped: " + databaseName);
                             out.println("> Database '" + databaseName + "' dropped.");
+
+                            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                            mongoDBHandler.dropCollection(databaseName);
+                            mongoDBHandler.close();
 
                             // Adatbázis eltávolítása a memóriabeli listából
                             databases.remove(databaseName);

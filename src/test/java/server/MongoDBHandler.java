@@ -34,12 +34,17 @@ public class MongoDBHandler {
 
         Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
         if (existingDocument != null) {
-            System.out.println("Cannot insert row: Document with the same primary key already exists.");
             return;
         }
 
         collection.insertOne(document);
     }
+
+    public void dropCollection(String databaseName) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        database.drop();
+    }
+
 
     public List<String> getAllCollections(String databaseName) {
         List<String> collections = new ArrayList<>();
