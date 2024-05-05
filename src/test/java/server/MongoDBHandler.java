@@ -9,8 +9,12 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 
+import static server.Server.getIsItEnd;
+
 public class MongoDBHandler {
-    private final MongoClient mongoClient;
+    private static MongoClient mongoClient = null;
+    private static final List<Document> documentList = new ArrayList<>();
+    private static final Object lock = new Object();
 
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
@@ -28,17 +32,32 @@ public class MongoDBHandler {
             Megbünhödte már e nép
             A multat s jövendőt!
         */
-
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
-
         Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
         if (existingDocument != null) {
             return;
         }
 
-        collection.insertOne(document);
+        synchronized (lock) {
+            int BATCH_SIZE = 1000;
+            if (documentList.size() < BATCH_SIZE) {
+                documentList.add(document);
+            } else if (documentList.size()==BATCH_SIZE || getIsItEnd()){
+                documentList.add(document);
+                insertDocumentsIntoMongoDB(databaseName, collectionName, new ArrayList<>(documentList));
+                documentList.clear();
+            }
+        }
+
     }
+
+    private void insertDocumentsIntoMongoDB(String databaseName, String collectionName, List<Document> documents) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+        collection.insertMany(documents);
+    }
+
 
     public void dropCollection(String databaseName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -141,6 +160,36 @@ public class MongoDBHandler {
         }
 
         return documents;
+    }
+
+    public static List<String[]> fetchAllRows(String databaseName, String tableName) {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        if (database == null) {
+            System.out.println("Database not found: " + databaseName);
+            return null;
+        }
+
+        MongoCollection<Document> collection = database.getCollection(tableName);
+        FindIterable<Document> documents = collection.find();
+        List<String[]> rows = new ArrayList<>();
+
+        try (MongoCursor<Document> cursor = documents.iterator()) {
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                String[] row = convertDocumentToStringArray(doc);
+                rows.add(row);
+            }
+        }
+
+        return rows;
+    }
+
+    private static String[] convertDocumentToStringArray(Document doc) {
+        List<String> values = new ArrayList<>();
+        for (String key : doc.keySet()) {
+            values.add(doc.get(key).toString());
+        }
+        return values.toArray(new String[0]);
     }
 
     public void close() {
