@@ -11,13 +11,13 @@ public class Client_GUI extends JFrame {
     private final JMenuItem execute;
     private final JMenuItem clear;
     private final JMenuItem refresh;
+    private final JMenuItem info;
     private final JTextArea querry, output;
     private final JMenuBar jMenuBar;
-
     private final JMenuItem exit;
-
     private final FileExplorer fileExplorer;
 
+    private InfoFrame infoFrame;
     private Client client;
 
     private boolean toResetTA = true;
@@ -44,10 +44,6 @@ public class Client_GUI extends JFrame {
         exit = new JMenuItem("   EXIT",exiticon);
         exit.setPreferredSize(new Dimension(60,40));
         exit.setBackground(new Color(75, 104, 178));
-
-
-
-
 
         exit.addMouseListener(new MouseAdapter() {
             @Override
@@ -125,11 +121,41 @@ public class Client_GUI extends JFrame {
             }
         });
 
+        ImageIcon iicon = new ImageIcon("src/main/resources/infoic.png");
+
+        Image iimage = iicon.getImage();
+        Image inewimg = iimage.getScaledInstance(50, 50,  java.awt.Image.SCALE_SMOOTH);
+        iicon = new ImageIcon(inewimg);
+
+        info = new JMenuItem("INFO",iicon);
+        info.setBackground(new Color(75, 104, 178));
+        info.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                info.setBackground(Color.LIGHT_GRAY);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                info.setBackground(new Color(75, 104, 178));
+            }
+        });
+
+
+        info.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                infoFrame = new InfoFrame();
+                System.out.println("asd");
+            }
+        });
+
         jMenuBar = new JMenuBar();
 
         jMenuBar.add(refresh);
         jMenuBar.add(clear);
         jMenuBar.add(execute);
+        jMenuBar.add(info);
         jMenuBar.add(exit);
 
 
