@@ -28,6 +28,7 @@ public class Server extends Thread {
     private static String currentDatabase;
     private static MongoClient mongoClient;
     private Socket clientSocket;
+    private static Boolean isItEnd = false;
 
     @Override
     public void run() {
@@ -169,22 +170,7 @@ public class Server extends Thread {
             while ((line = in.readLine()) != null) {
                 if (!line.trim().startsWith("/*")) {
                     if (line.trim().endsWith(";")) {
-                        MongoDBHandler mongoDBHandler = new MongoDBHandler();
-                        if (line.startsWith("FETCH")) {
-                            String[] parts = line.split("\\s+");
-                            if (parts.length >= 4) {
-                                String databaseName = parts[1];
-                                String tableName = parts[2];
-                                String[] attributeNames = parts[3].split(",");
-
-                                List<String[]> rows = mongoDBHandler.fetchRows(databaseName, tableName, attributeNames);
-                                if (rows != null) {
-                                    for (String[] row : rows) {
-                                        out.println(String.join(",", row));
-                                    }
-                                }
-                            }
-                        }
+                        isItEnd=false;
 
 
                         commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
@@ -209,6 +195,8 @@ public class Server extends Thread {
                             insertRow(command, out);
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                             deleteRow(command, out);
+                        } else if (parts.length>=4 && parts[0].equalsIgnoreCase("SELECT")) {
+                            selectFromTable(command, out);
                         } else if (parts.length >= 3) {
                             String operation = parts[0].toLowerCase();
                             String objectType = parts[1].toLowerCase();
@@ -233,11 +221,14 @@ public class Server extends Thread {
                             } else {
                                 out.println("Invalid operation: " + operation);
                             }
-                        } else {
+                        }  else{
                             out.println("Invalid message format: " + command);
                         }
                         commandBuilder.setLength(0);
+                    } else if(line.equals("end")){
+                        isItEnd=true;
                     } else {
+                        isItEnd=false;
                         commandBuilder.append(line);
                     }
                 }
@@ -248,6 +239,69 @@ public class Server extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static Boolean getIsItEnd() {
+        return isItEnd;
+    }
+
+    private static void selectFromTable(String command, PrintWriter out) {
+        String[] parts = command.split("\\s+");
+
+        String tableName = null;
+        boolean isNextTableName = false;
+        for (String part : parts) {
+            if (isNextTableName) {
+                tableName = part;
+                break;
+            }
+            if (part.equalsIgnoreCase("FROM")) {
+                isNextTableName = true;
+            }
+        }
+
+        if (tableName == null) {
+            out.println("> Invalid SELECT command: Missing table name or FROM keyword.");
+        }
+
+        List<String[]> rows = MongoDBHandler.fetchAllRows(currentDatabase, tableName);
+
+        if (rows == null) {
+            out.println("> Failed to fetch rows from table: " + tableName);
+        } else if (rows.isEmpty()){
+            out.println("> Table: " + tableName + "is empty.");
+        }
+
+        if(currentDatabase==null){
+            out.println("> Failed to find database.\n Note: USE <database_name> if you forgot it you dumb :3 XD");
+        }
+
+        JSONObject tableFormat = readTableFormat(currentDatabase, tableName, out);
+        if (tableFormat == null) {
+            System.out.println("Table format not found for table '" + tableName + "'");
+            out.println("> Table format not found for table '" + tableName + "'");
+            return;
+        }
+
+        printSelectedRows(out, tableFormat, rows);
+    }
+
+    private static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows) {
+        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
+        for (Object attributeObj : attributes) {
+            JSONObject attribute = (JSONObject) attributeObj;
+            out.print("\t  " +attribute.get("name") + "\t  ");
+        }
+
+        out.println();
+
+        StringBuilder delimiter = new StringBuilder();
+        delimiter.append("-".repeat(Math.max(0, attributes.size() * 40)));
+        out.println(delimiter);
+        for (String[] row : rows) {
+            out.println("|\t" + String.join("\t|\t", row) + "\t|");
+        }
+        out.println(delimiter);
     }
 
     private static void showDatabases(PrintWriter out) {
@@ -365,6 +419,7 @@ public class Server extends Thread {
             String attributeType = attribute.getType();
             if (attributeType.toLowerCase().contains("varchar")) {
                 attributeType = "varchar";
+                value = value.replaceAll("^'|'$", "");
             }
 
             if (convertValue(value, attributeType) == null) {
@@ -395,12 +450,14 @@ public class Server extends Thread {
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
-        updateIndexes(tableName, values, mongoDBHandler, out, primaryKeyValue);
         mongoDBHandler.close();
+        updateIndexes(tableName, values, out, primaryKeyValue);
+
         out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
     }
 
-    private static void updateIndexes(String tableName, String[] values, MongoDBHandler mongoDBHandler, PrintWriter out, String primaryKeyValue) {
+    private static void updateIndexes(String tableName, String[] values, PrintWriter out, String primaryKeyValue) {
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
         List<String> relevantCollections = getRelevantCollections(tableName, mongoDBHandler);
 
         List<List<String>> attributeNamesList = new ArrayList<>();
@@ -474,6 +531,7 @@ public class Server extends Thread {
             }
             nrIndexes++;
         }
+        mongoDBHandler.close();
     }
 
     private static List<String> getRelevantCollections(String tableName, MongoDBHandler mongoDBHandler) {
