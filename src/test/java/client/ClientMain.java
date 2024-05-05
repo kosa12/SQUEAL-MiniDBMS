@@ -17,7 +17,6 @@ public class ClientMain {
 
         final boolean[] goGif = {false};
 
-
         GifPlayer gifPlayer = new GifPlayer();
 
         Timer timer = new Timer(1700, _ -> {
