@@ -330,6 +330,7 @@ public class Server extends Thread {
             currentDatabase = databaseName;
             System.out.println("Using database: " + databaseName);
             out.println("> Using database: " + databaseName);
+            out.println("  "+databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
             out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");
@@ -955,7 +956,6 @@ public class Server extends Thread {
             return null;
         }
     }
-
 
     private static boolean isValidColumnType(String type) {
         String[] validTypes = {"int", "float", "bit", "date", "datetime"};
