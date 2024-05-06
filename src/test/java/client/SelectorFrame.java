@@ -11,7 +11,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SelectorFrame extends JFrame {
@@ -20,6 +22,7 @@ public class SelectorFrame extends JFrame {
     private String currentDatabase;
     private static JCheckBox[] jCheckBoxes;
     private String[] selectedTableNames;
+    private List<String> stringList;
     public SelectorFrame(String databasename){
         currentDatabase = databasename;
 
@@ -37,16 +40,13 @@ public class SelectorFrame extends JFrame {
         go.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                selectedTableNames = new String[jCheckBoxes.length];
-                int index = 0;
+                stringList = new ArrayList<>();
                 for(JCheckBox checkBox : jCheckBoxes){
-                    // System.out.println(checkBox.getText());
                     if(checkBox.isSelected()){
-                        selectedTableNames[index] = checkBox.getText();
-                        index++;
+                        stringList.add(checkBox.getText());
                     }
                 }
-                System.out.println(Arrays.toString(selectedTableNames));
+                System.out.println(stringList);
                 dispose();
             }
         });
