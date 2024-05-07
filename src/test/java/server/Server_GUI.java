@@ -45,6 +45,7 @@ public class Server_GUI extends JFrame {
 
         pack();
 
+
         buttonPanel.setBackground(new Color(75, 104, 178));
 
         Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/server.png");
@@ -62,14 +63,9 @@ public class Server_GUI extends JFrame {
     }
 
     private void stopServer() {
-        try {
-            if(this.server!=null){
-                server.getServerSocket().close();
-                logMessage("Server is shutting down...");
-                System.exit(0);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        if(this.server!=null){
+            logMessage("Server is shutting down...");
+            System.exit(0);
         }
     }
 

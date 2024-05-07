@@ -15,6 +15,9 @@ public class MongoDBHandler {
     private static MongoClient mongoClient = null;
     private static final List<Document> documentList = new ArrayList<>();
     private static final Object lock = new Object();
+    private static String databaseName1;
+    private static String collectionName1;
+
 
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
@@ -43,7 +46,9 @@ public class MongoDBHandler {
             int BATCH_SIZE = 1000;
             if (documentList.size() < BATCH_SIZE) {
                 documentList.add(document);
-            } else if (documentList.size()==BATCH_SIZE || getIsItEnd()){
+                databaseName1 = databaseName;
+                collectionName1 = collectionName;
+            } else if (documentList.size() == BATCH_SIZE || getIsItEnd()) {
                 documentList.add(document);
                 insertDocumentsIntoMongoDB(databaseName, collectionName, new ArrayList<>(documentList));
                 documentList.clear();
@@ -52,12 +57,22 @@ public class MongoDBHandler {
 
     }
 
+    public static void insertDocumentsIntoMongoDBALL() {
+        if(!documentList.isEmpty()){
+            MongoDatabase database = mongoClient.getDatabase(databaseName1);
+            MongoCollection<Document> collection = database.getCollection(collectionName1);
+            collection.insertMany(documentList);
+            documentList.clear();
+        }
+
+    }
+
+
     private void insertDocumentsIntoMongoDB(String databaseName, String collectionName, List<Document> documents) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
         collection.insertMany(documents);
     }
-
 
     public void dropCollection(String databaseName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
