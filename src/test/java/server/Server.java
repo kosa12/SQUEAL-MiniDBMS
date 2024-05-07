@@ -39,13 +39,14 @@ public class Server extends Thread {
             System.out.println(dbName);
         }
 
+        ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(10000);
             System.out.println("Server is running...");
             boolean isRunning = true;
             while (isRunning) {
                 try {
-                    clientSocket = serverSocket.accept();
+                    Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
                     clientSocket.setSoTimeout(500000);
@@ -55,7 +56,17 @@ public class Server extends Thread {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                try {
+                    serverSocket.close();
+                    System.out.println("Server socket closed.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+
     }
 
     public void recreateFromMongoDB(String databaseName) {
@@ -93,13 +104,18 @@ public class Server extends Thread {
                 return;
             }
 
-            File[] databaseFiles = databasesDir.listFiles((_, name) -> name.endsWith(".json") && !name.contains("index"));
+            File[] databaseFiles = databasesDir.listFiles((_, name) -> name.endsWith(".json"));
             if (databaseFiles == null) {
                 System.out.println("No database files found in directory: " + jsonPath);
                 return;
             }
 
             for (File databaseFile : databaseFiles) {
+
+                if(databaseFile.length()==0){
+                    databaseFile.delete();
+                    continue;
+                }
 
                 try (FileReader reader = new FileReader(databaseFile)) {
 
@@ -172,7 +188,6 @@ public class Server extends Thread {
                     if (line.trim().endsWith(";")) {
                         isItEnd=false;
 
-
                         commandBuilder.append(line.trim(), 0, line.lastIndexOf(';'));
                         String command = commandBuilder.toString().trim();
                         if (command.trim().isEmpty()) {
@@ -227,6 +242,9 @@ public class Server extends Thread {
                         commandBuilder.setLength(0);
                     } else if(line.equals("end")){
                         isItEnd=true;
+                        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+                        mongoDBHandler.insertDocumentsIntoMongoDBALL();
+                        mongoDBHandler.close();
                     } else {
                         isItEnd=false;
                         commandBuilder.append(line);
@@ -282,11 +300,15 @@ public class Server extends Thread {
             out.println("> Table format not found for table '" + tableName + "'");
             return;
         }
+        if(parts[1].equals("*")){
+            printSelectedRowsALL(out, tableFormat, rows);
+        } else {
 
-        printSelectedRows(out, tableFormat, rows);
+        }
+
     }
 
-    private static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows) {
+    private static void printSelectedRowsALL(PrintWriter out, JSONObject tableFormat, List<String[]> rows) {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         for (Object attributeObj : attributes) {
             JSONObject attribute = (JSONObject) attributeObj;
@@ -330,7 +352,6 @@ public class Server extends Thread {
             currentDatabase = databaseName;
             System.out.println("Using database: " + databaseName);
             out.println("> Using database: " + databaseName);
-            out.println("  "+databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
             out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");
@@ -957,6 +978,7 @@ public class Server extends Thread {
         }
     }
 
+
     private static boolean isValidColumnType(String type) {
         String[] validTypes = {"int", "float", "bit", "date", "datetime"};
         for (String validType : validTypes) {
@@ -1031,7 +1053,7 @@ public class Server extends Thread {
                     fileReader.close();
                     fileWriter = new FileWriter(databaseFile);
 
-                    if (!updatedFKJson.isEmpty() || updatedFKJson == null || updatedFKJson.size() == 0) {
+                    if (!updatedFKJson.isEmpty()) {
                         databaseJson = updatedFKJson;
                         databaseObj = (JSONObject) databaseJson.getFirst();
                         tablesArray = (JSONArray) databaseObj.get("tables");
@@ -1314,8 +1336,6 @@ public class Server extends Thread {
 
             fileWriter = new FileWriter(databaseFile);
             fileWriter.write(databaseJson.toJSONString() + "\n");
-
-
 
             System.out.println("Table '" + tableName + "' created.");
             out.println("> Table '" + tableName + "' created.");
