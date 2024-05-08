@@ -192,9 +192,15 @@ public class MongoDBHandler {
             while (cursor.hasNext()) {
                 Document doc = cursor.next();
                 String[] row = convertDocumentToStringArray(doc);
-                rows.add(row);
+                String[] secondElementParts = row[1].split(";");
+                String[] combinedRow = new String[row.length + secondElementParts.length - 1];
+                combinedRow[0] = row[0];
+                System.arraycopy(secondElementParts, 0, combinedRow, 1, secondElementParts.length);
+                rows.add(combinedRow);
             }
         }
+
+
 
         return rows;
     }

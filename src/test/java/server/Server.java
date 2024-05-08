@@ -282,13 +282,8 @@ public class Server extends Thread {
             out.println("> Invalid SELECT command: Missing table name or FROM keyword.");
         }
 
-        List<String[]> rows = MongoDBHandler.fetchAllRows(currentDatabase, tableName);
 
-        if (rows == null) {
-            out.println("> Failed to fetch rows from table: " + tableName);
-        } else if (rows.isEmpty()){
-            out.println("> Table: " + tableName + "is empty.");
-        }
+
 
         if(currentDatabase==null){
             out.println("> Failed to find database.\n Note: USE <database_name> if you forgot it you dumb :3 XD");
@@ -301,14 +296,93 @@ public class Server extends Thread {
             return;
         }
         if(parts[1].equals("*")){
+            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            List<String[]> rows =  mongoDBHandler.fetchAllRows(currentDatabase, tableName);
+            mongoDBHandler.close();
+
+            if (rows == null) {
+                out.println("> Failed to fetch rows from table: " + tableName);
+            } else if (rows.isEmpty()){
+                out.println("> Table: " + tableName + "is empty.");
+            }
+
             printSelectedRowsALL(out, tableFormat, rows);
         } else {
+            List<String> attributeNamesList = new ArrayList<>();
+            boolean foundSelectKeyword = false;
+            boolean foundFromKeyword = false;
 
+            for (String part : parts) {
+                if (part.equalsIgnoreCase("SELECT")) {
+                    foundSelectKeyword = true;
+                    continue;
+                } else if (part.equalsIgnoreCase("FROM")) {
+                    foundFromKeyword = true;
+                    break;
+                }
+
+                if (foundSelectKeyword && !foundFromKeyword) {
+                    String[] attributeNamesArray = part.split(",");
+                    for (String attributeName : attributeNamesArray) {
+                        attributeNamesList.add(attributeName.trim());
+                    }
+                }
+            }
+
+            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            List<String[]> rows =  mongoDBHandler.fetchAllRows(currentDatabase, tableName);
+            mongoDBHandler.close();
+            out.println();
+            out.println("> Note: Make an index for your attributes for faster selection.\n> Syntax: create index  _name_  on  _tablename_ (attributes);");
+
+            String[] attributeNames = attributeNamesList.toArray(new String[0]);
+
+            printSelectedRows(out, tableFormat, rows, attributeNames);
         }
 
     }
 
+    private static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows, String[] selectedAttributes) {
+        JSONArray attributes = (JSONArray) tableFormat.get("attributes");
+        Map<String, Integer> attributeIndices = new HashMap<>();
+
+        for (int i = 0; i < attributes.size(); i++) {
+            JSONObject attribute = (JSONObject) attributes.get(i);
+            attributeIndices.put(attribute.get("name").toString(), i);
+        }
+
+        List<String[]> filteredRows = new ArrayList<>();
+        for (String[] row : rows) {
+            String[] filteredRow = new String[selectedAttributes.length];
+            for (int i = 0; i < selectedAttributes.length; i++) {
+                int index = attributeIndices.getOrDefault(selectedAttributes[i], -1);
+                if (index != -1 && index < row.length) {
+                    filteredRow[i] = row[index];
+                } else {
+                    filteredRow[i] = "";
+                }
+            }
+            filteredRows.add(filteredRow);
+        }
+
+        out.println();
+        for (String attribute : selectedAttributes){
+            out.print("\t  " + attribute + "\t  ");
+        }
+        out.println();
+
+        StringBuilder delimiter = new StringBuilder();
+        delimiter.append("-".repeat(Math.max(0, selectedAttributes.length * 40)));
+        out.println(delimiter);
+        for (String[] row : filteredRows) {
+            out.println("|\t" + String.join("\t|\t", row) + "\t|");
+        }
+        out.println(delimiter);
+    }
+
+
     private static void printSelectedRowsALL(PrintWriter out, JSONObject tableFormat, List<String[]> rows) {
+        out.println();
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         for (Object attributeObj : attributes) {
             JSONObject attribute = (JSONObject) attributeObj;
@@ -1459,7 +1533,6 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
-
 
 }
 
