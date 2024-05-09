@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class TestWritingScript {
     public static void main(String[] args) {
-        int numInserts = 100000;
+        int numInserts = 10000;
         String tableName = "asd";
         String filePath = "src/test/java/tester/scripts/insert_script_asd.txt";
 
