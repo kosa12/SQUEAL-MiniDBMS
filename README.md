@@ -27,6 +27,13 @@ The Database Management System (DBMS) project is a Java-based application that p
     - **Insert Data:** Data can be inserted with a visual editor into the MongoDB collection.
     - **Delete Data:** The user can delete the data from the MongoDB via selecting the row.
   
+5. **Selection:**
+   - **Select Data:** Users can retrieve specific data from tables based on specified conditions using SQL SELECT statements.
+   - **Filtering:** Data retrieval can be filtered using WHERE clauses.
+   - **Sorting:** Retrieved data can be sorted based on specific attributes using ORDER BY clauses.
+   - **Aggregate Functions:** Users can perform aggregate functions such as SUM, COUNT, AVG, etc., on selected data.
+   - **Joins:** Tables can be joined together based on common attributes to retrieve combined data.
+
 ## How to Use 💡
 
 1. **Installation:** Clone the repository to your local machine.
