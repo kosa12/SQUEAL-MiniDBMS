@@ -552,6 +552,7 @@ public class Server extends Thread {
             currentDatabase = databaseName;
             System.out.println("Using database: " + databaseName);
             out.println("> Using database: " + databaseName);
+            out.println("DBFORQUERY"+databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
             out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");

@@ -17,7 +17,10 @@ public class Client_GUI extends JFrame {
     private final JMenuBar jMenuBar;
     private final JMenuItem exit;
     private final FileExplorer fileExplorer;
+    private String currentDBname;
+    private JCheckBox[] checkBoxes;
     private QueryDesignerFrame queryDesignerFrame;
+    private SelectorFrame selectorFrame;
     private InfoFrame infoFrame;
     private Client client;
 
@@ -174,9 +177,12 @@ public class Client_GUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 queryDesignerFrame = new QueryDesignerFrame();
+                String currendDBname =  client.getCurrentDBname();
+                selectorFrame = new SelectorFrame(currendDBname);
+                checkBoxes = SelectorFrame.getjCheckBoxes();
+
             }
         });
-
 
         jMenuBar = new JMenuBar();
 

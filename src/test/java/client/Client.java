@@ -13,6 +13,7 @@ public class Client {
     private static JTextArea outputTextArea;
     private BufferedReader serverInput;
     private volatile boolean running;
+    private String currentDBname;
 
     public Client(String serverAddress, int serverPort) {
         try {
@@ -55,7 +56,11 @@ public class Client {
             while (running && (response = serverInput.readLine()) != null) {
                 if (outputTextArea != null) {
                     String finalResponse = response;
-                    SwingUtilities.invokeLater(() -> outputTextArea.append(finalResponse + "\n"));
+                    if (!finalResponse.startsWith("DBFORQUERY")) {
+                        SwingUtilities.invokeLater(() -> outputTextArea.append(finalResponse + "\n"));
+                    }else {
+                        currentDBname=finalResponse.substring(2);
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -75,5 +80,9 @@ public class Client {
 
     public void setOutputTextArea(JTextArea outputTextArea) {
         this.outputTextArea = outputTextArea;
+    }
+
+    public String getCurrentDBname() {
+        return currentDBname;
     }
 }
