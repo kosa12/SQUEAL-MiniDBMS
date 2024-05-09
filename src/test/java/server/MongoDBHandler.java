@@ -74,6 +74,22 @@ public class MongoDBHandler {
         collection.insertMany(documents);
     }
 
+    public void insertDocumentINDEX(String databaseName, String collectionName, Document document) {
+
+
+
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
+        if (existingDocument != null) {
+            System.out.println("Cannot insert row: Document with the same primary key already exists.");
+            return;
+        }
+
+        collection.insertOne(document);
+    }
+
     public void dropCollection(String databaseName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         database.drop();
@@ -124,6 +140,35 @@ public class MongoDBHandler {
         Document query = new Document("_id", primaryKeyValue);
         return collection.deleteOne(query).getDeletedCount();
     }
+
+    public List<String[]> fetchRowsWithFilter(String databaseName, String collectionName, Bson filter) {
+        List<String[]> rows = new ArrayList<>();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        FindIterable<Document> documents = collection.find(filter);
+        for (Document document : documents) {
+            String[] rowData = convertDocumentToStringArray(document);
+            rows.add(rowData);
+        }
+
+        return rows;
+    }
+
+    public List<String[]> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, Bson filter) {
+        List<String[]> rows = new ArrayList<>();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        FindIterable<Document> documents = collection.find(filter);
+        for (Document document : documents) {
+            String[] rowData = convertDocumentToStringArray(document);
+            rows.add(rowData);
+        }
+
+        return rows;
+    }
+
 
     public List<String[]> fetchRows(String databaseName, String collectionName, String[] attributeNames) {
         List<String[]> rows = new ArrayList<>();
