@@ -17,7 +17,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,7 +29,6 @@ public class Server extends Thread {
     private static HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
     private static MongoClient mongoClient;
-    private Socket clientSocket;
     private static Boolean isItEnd = false;
 
     @Override
@@ -257,7 +255,7 @@ public class Server extends Thread {
             }
             clientSocket.close();
             out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -266,7 +264,7 @@ public class Server extends Thread {
         return isItEnd;
     }
 
-    private static void selectFromTable(String command, PrintWriter out) {
+    private static void selectFromTable(String command, PrintWriter out) throws InterruptedException {
         String[] parts = command.split("\\s+");
 
         String tableName = extractTableName(parts);
@@ -288,6 +286,7 @@ public class Server extends Thread {
 
         if (parts[1].equals("*")) {
             if (command.contains("WHERE")) {
+                // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
                 String condition = extractCondition(command);
                 if (condition != null) {
                     List<String> attributeNamesList = extractAttributeNames(parts);
@@ -303,6 +302,7 @@ public class Server extends Thread {
                     out.println("> Invalid WHERE clause.");
                 }
             } else {
+                // SELECT * FROM ETC;
                 List<String[]> rows = fetchAllRowsFromTable(tableName, out);
                 if (rows != null) {
                     printSelectedRowsALL(out, tableFormat, rows);
@@ -316,30 +316,38 @@ public class Server extends Thread {
             }
 
             if (command.contains("WHERE")) {
+                // SELECT A, B, C FROM ETC WHERE LOREMIPSUM = lofasz;
                 String condition = extractCondition(command);
                 if (condition != null) {
                     List<String[]> rows = fetchRowsWithFilter(tableName, condition, out, attributeNamesList);
                     if (rows != null && !rows.isEmpty()) {
                         int primaryKeyIndex = 1;
+                        PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
                         for (String[] row : rows) {
+                            List<String[]> ertekek = new ArrayList<>();
                             String[] primaryKeys = row[primaryKeyIndex].split(";");
                             for (String primaryKey : primaryKeys) {
                                 Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
                                 if (document != null) {
-                                    Object attributeValue = document.get("_id");
-                                    out.println(attributeValue);
+                                    String ertek = (String) document.get("ertek");
+                                    String pk = (String) document.get("_id");
+                                    String vegsoErtek = pk + ";" + ertek;
+                                    ertekek.add(vegsoErtek.split(";"));
                                 } else {
                                     out.println("> Document not found for primary key: " + primaryKey);
                                 }
                             }
+                            printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
                         }
                     }
                 } else {
                     out.println("> Invalid WHERE clause.");
                 }
             } else {
+                // SELECT A, B, C FROM ETC;
                 List<String[]> rows = fetchAllRowsFromTable(tableName, out);
                 if (rows != null) {
+                    PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
                     printSelectedRows(out, tableFormat, rows, attributeNamesList.toArray(new String[0]));
                 }
             }
@@ -406,7 +414,7 @@ public class Server extends Thread {
         return rows;
     }
 
-    private static List<String[]> fetchRowsWithFilter(String tableName, String condition, PrintWriter out, List<String> attributeNamesList) {
+    private static List<String[]> fetchRowsWithFilter(String tableName, String condition, PrintWriter out, List<String> attributeNamesList) throws InterruptedException {
         String[] conditionParts = condition.split("\\s+");
         if (conditionParts.length != 3) {
             out.println("> Invalid condition format.");
@@ -418,19 +426,53 @@ public class Server extends Thread {
         String value = conditionParts[2].trim();
 
         Bson filter;
-        switch (operator) {
-            case "=":
-                filter = Filters.eq("_id", value);
-                break;
-            case ">":
-                filter = Filters.gt("_id", value);
-                break;
-            case "<":
-                filter = Filters.lt("_id", value);
-                break;
-            default:
-                out.println("> Invalid operator in WHERE clause: " + operator);
-                return null;
+        try {
+            int numericValue = Integer.parseInt(value);
+            switch (operator) {
+                case "=":
+                    filter = Filters.eq("_id", numericValue);
+                    break;
+                case ">":
+                    filter = Filters.gt("_id", numericValue);
+                    break;
+                case ">=":
+                    filter = Filters.gte("_id", numericValue);
+                    break;
+                case "<":
+                    filter = Filters.lt("_id", numericValue);
+                    break;
+                case "<=":
+                    filter = Filters.lte("_id", numericValue);
+                    break;
+                case "!=":
+                    filter = Filters.ne("_id", numericValue);
+                    break;
+                default:
+                    out.println("> Invalid operator in WHERE clause: " + operator);
+                    return null;
+            }
+        } catch (NumberFormatException e) {
+            // Ha nem szam, visszamegyunk es String marad
+            switch (operator) {
+                case "=":
+                    filter = Filters.eq("_id", value);
+                    break;
+                case ">":
+                    filter = Filters.gt("_id", value);
+                    break;
+                case ">=":
+                    filter = Filters.gte("_id", value);
+                    break;
+                case "<":
+                    filter = Filters.lt("_id", value);
+                    break;
+                case "<=":
+                    filter = Filters.lte("_id", value);
+                    break;
+                default:
+                    out.println("> Invalid operator in WHERE clause: " + operator);
+                    return null;
+            }
         }
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
@@ -453,8 +495,29 @@ public class Server extends Thread {
             mongoDBHandler.close();
             return rows;
         } else {
-            out.println("> Index does not exist for attribute: " + attributeName + ". Performing regular query.");
-            List<String[]> rows = mongoDBHandler.fetchRowsWithFilter(currentDatabase, tableName, filter);
+            String createIndexName = tableName + attributeName.toUpperCase();
+            String command = "CREATE INDEX " + createIndexName + " ON " + tableName + " ( " + attributeName + " );";
+            out.println("> Index does not exist for attribute: " + attributeName + ". Creating one for future better performance\n  This could take a while, if the database if large, but in the future, the selection for this attribute will be better");
+            createIndex(command, out);
+
+            mongoDBHandler = new MongoDBHandler();
+            String vegsoIndexName = "";
+            boolean indexCreated = false;
+            while (!indexCreated) {
+                List<String> updatedIndexes = getRelevantCollections(tableName, mongoDBHandler);
+                for (String index : updatedIndexes) {
+                    if (index.contains(createIndexName)) {
+                        indexCreated = true;
+                        vegsoIndexName = index;
+                        break;
+                    }
+                }
+                if (!indexCreated) {
+                    Thread.sleep(1000);
+                }
+            }
+
+            List<String[]> rows = mongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, vegsoIndexName, filter);
             mongoDBHandler.close();
             return rows;
         }
@@ -469,6 +532,7 @@ public class Server extends Thread {
 
 
     private static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows, String[] selectedAttributes) {
+
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         Map<String, Integer> attributeIndices = new HashMap<>();
 
@@ -491,12 +555,6 @@ public class Server extends Thread {
             filteredRows.add(filteredRow);
         }
 
-        out.println();
-        for (String attribute : selectedAttributes) {
-            out.print("\t  " + attribute + "\t  ");
-        }
-        out.println();
-
         StringBuilder delimiter = new StringBuilder();
         delimiter.append("-".repeat(Math.max(0, selectedAttributes.length * 40)));
         out.println(delimiter);
@@ -504,6 +562,14 @@ public class Server extends Thread {
             out.println("|\t" + String.join("\t|\t", row) + "\t|");
         }
         out.println(delimiter);
+    }
+
+    private static void PrintAttributeHeaderOut(PrintWriter out, JSONObject tableFormat, String[] selectedAttributes) {
+        out.println();
+        for (String attribute : selectedAttributes) {
+            out.print("\t  " + attribute + "\t  ");
+        }
+        out.println();
     }
 
 

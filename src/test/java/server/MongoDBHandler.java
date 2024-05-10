@@ -1,13 +1,17 @@
 package server;
 
 import com.mongodb.client.*;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import com.mongodb.client.model.Aggregates;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
 
 import static server.Server.getIsItEnd;
 
@@ -58,7 +62,7 @@ public class MongoDBHandler {
     }
 
     public static void insertDocumentsIntoMongoDBALL() {
-        if(!documentList.isEmpty()){
+        if (!documentList.isEmpty()) {
             MongoDatabase database = mongoClient.getDatabase(databaseName1);
             MongoCollection<Document> collection = database.getCollection(collectionName1);
             collection.insertMany(documentList);
@@ -75,7 +79,6 @@ public class MongoDBHandler {
     }
 
     public void insertDocumentINDEX(String databaseName, String collectionName, Document document) {
-
 
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -141,13 +144,25 @@ public class MongoDBHandler {
         return collection.deleteOne(query).getDeletedCount();
     }
 
-    public List<String[]> fetchRowsWithFilter(String databaseName, String collectionName, Bson filter) {
+    public List<String[]> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, Bson filter) {
         List<String[]> rows = new ArrayList<>();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
-        FindIterable<Document> documents = collection.find(filter);
-        for (Document document : documents) {
+        List<Document> convertedDocuments;
+        if (filterIsNumber(filter)) {
+            List<Bson> pipeline = List.of(
+
+                    Aggregates.addFields(new Field<>("_id", new Document("$convert", new Document("input", "$_id").append("to", "int")))),
+                    Aggregates.match(filter)
+            );
+
+            convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
+        } else {
+            convertedDocuments = collection.find(filter).into(new ArrayList<>());
+        }
+
+        for (Document document : convertedDocuments) {
             String[] rowData = convertDocumentToStringArray(document);
             rows.add(rowData);
         }
@@ -155,18 +170,31 @@ public class MongoDBHandler {
         return rows;
     }
 
-    public List<String[]> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, Bson filter) {
-        List<String[]> rows = new ArrayList<>();
-        MongoDatabase database = mongoClient.getDatabase(databaseName);
-        MongoCollection<Document> collection = database.getCollection(collectionName);
+    private boolean filterIsNumber(Bson filter) {
+        String filterValue = filter.toString();
+        return isInteger(filterValue.trim());
+    }
 
-        FindIterable<Document> documents = collection.find(filter);
-        for (Document document : documents) {
-            String[] rowData = convertDocumentToStringArray(document);
-            rows.add(rowData);
+    private boolean isInteger(String str) {
+        try {
+            if (str.endsWith("}")) {
+                str = str.substring(0, str.length() - 1);
+            }
+            String[] parts = str.split(",");
+            Integer numericValue = null;
+            for (String part : parts) {
+                String trimmedPart = part.trim();
+                if (trimmedPart.startsWith("value=")) {
+                    numericValue = Integer.parseInt(trimmedPart.substring(6));
+                    break;
+                }
+            }
+
+            return numericValue != null;
+        } catch (NumberFormatException e) {
+            return false;
         }
 
-        return rows;
     }
 
 
@@ -244,7 +272,6 @@ public class MongoDBHandler {
                 rows.add(combinedRow);
             }
         }
-
 
 
         return rows;
