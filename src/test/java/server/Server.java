@@ -50,7 +50,7 @@ public class Server extends Thread {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
-                    clientSocket.setSoTimeout(500000);
+                    clientSocket.setSoTimeout(50000000);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -618,7 +618,7 @@ public class Server extends Thread {
             currentDatabase = databaseName;
             System.out.println("Using database: " + databaseName);
             out.println("> Using database: " + databaseName);
-            out.println("DBFORQUERY"+databaseName);
+            out.println("DBFORQUERY "+databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
             out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");

@@ -59,7 +59,7 @@ public class Client {
                     if (!finalResponse.startsWith("DBFORQUERY")) {
                         SwingUtilities.invokeLater(() -> outputTextArea.append(finalResponse + "\n"));
                     }else {
-                        currentDBname=finalResponse.substring(2);
+                        currentDBname=finalResponse.substring(11);
                     }
                 }
             }
