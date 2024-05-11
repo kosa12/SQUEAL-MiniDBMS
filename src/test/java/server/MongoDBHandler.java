@@ -41,13 +41,9 @@ public class MongoDBHandler {
         */
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
-        Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
-        if (existingDocument != null) {
-            return;
-        }
 
         synchronized (lock) {
-            int BATCH_SIZE = 1000;
+            int BATCH_SIZE = 100;
             if (documentList.size() < BATCH_SIZE) {
                 documentList.add(document);
                 databaseName1 = databaseName;
