@@ -22,6 +22,7 @@ public class SelectorFrame extends JFrame {
     private String currentDatabase;
     private static JCheckBox[] jCheckBoxes;
     private String[] selectedTableNames;
+    private QueryDesignerFrame queryDesignerFrame;
     private List<String> stringList;
     public SelectorFrame(String databasename){
         currentDatabase = databasename;
@@ -47,9 +48,12 @@ public class SelectorFrame extends JFrame {
                     }
                 }
                 System.out.println(stringList);
+                queryDesignerFrame = new QueryDesignerFrame(stringList,currentDatabase);
                 dispose();
             }
         });
+
+
 
         jPanel.setLayout(new BoxLayout(jPanel,BoxLayout.Y_AXIS));
         this.setSize(250,250);

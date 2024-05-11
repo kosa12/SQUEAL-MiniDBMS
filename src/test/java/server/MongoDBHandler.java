@@ -26,29 +26,24 @@ public class MongoDBHandler {
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
-
     /**
-     Isten, áldd meg a magyart
-     Jó kedvvel, bőséggel,
-     Nyújts feléje védő kart,
-     Ha küzd ellenséggel;
-     Bal sors akit régen tép,
-     Hozz rá víg esztendőt,
-     Megbünhödte már e nép
-     A multat s jövendőt!
-     */
+                 Isten, áldd meg a magyart
+                Jó kedvvel, bőséggel,
+                Nyújts feléje védő kart,
+                Ha küzd ellenséggel;
+                Bal sors akit régen tép,
+                Hozz rá víg esztendőt,
+                Megbünhödte már e nép
+                A multat s jövendőt!
+            */
     public void insertDocument(String databaseName, String collectionName, Document document) {
 
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
-        Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
-        if (existingDocument != null) {
-            return;
-        }
 
         synchronized (lock) {
-            int BATCH_SIZE = 1000;
+            int BATCH_SIZE = 100;
             if (documentList.size() < BATCH_SIZE) {
                 documentList.add(document);
                 databaseName1 = databaseName;
@@ -98,6 +93,7 @@ public class MongoDBHandler {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         database.drop();
     }
+
 
     public List<String> getAllCollections(String databaseName) {
         List<String> collections = new ArrayList<>();
@@ -152,6 +148,7 @@ public class MongoDBHandler {
         List<Document> convertedDocuments;
         if (filterIsNumber(filter)) {
             List<Bson> pipeline = List.of(
+
                     Aggregates.addFields(new Field<>("_id", new Document("$convert", new Document("input", "$_id").append("to", "int")))),
                     Aggregates.match(filter)
             );
@@ -272,6 +269,7 @@ public class MongoDBHandler {
             }
         }
 
+
         return rows;
     }
 
@@ -287,4 +285,3 @@ public class MongoDBHandler {
         mongoClient.close();
     }
 }
-

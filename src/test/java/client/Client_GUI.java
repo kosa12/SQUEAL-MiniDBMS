@@ -176,10 +176,10 @@ public class Client_GUI extends JFrame {
         queryD.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                queryDesignerFrame = new QueryDesignerFrame();
                 String currendDBname =  client.getCurrentDBname();
                 selectorFrame = new SelectorFrame(currendDBname);
                 checkBoxes = SelectorFrame.getjCheckBoxes();
+
 
             }
         });
