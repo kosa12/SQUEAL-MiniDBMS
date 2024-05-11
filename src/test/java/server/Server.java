@@ -50,7 +50,7 @@ public class Server extends Thread {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
                     new Thread(() -> handleClient(clientSocket)).start();
-                    clientSocket.setSoTimeout(500000);
+                    clientSocket.setSoTimeout(50000000);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

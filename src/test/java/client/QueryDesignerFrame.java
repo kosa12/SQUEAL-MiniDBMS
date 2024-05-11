@@ -1,5 +1,10 @@
 package client;
 
+
+import com.mongodb.client.*;
+import data.Database;
+import data.Table;
+import org.bson.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -26,20 +31,32 @@ public class QueryDesignerFrame extends JFrame {
     private Map<String, List<String>> selectedItems;
 
     public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.ArrayList;
+
+public class QueryDesignerFrame extends JFrame {
+    private JPanel panel,outputPanel;
+    private JTextArea jTextArea;
+    private List<String> checkBoxes;
+    private String currentdb;
+
+    public QueryDesignerFrame(List<String> jCheckBoxes,String currentdatabase) {
         this.checkBoxes = jCheckBoxes;
         this.currentdb = currentdatabase;
         panel = new JPanel();
         panel.setBackground(Color.RED);
         this.setLayout(new BorderLayout());
 
-        projectTables(checkBoxes, panel);
+
+        projectTables(checkBoxes,panel);
         jTextArea = new JTextArea();
-        jTextArea.setPreferredSize(new Dimension(970, 200));
+        jTextArea.setPreferredSize(new Dimension(970,200));
         jTextArea.setEditable(false);
 
-        this.add(jTextArea, BorderLayout.SOUTH);
+        this.add(jTextArea,BorderLayout.SOUTH);
 
-        this.add(panel, BorderLayout.CENTER);
+        this.add(panel,BorderLayout.CENTER);
 
         this.setSize(1000, 800);
         this.setLocationRelativeTo(null);
@@ -62,7 +79,8 @@ public class QueryDesignerFrame extends JFrame {
             }
             JSONArray jsonArrayTable = (JSONArray) jsontabla.get("attributes");
 
-            DefaultTableModel model = new DefaultTableModel(null, new Object[]{checkBoxes.get(i), "Select"}) {
+
+            DefaultTableModel model = new DefaultTableModel(null, new Object[]{checkBoxes.get(i),"Select"}){
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return column == 1;
@@ -118,6 +136,31 @@ public class QueryDesignerFrame extends JFrame {
                     }
                 }
             });
+
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 1) {
+                        return Boolean.class;
+                    }
+                    return super.getColumnClass(columnIndex);
+                }
+            };
+
+            aux = 0;
+            for (Object o : jsonArrayTable) {
+                JSONObject attribut = (JSONObject) o;
+                String attributName = (String) attribut.get("name");
+                model.addRow(new Object[]{attributName,false});
+                aux++;
+            }
+
+            JTable table = new JTable(model);
+            JScrollPane scrollPane = new JScrollPane(table);
+            table.setFillsViewportHeight(true);
+            table.setPreferredSize(new Dimension(100,aux * 20));
+            table.setLocation(i * 50, i * 50);
+            table.setPreferredScrollableViewportSize(table.getPreferredSize());
+            panel.add(scrollPane);
         }
     }
 
@@ -129,7 +172,6 @@ public class QueryDesignerFrame extends JFrame {
                 .collect(Collectors.toList());
 
         List<String> selectedTables = new ArrayList<>(selectedItems.keySet());
-
         String selectedColumnsString = String.join(", ", selectedColumns);
         String selectedTablesString = String.join(", ", selectedTables);
 
@@ -137,6 +179,7 @@ public class QueryDesignerFrame extends JFrame {
         queryBuilder.append("SELECT ").append(selectedColumnsString).append(" FROM ").append(selectedTablesString);
 
         jTextArea.setText(queryBuilder.toString());
+
     }
 
 
