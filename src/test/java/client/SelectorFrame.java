@@ -51,8 +51,6 @@ public class SelectorFrame extends JFrame {
             }
         });
 
-
-
         jPanel.setLayout(new BoxLayout(jPanel,BoxLayout.Y_AXIS));
         this.setSize(250,250);
         this.add(jPanel);

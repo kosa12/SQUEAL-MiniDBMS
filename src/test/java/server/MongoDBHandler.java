@@ -27,18 +27,19 @@ public class MongoDBHandler {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
 
+    /**
+     Isten, áldd meg a magyart
+     Jó kedvvel, bőséggel,
+     Nyújts feléje védő kart,
+     Ha küzd ellenséggel;
+     Bal sors akit régen tép,
+     Hozz rá víg esztendőt,
+     Megbünhödte már e nép
+     A multat s jövendőt!
+     */
     public void insertDocument(String databaseName, String collectionName, Document document) {
 
-        /*
-         	Isten, áldd meg a magyart
-            Jó kedvvel, bőséggel,
-            Nyújts feléje védő kart,
-            Ha küzd ellenséggel;
-            Bal sors akit régen tép,
-            Hozz rá víg esztendőt,
-            Megbünhödte már e nép
-            A multat s jövendőt!
-        */
+
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
         Document existingDocument = collection.find(new Document("_id", document.get("_id"))).first();
@@ -98,7 +99,6 @@ public class MongoDBHandler {
         database.drop();
     }
 
-
     public List<String> getAllCollections(String databaseName) {
         List<String> collections = new ArrayList<>();
         MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
@@ -152,7 +152,6 @@ public class MongoDBHandler {
         List<Document> convertedDocuments;
         if (filterIsNumber(filter)) {
             List<Bson> pipeline = List.of(
-
                     Aggregates.addFields(new Field<>("_id", new Document("$convert", new Document("input", "$_id").append("to", "int")))),
                     Aggregates.match(filter)
             );
@@ -272,7 +271,6 @@ public class MongoDBHandler {
                 rows.add(combinedRow);
             }
         }
-
 
         return rows;
     }
