@@ -1,5 +1,6 @@
 package client;
 
+
 import com.mongodb.client.*;
 import data.Database;
 import data.Table;
@@ -10,10 +11,26 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+public class QueryDesignerFrame extends JFrame {
+    private JPanel panel, outputPanel;
+    private JTextArea jTextArea;
+    private List<String> checkBoxes;
+    private String currentdb;
+    private Map<String, List<String>> selectedItems;
+
+    public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
@@ -31,6 +48,7 @@ public class QueryDesignerFrame extends JFrame {
         panel.setBackground(Color.RED);
         this.setLayout(new BorderLayout());
 
+
         projectTables(checkBoxes,panel);
         jTextArea = new JTextArea();
         jTextArea.setPreferredSize(new Dimension(970,200));
@@ -46,6 +64,8 @@ public class QueryDesignerFrame extends JFrame {
         setIconImage(icon);
         this.setVisible(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        this.selectedItems = new HashMap<>();
     }
 
     private void projectTables(List<String> checkBoxes, JPanel panel) {
@@ -59,11 +79,63 @@ public class QueryDesignerFrame extends JFrame {
             }
             JSONArray jsonArrayTable = (JSONArray) jsontabla.get("attributes");
 
+
             DefaultTableModel model = new DefaultTableModel(null, new Object[]{checkBoxes.get(i),"Select"}){
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return column == 1;
                 }
+
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 1) {
+                        return Boolean.class;
+                    }
+                    return super.getColumnClass(columnIndex);
+                }
+            };
+
+            aux = 0;
+            for (Object o : jsonArrayTable) {
+                JSONObject attribut = (JSONObject) o;
+                String attributName = (String) attribut.get("name");
+                model.addRow(new Object[]{attributName, false});
+                aux++;
+            }
+
+            JTable table = new JTable(model);
+            JScrollPane scrollPane = new JScrollPane(table);
+            table.setFillsViewportHeight(true);
+            table.setPreferredSize(new Dimension(100, aux * 20));
+            table.setLocation(i * 50, i * 50);
+            table.setPreferredScrollableViewportSize(table.getPreferredSize());
+            panel.add(scrollPane);
+
+            int finalI = i;
+            model.addTableModelListener(new TableModelListener() {
+                @Override
+                public void tableChanged(TableModelEvent e) {
+                    if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 1) {
+                        for (int row = 0; row < model.getRowCount(); row++) {
+                            boolean selected = (Boolean) model.getValueAt(row, 1);
+                            String itemName = (String) model.getValueAt(row, 0);
+                            String key = checkBoxes.get(finalI);
+                            if (selected) {
+                                selectedItems.computeIfAbsent(key, _ -> new ArrayList<>());
+                                if (!selectedItems.get(key).contains(itemName)) {
+                                    selectedItems.get(key).add(itemName);
+                                }
+                            } else {
+                                selectedItems.computeIfPresent(key, (_, v) -> {
+                                    v.remove(itemName);
+                                    return v.isEmpty() ? null : v;
+                                });
+                            }
+                        }
+                        updateTextArea();
+                    }
+                }
+            });
 
                 @Override
                 public Class<?> getColumnClass(int columnIndex) {
@@ -90,6 +162,23 @@ public class QueryDesignerFrame extends JFrame {
             table.setPreferredScrollableViewportSize(table.getPreferredSize());
             panel.add(scrollPane);
         }
+    }
+
+    private void updateTextArea() {
+        List<String> selectedColumns = selectedItems
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        List<String> selectedTables = new ArrayList<>(selectedItems.keySet());
+        String selectedColumnsString = String.join(", ", selectedColumns);
+        String selectedTablesString = String.join(", ", selectedTables);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("SELECT ").append(selectedColumnsString).append(" FROM ").append(selectedTablesString);
+
+        jTextArea.setText(queryBuilder.toString());
 
     }
 

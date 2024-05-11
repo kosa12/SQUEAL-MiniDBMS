@@ -31,3 +31,5 @@ bin/
 .idea/
 target/
 
+**/*.json
+

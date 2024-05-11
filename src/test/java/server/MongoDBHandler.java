@@ -26,19 +26,19 @@ public class MongoDBHandler {
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
-
+    /**
+                 Isten, áldd meg a magyart
+                Jó kedvvel, bőséggel,
+                Nyújts feléje védő kart,
+                Ha küzd ellenséggel;
+                Bal sors akit régen tép,
+                Hozz rá víg esztendőt,
+                Megbünhödte már e nép
+                A multat s jövendőt!
+            */
     public void insertDocument(String databaseName, String collectionName, Document document) {
 
-        /*
-         	Isten, áldd meg a magyart
-            Jó kedvvel, bőséggel,
-            Nyújts feléje védő kart,
-            Ha küzd ellenséggel;
-            Bal sors akit régen tép,
-            Hozz rá víg esztendőt,
-            Megbünhödte már e nép
-            A multat s jövendőt!
-        */
+
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
@@ -285,4 +285,3 @@ public class MongoDBHandler {
         mongoClient.close();
     }
 }
-

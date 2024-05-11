@@ -834,7 +834,6 @@ public class Server extends Thread {
         return relevantCollections;
     }
 
-
     private static void deleteRow(String command, PrintWriter out) {
         if (!command.toLowerCase().contains("delete from")) {
             out.println("> Invalid DELETE command format: Missing 'DELETE FROM' keyword.");
@@ -1726,4 +1725,5 @@ public class Server extends Thread {
     }
 
 }
+
 
