@@ -285,7 +285,7 @@ public class Server extends Thread {
         }
 
         if (parts[1].equals("*")) {
-            if (command.contains("WHERE")) {
+            if (command.toLowerCase().contains("where")) {
                 // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
                 String condition = extractCondition(command);
                 if (condition != null) {
@@ -315,7 +315,7 @@ public class Server extends Thread {
                 return;
             }
 
-            if (command.contains("WHERE")) {
+            if (command.toLowerCase().contains("where")) {
                 // SELECT A, B, C FROM ETC WHERE LOREMIPSUM = lofasz;
                 String condition = extractCondition(command);
                 if (condition != null) {
@@ -481,17 +481,27 @@ public class Server extends Thread {
 
         List<String> indexes = getRelevantCollections(tableName, mongoDBHandler);
         boolean isThereAnIndex = false;
-        String IndexName = "";
+        String matchedIndexName = "";
+
+        String[] desiredParts = indexName.split("-");
+        int desiredLength = desiredParts.length;
+        String[] desiredAttributes = Arrays.copyOfRange(desiredParts, 0, desiredLength - 2);
+
         for (String index : indexes) {
-            if (index.contains(indexName)) {
-                isThereAnIndex = true;
-                IndexName = index;
-                break;
+            String[] indexParts = index.split("-");
+            int length = indexParts.length;
+            if (length >= 3 && indexParts[length - 1].equalsIgnoreCase("index") && indexParts[length - 2].equalsIgnoreCase(tableName)) {
+                String[] indexAttributes = Arrays.copyOfRange(indexParts, 1, length - 2);
+                if (Arrays.equals(indexAttributes, desiredAttributes)) {
+                    isThereAnIndex = true;
+                    matchedIndexName = index;
+                    break;
+                }
             }
         }
 
         if (isThereAnIndex) {
-            List<String[]> rows = mongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, IndexName, filter);
+            List<String[]> rows = mongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, filter);
             mongoDBHandler.close();
             return rows;
         } else {
@@ -741,7 +751,7 @@ public class Server extends Thread {
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
         mongoDBHandler.close();
-        //updateIndexes(tableName, values, out, primaryKeyValue);
+        updateIndexes(tableName, values, out, primaryKeyValue);
 
         out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
     }
@@ -815,7 +825,7 @@ public class Server extends Thread {
                     Document document = new Document();
                     document.append("_id", valueAtIndex);
                     document.append("ertek", primaryKeyValue);
-                    mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
+                    mongoDBHandler.insertDocumentINDEX(currentDatabase, collectionName, document);
                 }
 
             }
@@ -1567,7 +1577,6 @@ public class Server extends Thread {
                 }
             }
         }
-        out.println("> Index information added to JSON file.");
     }
 
     private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {
