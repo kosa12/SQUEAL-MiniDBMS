@@ -737,10 +737,11 @@ public class Server extends Thread {
 
         String collectionName = tableName.toLowerCase();
 
+
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         mongoDBHandler.insertDocument(currentDatabase, collectionName, document);
         mongoDBHandler.close();
-        updateIndexes(tableName, values, out, primaryKeyValue);
+        //updateIndexes(tableName, values, out, primaryKeyValue);
 
         out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
     }
@@ -1201,8 +1202,15 @@ public class Server extends Thread {
         }
 
         databases.get(currentDatabase).addTable(table);
+
+
+
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
+
+        JSONArray indexes = new JSONArray();
+        tableObj.put("indexes", indexes);
+
         tableObj.put("attributes", tableColumns);
         updateDatabaseWithTable(tableName, tableObj, out);
     }
@@ -1330,6 +1338,9 @@ public class Server extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                MongoDatabase mongoDatabase = mongoClient.getDatabase(currentDatabase);
+                mongoDatabase.getCollection(tableName).drop();
 
                 System.out.println("Table dropped: " + tableName);
                 out.println("> Table '" + tableName + "' dropped.");
@@ -1494,6 +1505,8 @@ public class Server extends Thread {
                 }
             }
 
+            updateIndexInJson(indexName, tableName, trimmedColumns, out);
+
             System.out.println("Index created: " + indexName + " on columns " + columnsStr + " in table " + tableName);
             out.println("> Index '" + indexName + "' created on column(s) " + columnsStr + " in table '" + tableName + "'");
         } catch (Exception ex) {
@@ -1502,6 +1515,59 @@ public class Server extends Thread {
         } finally {
             mongoDBHandler.close();
         }
+
+
+
+    }
+
+    private static void updateIndexInJson(String indexName, String tableName, String[] columns, PrintWriter out) {
+        String path = "src/test/java/databases/" + currentDatabase + ".json";
+        JSONArray currentDatabaseJson = getCurrentDatabaseJson(path);
+        if (currentDatabaseJson == null) {
+            out.println("> Error: Unable to load current database JSON.");
+            return;
+        }
+
+        JSONArray tablesArray = (JSONArray) ((JSONObject) currentDatabaseJson.getFirst()).get("tables");
+
+        JSONObject targetTable = null;
+        for (Object tableObj : tablesArray) {
+            JSONObject tableJson = (JSONObject) tableObj;
+            if (tableJson.get("table_name").equals(tableName)) {
+                targetTable = tableJson;
+                break;
+            }
+        }
+
+        if (targetTable == null) {
+            out.println("> Error: Table '" + tableName + "' not found in database JSON.");
+            return;
+        }
+
+        JSONArray indexesArray = (JSONArray) targetTable.get("indexes");
+        JSONObject newIndex = new JSONObject();
+        String mongoDBname = indexName + "-" + String.join("-", columns) + "-" + tableName + "-index";
+        newIndex.put("index_name_in_mongoDB", mongoDBname);
+        newIndex.put("index_name", indexName);
+        newIndex.put("attributes", String.join(", ", columns));
+        indexesArray.add(newIndex);
+
+        FileWriter writer = null;
+        try {
+            writer = new FileWriter(path);
+            writer.write(currentDatabaseJson.toJSONString());
+        } catch (IOException e) {
+            out.println("> Error: Unable to write to current database JSON file.");
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        out.println("> Index information added to JSON file.");
     }
 
     private static List<Integer> getIndexKeys(JSONObject tableFormat, String[] columns) {

@@ -170,6 +170,7 @@ public class VisualEditorFrame extends JFrame {
 
         client.sendMessage("USE " + currentDatabase + ";");
         client.sendMessage(command.toString());
+        client.sendMessage("end");
         model.addRow(rowData);
 
     }

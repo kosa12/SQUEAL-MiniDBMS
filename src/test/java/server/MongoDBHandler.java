@@ -17,7 +17,7 @@ import static server.Server.getIsItEnd;
 
 public class MongoDBHandler {
     private static MongoClient mongoClient = null;
-    private static final List<Document> documentList = new ArrayList<>();
+    private static List<Document> documentList = new ArrayList<>();
     private static final Object lock = new Object();
     private static String databaseName1;
     private static String collectionName1;
@@ -43,7 +43,7 @@ public class MongoDBHandler {
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
         synchronized (lock) {
-            int BATCH_SIZE = 100;
+            int BATCH_SIZE = 1000;
             if (documentList.size() < BATCH_SIZE) {
                 documentList.add(document);
                 databaseName1 = databaseName;
@@ -64,9 +64,7 @@ public class MongoDBHandler {
             collection.insertMany(documentList);
             documentList.clear();
         }
-
     }
-
 
     private void insertDocumentsIntoMongoDB(String databaseName, String collectionName, List<Document> documents) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);

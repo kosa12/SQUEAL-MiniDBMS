@@ -25,8 +25,9 @@ public class ClientMain {
             JTextArea outputTextArea = gui.getOutputTextArea();
             executeButton.addActionListener(_ -> {
                 String message = gui.getjTextField();
+                message = appendEndAfterInserts(message);
                 client.sendMessage(message);
-                client.sendMessage("end");
+
 
                 SwingUtilities.invokeLater(() -> outputTextArea.setText(""));
             });
@@ -41,6 +42,30 @@ public class ClientMain {
         timer.setRepeats(false); // Csak egyszer fusson le
         timer.start();
 
+    }
+
+    private static String appendEndAfterInserts(String message) {
+        String[] lines = message.split("\\n");
+        StringBuilder modifiedMessage = new StringBuilder();
+
+        boolean insideInsertBlock = false;
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            modifiedMessage.append(line).append("\n");
+
+            if (line.toLowerCase().startsWith("insert")) {
+                insideInsertBlock = true;
+            }
+
+            boolean isLastLine = i == lines.length - 1;
+            if (insideInsertBlock && (isLastLine || !lines[i + 1].trim().toLowerCase().startsWith("insert"))) {
+                modifiedMessage.append("end\n");
+                insideInsertBlock = false;
+            }
+        }
+
+        return modifiedMessage.toString();
     }
 
 }
