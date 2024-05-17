@@ -10,35 +10,79 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class QueryDesignerFrame extends JFrame {
-    private JPanel panel,outputPanel;
+    private JPanel panel, outputPanel;
     private JTextArea jTextArea;
     private List<String> checkBoxes;
     private String currentdb;
+    private JButton copy;
+    private Map<String, List<String>> selectedItems;
 
-    public QueryDesignerFrame(List<String> jCheckBoxes,String currentdatabase) {
+    public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
         this.checkBoxes = jCheckBoxes;
         this.currentdb = currentdatabase;
         panel = new JPanel();
-        panel.setBackground(Color.RED);
+        panel.setBackground(new Color(239, 240, 243));
         this.setLayout(new BorderLayout());
 
-        projectTables(checkBoxes,panel);
+        int padding = 10;
+        Insets insets = new Insets(padding,padding,padding,padding);
+
+        projectTables(checkBoxes, panel);
+
+
+
         jTextArea = new JTextArea();
-        jTextArea.setPreferredSize(new Dimension(970,200));
+        jTextArea.setFont(new Font("Cfont",Font.PLAIN,20));
+        jTextArea.setPreferredSize(new Dimension(900, 200));
         jTextArea.setEditable(false);
+        jTextArea.setBorder(new EmptyBorder(insets));
+        jTextArea.setBackground(new Color(239, 240, 243));
 
-        this.add(jTextArea,BorderLayout.SOUTH);
+        copy = new JButton("Copy");
+        copy.setPreferredSize(new Dimension(70,200));
+        copy.setBackground(new Color(239, 240, 243));
 
-        this.add(panel,BorderLayout.CENTER);
+        copy.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                copy(jTextArea.getText());
+            }
+        });
+
+        JPanel textPanel = new JPanel();
+        textPanel.setBackground(new Color(75, 104, 178));
+        textPanel.add(jTextArea);
+        textPanel.add(copy);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(new EmptyBorder(insets));
+        mainPanel.add(panel, BorderLayout.CENTER);
+        mainPanel.add(textPanel, BorderLayout.SOUTH);
+        mainPanel.setBackground(new Color(75, 104, 178));
+
+        this.add(mainPanel);
+
+        this.add(textPanel, BorderLayout.SOUTH);
+
 
         this.setSize(1000, 800);
         this.setLocationRelativeTo(null);
@@ -46,6 +90,18 @@ public class QueryDesignerFrame extends JFrame {
         setIconImage(icon);
         this.setVisible(true);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        this.selectedItems = new HashMap<>();
+    }
+
+    public static void copy(String text) {
+        Clipboard clipboard = getSystemClipboard();
+        clipboard.setContents(new StringSelection(text), null);
+    }
+
+    private static Clipboard getSystemClipboard() {
+        Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
+        return defaultToolkit.getSystemClipboard();
     }
 
     private void projectTables(List<String> checkBoxes, JPanel panel) {
@@ -54,12 +110,12 @@ public class QueryDesignerFrame extends JFrame {
         for (int i = 0; i < checkBoxes.size(); i++) {
             jsontabla = readTableFormat(currentdb, checkBoxes.get(i));
             if (jsontabla == null) {
-                System.out.println("Nem sikerült betölteni a táblázatot: " + checkBoxes.get(i));
+                System.out.println("> Could not load table: " + checkBoxes.get(i));
                 continue;
             }
             JSONArray jsonArrayTable = (JSONArray) jsontabla.get("attributes");
 
-            DefaultTableModel model = new DefaultTableModel(null, new Object[]{checkBoxes.get(i),"Select"}){
+            DefaultTableModel model = new DefaultTableModel(null, new Object[]{checkBoxes.get(i), "Select"}) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return column == 1;
@@ -78,22 +134,63 @@ public class QueryDesignerFrame extends JFrame {
             for (Object o : jsonArrayTable) {
                 JSONObject attribut = (JSONObject) o;
                 String attributName = (String) attribut.get("name");
-                model.addRow(new Object[]{attributName,false});
+                model.addRow(new Object[]{attributName, false});
                 aux++;
             }
 
             JTable table = new JTable(model);
             JScrollPane scrollPane = new JScrollPane(table);
             table.setFillsViewportHeight(true);
-            table.setPreferredSize(new Dimension(100,aux * 20));
+            table.setPreferredSize(new Dimension(100, aux * 20));
             table.setLocation(i * 50, i * 50);
             table.setPreferredScrollableViewportSize(table.getPreferredSize());
             panel.add(scrollPane);
-        }
 
+            int finalI = i;
+            model.addTableModelListener(new TableModelListener() {
+                @Override
+                public void tableChanged(TableModelEvent e) {
+                    if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 1) {
+                        for (int row = 0; row < model.getRowCount(); row++) {
+                            boolean selected = (Boolean) model.getValueAt(row, 1);
+                            String itemName = (String) model.getValueAt(row, 0);
+                            String key = checkBoxes.get(finalI);
+                            if (selected) {
+                                selectedItems.computeIfAbsent(key, _ -> new ArrayList<>());
+                                if (!selectedItems.get(key).contains(itemName)) {
+                                    selectedItems.get(key).add(itemName);
+                                }
+                            } else {
+                                selectedItems.computeIfPresent(key, (_, v) -> {
+                                    v.remove(itemName);
+                                    return v.isEmpty() ? null : v;
+                                });
+                            }
+                        }
+                        updateTextArea();
+                    }
+                }
+            });
+        }
     }
 
+    private void updateTextArea() {
+        List<String> selectedColumns = selectedItems
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
 
+        List<String> selectedTables = new ArrayList<>(selectedItems.keySet());
+
+        String selectedColumnsString = String.join(", ", selectedColumns);
+        String selectedTablesString = String.join(", ", selectedTables);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("SELECT ").append(selectedColumnsString).append(" FROM ").append(selectedTablesString).append(';');
+
+        jTextArea.setText(queryBuilder.toString());
+    }
 
     public static JSONObject readTableFormat(String databaseName, String tableName) {
         JSONParser parser = new JSONParser();
@@ -123,5 +220,4 @@ public class QueryDesignerFrame extends JFrame {
             return null;
         }
     }
-
 }
