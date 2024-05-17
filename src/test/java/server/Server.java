@@ -394,7 +394,9 @@ public class Server extends Thread {
     }
 
     private static String extractCondition(String command) {
-        int whereIndex = command.indexOf("WHERE");
+        String lowerCaseCommand = command.toLowerCase();
+        int whereIndex = lowerCaseCommand.indexOf("where");
+
         if (whereIndex != -1 && whereIndex < command.length() - 5) {
             return command.substring(whereIndex + 5).trim();
         }
@@ -803,6 +805,7 @@ public class Server extends Thread {
                     int indexKey = indexKeys.get(i);
                     String value = values[indexKey].trim();
                     if (!value.isEmpty()) {
+                        value = value.replaceAll("^'|'$", "");
                         valueBuilder.append(value);
                         if (i < indexKeys.size() - 1) {
                             valueBuilder.append(";");
