@@ -28,25 +28,25 @@ public class QueryDesignerFrame extends JFrame {
     private JButton copy;
     private int padding;
     private Map<String, List<String>> selectedItems;
+    private List<String> fkConnectedTables;
 
     public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
         this.checkBoxes = jCheckBoxes;
         this.currentdb = currentdatabase;
-        panel = new JPanel(null);
+        panel = new TablePanel();
+        panel.setLayout(null);
         panel.setBackground(new Color(239, 240, 243));
+        fkConnectedTables = new ArrayList<>();
         this.setLayout(new BorderLayout());
-      
-        this.padding = 10;
 
+        this.padding = 10;
         Insets insets = new Insets(padding, padding, padding, padding);
 
         projectTables(checkBoxes, panel);
 
         jTextArea = new JTextArea();
         jTextArea.setFont(new Font("Cfont", Font.PLAIN, 20));
-
         jTextArea.setPreferredSize(new Dimension(890, 200));
-
         jTextArea.setEditable(false);
         jTextArea.setBorder(new EmptyBorder(insets));
         jTextArea.setBackground(new Color(239, 240, 243));
@@ -54,7 +54,6 @@ public class QueryDesignerFrame extends JFrame {
         copy = new JButton("Copy");
         copy.setPreferredSize(new Dimension(70, 200));
         copy.setBackground(new Color(239, 240, 243));
-
         copy.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -134,6 +133,7 @@ public class QueryDesignerFrame extends JFrame {
             }
 
             JTable table = new JTable(model);
+            table.setName(model.getColumnName(0));
             JScrollPane scrollPane = new JScrollPane(table);
             table.setFillsViewportHeight(true);
             table.setPreferredSize(new Dimension(300, aux * 20));
@@ -185,6 +185,7 @@ public class QueryDesignerFrame extends JFrame {
                             }
                         }
                         updateTextArea();
+                        panel.repaint();
                     }
                 }
             });
@@ -218,13 +219,14 @@ public class QueryDesignerFrame extends JFrame {
                     int Y = thisY + yMoved;
 
                     parent.setLocation(X, Y);
+                    panel.repaint();
+
                 }
             };
 
             scrollPane.addMouseListener(mouseAdapter);
             scrollPane.addMouseMotionListener(mouseAdapter);
         }
-        // Set panel height based on the maximum row height
         panel.setPreferredSize(new Dimension(panel.getWidth(), maxHeight));
     }
 
@@ -244,7 +246,7 @@ public class QueryDesignerFrame extends JFrame {
             fromTableName = selectedTables.getFirst();
         }
 
-        List<String> connections = getForeignKeyConnections("src/test/java/databases/" + currentdb + ".json", currentdb, selectedTables, fromTableName);
+        List<String> connections = getForeignKeyConnections("src/test/java/databases/" + currentdb + ".json", currentdb, selectedTables, fromTableName, fkConnectedTables);
 
         StringBuilder queryBuilder = new StringBuilder();
 
@@ -288,7 +290,7 @@ public class QueryDesignerFrame extends JFrame {
         }
     }
 
-    public static List<String> getForeignKeyConnections(String filePath, String databaseName, List<String> selectedTables, String fromTableName) {
+    public static List<String> getForeignKeyConnections(String filePath, String databaseName, List<String> selectedTables, String fromTableName, List<String> fkConnectedTables) {
         JSONParser parser = new JSONParser();
         List<String> connections = new ArrayList<>();
 
@@ -327,6 +329,8 @@ public class QueryDesignerFrame extends JFrame {
                                             if (!nextTableName.equals(fromTableName)) {
                                                 String joinClause = "INNER JOIN " + tableName + " ON " + tableName + "." + attributeName + " = " + referencedTableName + "." + referencedAttributeName;
                                                 connections.add(joinClause);
+                                                fkConnectedTables.add(tableName + " " + referencedTableName);
+
                                                 break;
                                             }
                                         }
@@ -348,4 +352,46 @@ public class QueryDesignerFrame extends JFrame {
 
         return connections;
     }
+
+
+    private class TablePanel extends JPanel{
+        @Override
+        protected void paintComponent(Graphics g){
+            super.paintComponent(g);
+            for (String conn : fkConnectedTables) {
+                String[] parts = conn.split(" ");
+                JTable table1 = getTableByName(parts[0],panel);
+                JTable table2 = getTableByName(parts[1],panel);
+                if (table1 != null && table2 != null) {
+                    Point p1 = table1.getLocationOnScreen();
+                    Point p2 = table2.getLocationOnScreen();
+
+                    g.setColor(Color.BLACK);
+                    g.drawLine(p1.x - table1.getWidth(),p1.y - 150, p2.x - table2.getWidth() ,p2.y-150);
+
+                }
+            }
+        }
+
+
+    }
+
+    private JTable getTableByName(String searchedTable,JPanel panel){
+
+        Component[] components = panel.getComponents();
+        for (Component component : components) {
+            if (component instanceof JScrollPane) {
+                JScrollPane scrollPane = (JScrollPane) component;
+                Component viewportView = scrollPane.getViewport().getView();
+                if (viewportView instanceof JTable) {
+                    JTable table = (JTable) viewportView;
+                    if(table.getName().equals(searchedTable)){
+                        return table;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
 }
