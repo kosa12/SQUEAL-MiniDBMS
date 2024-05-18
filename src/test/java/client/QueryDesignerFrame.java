@@ -17,8 +17,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,31 +33,30 @@ public class QueryDesignerFrame extends JFrame {
     private List<String> checkBoxes;
     private String currentdb;
     private JButton copy;
+    private int padding;
     private Map<String, List<String>> selectedItems;
 
     public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
         this.checkBoxes = jCheckBoxes;
         this.currentdb = currentdatabase;
-        panel = new JPanel();
+        panel = new JPanel(null);
         panel.setBackground(new Color(239, 240, 243));
         this.setLayout(new BorderLayout());
 
-        int padding = 10;
-        Insets insets = new Insets(padding,padding,padding,padding);
+        this.padding = 10;
+        Insets insets = new Insets(padding, padding, padding, padding);
 
         projectTables(checkBoxes, panel);
 
-
-
         jTextArea = new JTextArea();
-        jTextArea.setFont(new Font("Cfont",Font.PLAIN,20));
-        jTextArea.setPreferredSize(new Dimension(900, 200));
+        jTextArea.setFont(new Font("Cfont", Font.PLAIN, 20));
+        jTextArea.setPreferredSize(new Dimension(890, 200));
         jTextArea.setEditable(false);
         jTextArea.setBorder(new EmptyBorder(insets));
         jTextArea.setBackground(new Color(239, 240, 243));
 
         copy = new JButton("Copy");
-        copy.setPreferredSize(new Dimension(70,200));
+        copy.setPreferredSize(new Dimension(70, 200));
         copy.setBackground(new Color(239, 240, 243));
 
         copy.addActionListener(new ActionListener() {
@@ -83,7 +81,6 @@ public class QueryDesignerFrame extends JFrame {
 
         this.add(textPanel, BorderLayout.SOUTH);
 
-
         this.setSize(1000, 800);
         this.setLocationRelativeTo(null);
         Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/qdic.png");
@@ -107,6 +104,8 @@ public class QueryDesignerFrame extends JFrame {
     private void projectTables(List<String> checkBoxes, JPanel panel) {
         JSONObject jsontabla = null;
         int aux;
+        int rowHeight = 0;
+        int maxHeight = 0;
         for (int i = 0; i < checkBoxes.size(); i++) {
             jsontabla = readTableFormat(currentdb, checkBoxes.get(i));
             if (jsontabla == null) {
@@ -141,9 +140,31 @@ public class QueryDesignerFrame extends JFrame {
             JTable table = new JTable(model);
             JScrollPane scrollPane = new JScrollPane(table);
             table.setFillsViewportHeight(true);
-            table.setPreferredSize(new Dimension(100, aux * 20));
-            table.setLocation(i * 50, i * 50);
-            table.setPreferredScrollableViewportSize(table.getPreferredSize());
+            table.setPreferredSize(new Dimension(300, aux * 20));
+
+            rowHeight = aux * 20 + 25 ;
+            maxHeight = Math.max(maxHeight, rowHeight);
+
+            if (i > 0 && panel.getComponentCount() > 0) {
+                Component lastComponent = panel.getComponent(panel.getComponentCount() - 1);
+                int lastY = lastComponent.getY();
+                int lastHeight = lastComponent.getHeight();
+                if (lastY + lastHeight + rowHeight > panel.getHeight()) {
+                    int newX = 0;
+                    int newY = lastY + lastHeight + padding;
+                    scrollPane.setBounds(newX, newY, 300, rowHeight);
+                } else {
+                    int newX = (i % 3) * 350;
+                    int newY = lastY;
+                    scrollPane.setBounds(newX, newY, 300, rowHeight);
+                }
+            } else {
+                // First table
+                int newX = 0;
+                int newY = 0;
+                scrollPane.setBounds(newX, newY, 300, rowHeight);
+            }
+
             panel.add(scrollPane);
 
             int finalI = i;
@@ -171,8 +192,46 @@ public class QueryDesignerFrame extends JFrame {
                     }
                 }
             });
+
+
+            MouseAdapter mouseAdapter = new MouseAdapter() {
+                private Point initialClick;
+                private JComponent parent;
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    initialClick = e.getPoint();
+                    parent = (JComponent) e.getSource();
+                    parent.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    int thisX = parent.getLocation().x;
+                    int thisY = parent.getLocation().y;
+
+                    int xMoved = e.getX() - initialClick.x;
+                    int yMoved = e.getY() - initialClick.y;
+
+                    int X = thisX + xMoved;
+                    int Y = thisY + yMoved;
+
+                    parent.setLocation(X, Y);
+                }
+            };
+
+            scrollPane.addMouseListener(mouseAdapter);
+            scrollPane.addMouseMotionListener(mouseAdapter);
         }
+        // Set panel height based on the maximum row height
+        panel.setPreferredSize(new Dimension(panel.getWidth(), maxHeight));
     }
+
 
     private void updateTextArea() {
         List<String> selectedColumns = selectedItems
