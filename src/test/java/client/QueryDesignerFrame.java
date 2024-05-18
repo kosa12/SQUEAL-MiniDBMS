@@ -1,9 +1,5 @@
 package client;
 
-import com.mongodb.client.*;
-import data.Database;
-import data.Table;
-import org.bson.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -20,11 +16,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class QueryDesignerFrame extends JFrame {
@@ -42,15 +35,18 @@ public class QueryDesignerFrame extends JFrame {
         panel = new JPanel(null);
         panel.setBackground(new Color(239, 240, 243));
         this.setLayout(new BorderLayout());
-
+      
         this.padding = 10;
+
         Insets insets = new Insets(padding, padding, padding, padding);
 
         projectTables(checkBoxes, panel);
 
         jTextArea = new JTextArea();
         jTextArea.setFont(new Font("Cfont", Font.PLAIN, 20));
+
         jTextArea.setPreferredSize(new Dimension(890, 200));
+
         jTextArea.setEditable(false);
         jTextArea.setBorder(new EmptyBorder(insets));
         jTextArea.setBackground(new Color(239, 240, 243));
@@ -243,10 +239,22 @@ public class QueryDesignerFrame extends JFrame {
         List<String> selectedTables = new ArrayList<>(selectedItems.keySet());
 
         String selectedColumnsString = String.join(", ", selectedColumns);
-        String selectedTablesString = String.join(", ", selectedTables);
+        String fromTableName = "";
+        if(!selectedTables.isEmpty()){
+            fromTableName = selectedTables.getFirst();
+        }
+
+        List<String> connections = getForeignKeyConnections("src/test/java/databases/" + currentdb + ".json", currentdb, selectedTables, fromTableName);
 
         StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("SELECT ").append(selectedColumnsString).append(" FROM ").append(selectedTablesString).append(';');
+
+        queryBuilder.append("SELECT ").append(selectedColumnsString).append(" FROM ").append(fromTableName);
+
+        for (String connection : connections) {
+            queryBuilder.append("\n").append(connection);
+        }
+
+        queryBuilder.append(';');
 
         jTextArea.setText(queryBuilder.toString());
     }
@@ -278,5 +286,66 @@ public class QueryDesignerFrame extends JFrame {
         } catch (IOException | ParseException e) {
             return null;
         }
+    }
+
+    public static List<String> getForeignKeyConnections(String filePath, String databaseName, List<String> selectedTables, String fromTableName) {
+        JSONParser parser = new JSONParser();
+        List<String> connections = new ArrayList<>();
+
+        try {
+            FileReader reader = new FileReader(filePath);
+            JSONArray databasesArray = (JSONArray) parser.parse(reader);
+
+            for (Object dbObj : databasesArray) {
+                JSONObject database = (JSONObject) dbObj;
+                String dbName = (String) database.get("database_name");
+
+                if (dbName.equals(databaseName)) {
+                    JSONArray tables = (JSONArray) database.get("tables");
+
+                    for (Object tableObj : tables) {
+                        JSONObject table = (JSONObject) tableObj;
+                        String tableName = (String) table.get("table_name");
+
+                        if (selectedTables.contains(tableName)) {
+                            JSONArray attributes = (JSONArray) table.get("attributes");
+
+                            for (Object attributeObj : attributes) {
+                                JSONObject attribute = (JSONObject) attributeObj;
+                                String attributeName = (String) attribute.get("name");
+                                JSONArray isReferencedByFk = (JSONArray) attribute.get("is_referenced_by_fk");
+
+                                for (Object refObj : isReferencedByFk) {
+                                    JSONObject ref = (JSONObject) refObj;
+                                    String referencedTableName = (String) ref.get("fkTableName");
+                                    String referencedAttributeName = (String) ref.get("fkName");
+
+                                    if (selectedTables.contains(referencedTableName)) {
+                                        Iterator<String> tableIterator = selectedTables.iterator();
+                                        while (tableIterator.hasNext()) {
+                                            String nextTableName = tableIterator.next();
+                                            if (!nextTableName.equals(fromTableName)) {
+                                                String joinClause = "INNER JOIN " + tableName + " ON " + tableName + "." + attributeName + " = " + referencedTableName + "." + referencedAttributeName;
+                                                connections.add(joinClause);
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                    return connections;
+                }
+            }
+
+            connections.add("Database '" + databaseName + "' not found.");
+
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+
+        return connections;
     }
 }
