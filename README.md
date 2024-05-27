@@ -68,8 +68,8 @@ The Database Management System (DBMS) project is a Java-based application that p
 
 
 ## Contributors 🤝
-- [Dacz Krisztian](https://github.com/dKriszti15) - FrontEnd
-- [Kosa Matyas](https://github.com/kosa12) - BackEnd
+- [Dacz Krisztian](https://github.com/dKriszti15)
+- [Kosa Matyas](https://github.com/kosa12)
 
 ## License 🎫
 

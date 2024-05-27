@@ -23,6 +23,8 @@ import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
 
+import javax.print.Doc;
+
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static HashMap<String, Database> databases = new HashMap<>();
