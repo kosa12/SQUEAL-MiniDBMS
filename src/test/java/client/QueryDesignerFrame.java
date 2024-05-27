@@ -393,5 +393,6 @@ public class QueryDesignerFrame extends JFrame {
                 }
             }
         }
+        return null;
     }
 }

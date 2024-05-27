@@ -249,7 +249,7 @@ public class Server extends Thread {
                         mongoDBHandler.close();
                     } else {
                         isItEnd = false;
-                        commandBuilder.append(line);
+                        commandBuilder.append(line).append(" ");
                     }
                 }
 
@@ -289,33 +289,17 @@ public class Server extends Thread {
             if (command.toLowerCase().contains("where")) {
                 // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
                 List<String> conditions = extractConditions(command);
+                List<String> attributeNamesList = extractAttributeNamesALL(parts);
+                if (attributeNamesList.isEmpty()) {
+                    out.println("> No attributes selected.");
+                    return;
+                }
+
                 if (conditions != null) {
-                    List<String> attributeNamesList = extractAttributeNamesALL(parts);
-                    if (attributeNamesList.isEmpty()) {
-                        out.println("> No attributes selected.");
-                        return;
-                    }
                     List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
                     if (rows != null && !rows.isEmpty()) {
-                        PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
-                        List<String[]> ertekek = new ArrayList<>();
-                        for (List<String> row : rows) {
-                            for(String rowXD : row){
-                                String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
-                                for (String primaryKey : primaryKeys) {
-                                    Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
-                                    if (document != null) {
-                                        String ertek = (String) document.get("ertek");
-                                        String pk = (String) document.get("_id");
-                                        String vegsoErtek = pk + ";" + ertek;
-                                        ertekek.add(vegsoErtek.split(";"));
-                                    } else {
-                                        out.println("> Document not found for primary key: " + primaryKey);
-                                    }
-                                }
-                            }
-
-                        }
+                        List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
+                        printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
                         printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
                     }
                 } else {
@@ -341,25 +325,8 @@ public class Server extends Thread {
                 if (conditions != null) {
                     List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
                     if (rows != null && !rows.isEmpty()) {
-                        PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
-                        List<String[]> ertekek = new ArrayList<>();
-                        for (List<String> row : rows) {
-                            for(String rowXD : row){
-                                String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
-                                for (String primaryKey : primaryKeys) {
-                                    Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
-                                    if (document != null) {
-                                        String ertek = (String) document.get("ertek");
-                                        String pk = (String) document.get("_id");
-                                        String vegsoErtek = pk + ";" + ertek;
-                                        ertekek.add(vegsoErtek.split(";"));
-                                    } else {
-                                        out.println("> Document not found for primary key: " + primaryKey);
-                                    }
-                                }
-                            }
-
-                        }
+                        List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
+                        printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
                         printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
                     }
                 } else {
@@ -369,11 +336,34 @@ public class Server extends Thread {
                 // SELECT A, B, C FROM ETC;
                 List<String[]> rows = fetchAllRowsFromTable(tableName, out);
                 if (rows != null) {
-                    PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
+                    printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
                     printSelectedRows(out, tableFormat, rows, attributeNamesList.toArray(new String[0]));
                 }
             }
         }
+    }
+
+    private static List<String[]> getErtekekfromTable(PrintWriter out, List<List<String>> rows, String tableName) {
+
+        List<String[]> ertekek = new ArrayList<>();
+        for (List<String> row : rows) {
+            for(String rowXD : row){
+                String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
+                for (String primaryKey : primaryKeys) {
+                    Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
+                    if (document != null) {
+                        String ertek = (String) document.get("ertek");
+                        String pk = (String) document.get("_id");
+                        String vegsoErtek = pk + ";" + ertek;
+                        ertekek.add(vegsoErtek.split(";"));
+                    } else {
+                        out.println("> Document not found for primary key: " + primaryKey);
+                    }
+                }
+            }
+
+        }
+        return ertekek;
     }
 
     private static Document fetchDocumentByPrimaryKey(String tableName, String primaryKey) {
@@ -516,7 +506,7 @@ public class Server extends Thread {
             }
 
             if (isThereAnIndex) {
-                FindIterable<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -529,7 +519,7 @@ public class Server extends Thread {
                 createIndex(command, out);
                 StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
                 MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
-                FindIterable<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -630,7 +620,7 @@ public class Server extends Thread {
         out.println(delimiter);
     }
 
-    private static void PrintAttributeHeaderOut(PrintWriter out, JSONObject tableFormat, String[] selectedAttributes) {
+    private static void printAttributeHeaderOut(PrintWriter out, String[] selectedAttributes) {
         out.println();
         for (String attribute : selectedAttributes) {
             out.print("\t  " + attribute + "\t  ");

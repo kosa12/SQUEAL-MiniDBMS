@@ -8,6 +8,15 @@ import org.bson.Document;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,37 +168,93 @@ public class MongoDBHandler {
         return collection.deleteOne(query).getDeletedCount();
     }
 
-    public static FindIterable<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition) {
-        FindIterable<Document> result = null;
+    public static List<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition) {
+        List<Document> result = new ArrayList<>();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        // Parse condition
         String[] parts = condition.split("\\s+");
+        if (parts.length != 3) {
+            System.err.println("Invalid condition format. Expected format: <field> <operator> <value>");
+            return result;
+        }
+
+        String field = parts[0];
         String operator = parts[1];
         String value = parts[2];
 
-        switch (operator){
-            case "=":
-                result = collection.find(Filters.eq("_id", value));
-                break;
-            case "<":
-                result = collection.find(Filters.lt("_id", value));
-                break;
-            case "<=":
-                result = collection.find(Filters.lte("_id", value));
-                break;
-            case ">":
-                result = collection.find(Filters.gt("_id", value));
-                break;
-            case ">=":
-                result = collection.find(Filters.gte("_id", value));
-                break;
-            case "!=":
-                result = collection.find(Filters.ne("_id", value));
-                break;
+        Bson filter = createFilter(field, operator, value);
+        if (filter == null) {
+            return result;
         }
 
-        return result;
+        List<Document> convertedDocuments;
+
+        if (isInteger(value)) {
+            List<Bson> pipeline = List.of(
+                    Aggregates.addFields(new Field<>("convertedId", new Document("$toInt", "$_id"))),
+                    Aggregates.match(createFilter("convertedId", operator, value))
+            );
+
+            System.out.println("Using aggregation pipeline with filter: " + filter.toBsonDocument(Document.class, database.getCodecRegistry()));
+            convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
+        } else {
+            System.out.println("Using simple filter: " + filter.toBsonDocument(Document.class, database.getCodecRegistry()));
+            convertedDocuments = collection.find(filter).into(new ArrayList<>());
+        }
+
+        System.out.println("Documents found: " + convertedDocuments.size());
+        return convertedDocuments;
     }
+
+
+
+    private static Bson createFilter(String field, String operator, String value) {
+        Bson filter = null;
+        switch (operator) {
+            case "=":
+                filter = Filters.eq(field, parseValue(value));
+                break;
+            case "<":
+                filter = Filters.lt(field, parseValue(value));
+                break;
+            case "<=":
+                filter = Filters.lte(field, parseValue(value));
+                break;
+            case ">":
+                filter = Filters.gt(field, parseValue(value));
+                break;
+            case ">=":
+                filter = Filters.gte(field, parseValue(value));
+                break;
+            case "!=":
+                filter = Filters.ne(field, parseValue(value));
+                break;
+            default:
+                System.err.println("Invalid operator: " + operator);
+                break;
+        }
+        return filter;
+    }
+
+    private static Object parseValue(String value) {
+        if (isInteger(value)) {
+            return Integer.parseInt(value);
+        } else {
+            return value;
+        }
+    }
+
+    private static boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
 
 
     public List<String[]> fetchRows(String databaseName, String collectionName, String[] attributeNames) {
