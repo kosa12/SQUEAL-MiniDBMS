@@ -5,12 +5,14 @@ import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
+import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import com.mongodb.client.model.Aggregates;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 import static server.Server.getIsItEnd;
@@ -21,20 +23,21 @@ public class MongoDBHandler {
     private static final Object lock = new Object();
     private static String databaseName1;
     private static String collectionName1;
-    private static MongoDBHandler instance;
+
+
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
     /**
-                 Isten, áldd meg a magyart
-                Jó kedvvel, bőséggel,
-                Nyújts feléje védő kart,
-                Ha küzd ellenséggel;
-                Bal sors akit régen tép,
-                Hozz rá víg esztendőt,
-                Megbünhödte már e nép
-                A multat s jövendőt!
-            */
+     Isten, áldd meg a magyart
+     Jó kedvvel, bőséggel,
+     Nyújts feléje védő kart,
+     Ha küzd ellenséggel;
+     Bal sors akit régen tép,
+     Hozz rá víg esztendőt,
+     Megbünhödte már e nép
+     A multat s jövendőt!
+     */
     public void insertDocument(String databaseName, String collectionName, Document document) {
 
 
@@ -92,7 +95,7 @@ public class MongoDBHandler {
 
 
     public List<String> getAllCollections(String databaseName) {
-        int maxRetries = 15;
+        int maxRetries = 25;
         int attempt = 0;
         while (attempt < maxRetries) {
             try {
@@ -119,16 +122,7 @@ public class MongoDBHandler {
         }
         return new ArrayList<>();
     }
-    public static MongoDBHandler getInstance() {
-        if (instance == null) {
-            synchronized (MongoDBHandler.class) {
-                if (instance == null) {
-                    instance = new MongoDBHandler();
-                }
-            }
-        }
-        return instance;
-    }
+
     public boolean indexExists(String databaseName, String indexName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         for (String name : database.listCollectionNames()) {
@@ -165,57 +159,36 @@ public class MongoDBHandler {
         return collection.deleteOne(query).getDeletedCount();
     }
 
-    public List<String[]> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, Bson filter) {
-        List<String[]> rows = new ArrayList<>();
+    public static FindIterable<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition) {
+        FindIterable<Document> result = null;
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
+        String[] parts = condition.split("\\s+");
+        String operator = parts[1];
+        String value = parts[2];
 
-        List<Document> convertedDocuments;
-        if (filterIsNumber(filter)) {
-            List<Bson> pipeline = List.of(
-
-                    Aggregates.addFields(new Field<>("_id", new Document("$convert", new Document("input", "$_id").append("to", "int")))),
-                    Aggregates.match(filter)
-            );
-
-            convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
-        } else {
-            convertedDocuments = collection.find(filter).into(new ArrayList<>());
+        switch (operator){
+            case "=":
+                result = collection.find(Filters.eq("_id", value));
+                break;
+            case "<":
+                result = collection.find(Filters.lt("_id", value));
+                break;
+            case "<=":
+                result = collection.find(Filters.lte("_id", value));
+                break;
+            case ">":
+                result = collection.find(Filters.gt("_id", value));
+                break;
+            case ">=":
+                result = collection.find(Filters.gte("_id", value));
+                break;
+            case "!=":
+                result = collection.find(Filters.ne("_id", value));
+                break;
         }
 
-        for (Document document : convertedDocuments) {
-            String[] rowData = convertDocumentToStringArray(document);
-            rows.add(rowData);
-        }
-
-        return rows;
-    }
-
-    private boolean filterIsNumber(Bson filter) {
-        String filterValue = filter.toString();
-        return isInteger(filterValue.trim());
-    }
-
-    private boolean isInteger(String str) {
-        try {
-            if (str.endsWith("}")) {
-                str = str.substring(0, str.length() - 1);
-            }
-            String[] parts = str.split(",");
-            Integer numericValue = null;
-            for (String part : parts) {
-                String trimmedPart = part.trim();
-                if (trimmedPart.startsWith("value=")) {
-                    numericValue = Integer.parseInt(trimmedPart.substring(6));
-                    break;
-                }
-            }
-
-            return numericValue != null;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-
+        return result;
     }
 
 

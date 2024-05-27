@@ -365,9 +365,9 @@ public class QueryDesignerFrame extends JFrame {
                 if (table1 != null && table2 != null) {
                     Point p1 = table1.getLocationOnScreen();
                     Point p2 = table2.getLocationOnScreen();
-
+                    System.out.println(p1.x + " | " + p1.y + " <> " + p2.x + " | " + p2.y);
                     g.setColor(Color.BLACK);
-                    g.drawLine(p1.x - table1.getWidth()/2,p1.y - table1.getHeight(), p2.x - table2.getWidth()/2 ,p2.y-table2.getHeight());
+                    g.drawLine(p1.x - table1.getWidth(),p1.y - 160, p2.x - table2.getWidth() ,p2.y - 160);
 
                 }
             }
