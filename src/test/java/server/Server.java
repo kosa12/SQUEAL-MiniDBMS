@@ -24,6 +24,8 @@ import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
 
+import javax.print.Doc;
+
 public class Server extends Thread {
     private ServerSocket serverSocket;
     private static HashMap<String, Database> databases = new HashMap<>();
@@ -287,16 +289,35 @@ public class Server extends Thread {
         if (parts[1].equals("*")) {
             if (command.toLowerCase().contains("where")) {
                 // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
-                String condition = extractCondition(command);
-                if (condition != null) {
-                    List<String> attributeNamesList = extractAttributeNames(parts);
+                List<String> conditions = extractConditions(command);
+                if (conditions != null) {
+                    List<String> attributeNamesList = extractAttributeNamesALL(parts);
                     if (attributeNamesList.isEmpty()) {
                         out.println("> No attributes selected.");
                         return;
                     }
-                    List<String[]> rows = fetchRowsWithFilter(tableName, condition, out, attributeNamesList);
-                    if (rows != null) {
-                        printSelectedRowsALL(out, tableFormat, rows);
+                    List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
+                    if (rows != null && !rows.isEmpty()) {
+                        PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
+                        List<String[]> ertekek = new ArrayList<>();
+                        for (List<String> row : rows) {
+                            for(String rowXD : row){
+                                String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
+                                for (String primaryKey : primaryKeys) {
+                                    Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
+                                    if (document != null) {
+                                        String ertek = (String) document.get("ertek");
+                                        String pk = (String) document.get("_id");
+                                        String vegsoErtek = pk + ";" + ertek;
+                                        ertekek.add(vegsoErtek.split(";"));
+                                    } else {
+                                        out.println("> Document not found for primary key: " + primaryKey);
+                                    }
+                                }
+                            }
+
+                        }
+                        printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
                     }
                 } else {
                     out.println("> Invalid WHERE clause.");
@@ -317,28 +338,30 @@ public class Server extends Thread {
 
             if (command.toLowerCase().contains("where")) {
                 // SELECT A, B, C FROM ETC WHERE LOREMIPSUM = lofasz;
-                String condition = extractCondition(command);
-                if (condition != null) {
-                    List<String[]> rows = fetchRowsWithFilter(tableName, condition, out, attributeNamesList);
+                List<String> conditions = extractConditions(command);
+                if (conditions != null) {
+                    List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
                     if (rows != null && !rows.isEmpty()) {
-                        int primaryKeyIndex = 1;
                         PrintAttributeHeaderOut(out, tableFormat, attributeNamesList.toArray(new String[0]));
-                        for (String[] row : rows) {
-                            List<String[]> ertekek = new ArrayList<>();
-                            String[] primaryKeys = row[primaryKeyIndex].split(";");
-                            for (String primaryKey : primaryKeys) {
-                                Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
-                                if (document != null) {
-                                    String ertek = (String) document.get("ertek");
-                                    String pk = (String) document.get("_id");
-                                    String vegsoErtek = pk + ";" + ertek;
-                                    ertekek.add(vegsoErtek.split(";"));
-                                } else {
-                                    out.println("> Document not found for primary key: " + primaryKey);
+                        List<String[]> ertekek = new ArrayList<>();
+                        for (List<String> row : rows) {
+                            for(String rowXD : row){
+                                String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
+                                for (String primaryKey : primaryKeys) {
+                                    Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
+                                    if (document != null) {
+                                        String ertek = (String) document.get("ertek");
+                                        String pk = (String) document.get("_id");
+                                        String vegsoErtek = pk + ";" + ertek;
+                                        ertekek.add(vegsoErtek.split(";"));
+                                    } else {
+                                        out.println("> Document not found for primary key: " + primaryKey);
+                                    }
                                 }
                             }
-                            printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
+
                         }
+                        printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
                     }
                 } else {
                     out.println("> Invalid WHERE clause.");
@@ -393,14 +416,55 @@ public class Server extends Thread {
         return attributeNamesList;
     }
 
-    private static String extractCondition(String command) {
-        String lowerCaseCommand = command.toLowerCase();
-        int whereIndex = lowerCaseCommand.indexOf("where");
+    private static List<String> extractAttributeNamesALL(String[] parts) {
+        List<String> attributeNamesList = new ArrayList<>();
+        String path = "src/test/java/databases/" + currentDatabase + ".json";
+        JSONParser parser = new JSONParser();
+        try {
+            Object obj = parser.parse(new FileReader(path));
+            JSONArray databaseArray = (JSONArray) obj;
 
-        if (whereIndex != -1 && whereIndex < command.length() - 5) {
-            return command.substring(whereIndex + 5).trim();
+            for (Object databaseObj : databaseArray) {
+                JSONObject databaseJson = (JSONObject) databaseObj;
+
+                JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
+                if (tablesArray != null) {
+                    for (Object tableObj : tablesArray) {
+                        JSONObject tableJson = (JSONObject) tableObj;
+                        String tableName = (String) tableJson.get("table_name");
+
+                        if (tableName.equals(parts[3])) {
+                            JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+                            for (Object attributeObj : attributesArray) {
+                                JSONObject attributeJson = (JSONObject) attributeObj;
+                                String attributeName = (String) attributeJson.get("name");
+                                attributeNamesList.add(attributeName);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
         }
-        return null;
+        return attributeNamesList;
+    }
+
+    private static List<String> extractConditions(String command) {
+        List<String> conditions = new ArrayList<>();
+        int whereIndex = command.toLowerCase().indexOf("where");
+        if (whereIndex == -1) {
+            return conditions;
+        }
+
+        String conditionString = command.substring(whereIndex + 5).trim();
+        String[] conditionsArray = conditionString.split("\\s+and\\s+");
+
+        for (String condition : conditionsArray) {
+            conditions.add(condition.trim());
+        }
+
+        return conditions;
     }
 
     private static List<String[]> fetchAllRowsFromTable(String tableName, PrintWriter out) {
@@ -416,124 +480,115 @@ public class Server extends Thread {
         return rows;
     }
 
-    private static List<String[]> fetchRowsWithFilter(String tableName, String condition, PrintWriter out, List<String> attributeNamesList) throws InterruptedException {
-        String[] conditionParts = condition.split("\\s+");
-        if (conditionParts.length != 3) {
-            out.println("> Invalid condition format.");
-            return null;
-        }
-
-        String attributeName = conditionParts[0].trim();
-        String operator = conditionParts[1].trim();
-        String value = conditionParts[2].trim();
-
-        Bson filter;
-        try {
-            int numericValue = Integer.parseInt(value);
-            switch (operator) {
-                case "=":
-                    filter = Filters.eq("_id", numericValue);
-                    break;
-                case ">":
-                    filter = Filters.gt("_id", numericValue);
-                    break;
-                case ">=":
-                    filter = Filters.gte("_id", numericValue);
-                    break;
-                case "<":
-                    filter = Filters.lt("_id", numericValue);
-                    break;
-                case "<=":
-                    filter = Filters.lte("_id", numericValue);
-                    break;
-                case "!=":
-                    filter = Filters.ne("_id", numericValue);
-                    break;
-                default:
-                    out.println("> Invalid operator in WHERE clause: " + operator);
-                    return null;
+    private static List<List<String>> fetchRowsWithFilter(String tableName, List<String> conditions, PrintWriter out, List<String> attributeNamesList) throws InterruptedException {
+        ArrayList<Set<Document>> sets = new ArrayList<>(conditions.size());
+        Set<Document> set;
+        for (String condition : conditions) {
+            set = new HashSet<>();
+            String[] parts = condition.split("\\s+");
+            if (parts.length != 3) {
+                out.println("> Invalid condition: " + condition);
+                return null;
             }
-        } catch (NumberFormatException e) {
-            // Ha nem szam, visszamegyunk es String marad
-            switch (operator) {
-                case "=":
-                    filter = Filters.eq("_id", value);
-                    break;
-                case ">":
-                    filter = Filters.gt("_id", value);
-                    break;
-                case ">=":
-                    filter = Filters.gte("_id", value);
-                    break;
-                case "<":
-                    filter = Filters.lt("_id", value);
-                    break;
-                case "<=":
-                    filter = Filters.lte("_id", value);
-                    break;
-                default:
-                    out.println("> Invalid operator in WHERE clause: " + operator);
-                    return null;
-            }
-        }
+            String attributeName = parts[0];
 
-        MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            String indexName = constructIndexName(attributeName, tableName);
+            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            List<String> indexes = getRelevantCollections(tableName, mongoDBHandler);
 
-        String indexName = constructIndexName(attributeName, tableName);
+            boolean isThereAnIndex = false;
+            String matchedIndexName = "";
 
-        List<String> indexes = getRelevantCollections(tableName, mongoDBHandler);
-        boolean isThereAnIndex = false;
-        String matchedIndexName = "";
+            String[] desiredParts = indexName.split("-");
+            int desiredLength = desiredParts.length;
+            String[] desiredAttributes = Arrays.copyOfRange(desiredParts, 0, desiredLength - 2);
 
-        String[] desiredParts = indexName.split("-");
-        int desiredLength = desiredParts.length;
-        String[] desiredAttributes = Arrays.copyOfRange(desiredParts, 0, desiredLength - 2);
-
-        for (String index : indexes) {
-            String[] indexParts = index.split("-");
-            int length = indexParts.length;
-            if (length >= 3 && indexParts[length - 1].equalsIgnoreCase("index") && indexParts[length - 2].equalsIgnoreCase(tableName)) {
-                String[] indexAttributes = Arrays.copyOfRange(indexParts, 1, length - 2);
-                if (Arrays.equals(indexAttributes, desiredAttributes)) {
-                    isThereAnIndex = true;
-                    matchedIndexName = index;
-                    break;
-                }
-            }
-        }
-
-        if (isThereAnIndex) {
-            List<String[]> rows = mongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, filter);
-            mongoDBHandler.close();
-            return rows;
-        } else {
-            String createIndexName = tableName + attributeName.toUpperCase();
-            String command = "CREATE INDEX " + createIndexName + " ON " + tableName + " ( " + attributeName + " );";
-            out.println("> Index does not exist for attribute: " + attributeName + ". Creating one for future better performance\n  This could take a while, if the database if large, but in the future, the selection for this attribute will be better");
-            createIndex(command, out);
-
-            mongoDBHandler = new MongoDBHandler();
-            String vegsoIndexName = "";
-            boolean indexCreated = false;
-            while (!indexCreated) {
-                List<String> updatedIndexes = getRelevantCollections(tableName, mongoDBHandler);
-                for (String index : updatedIndexes) {
-                    if (index.contains(createIndexName)) {
-                        indexCreated = true;
-                        vegsoIndexName = index;
+            for (String index : indexes) {
+                String[] indexParts = index.split("-");
+                int length = indexParts.length;
+                if (length >= 3 && indexParts[length - 1].equalsIgnoreCase("index") && indexParts[length - 2].equalsIgnoreCase(tableName)) {
+                    String[] indexAttributes = Arrays.copyOfRange(indexParts, 1, length - 2);
+                    if (Arrays.equals(indexAttributes, desiredAttributes)) {
+                        isThereAnIndex = true;
+                        matchedIndexName = index;
                         break;
                     }
                 }
-                if (!indexCreated) {
-                    Thread.sleep(1000);
-                }
             }
 
-            List<String[]> rows = mongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, vegsoIndexName, filter);
-            mongoDBHandler.close();
-            return rows;
+            if (isThereAnIndex) {
+                FindIterable<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                if (result != null) {
+                    for (Document doc : result) {
+                        set.add(doc);
+                    }
+                }
+            } else {
+                String createIndexName = tableName + attributeName.toUpperCase();
+
+                String command = "CREATE INDEX " + createIndexName + " ON " + tableName + " ( " + attributeName + " );";
+                createIndex(command, out);
+                StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
+                MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
+                FindIterable<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                if (result != null) {
+                    for (Document doc : result) {
+                        set.add(doc);
+                    }
+                }
+            }
+            sets.add(set);
         }
+
+        set = new HashSet<>(sets.getFirst());
+        List<List<String>> resultList = new ArrayList<>();
+        for (int j = 1; j < sets.size(); j++) {
+            resultList.add(intersect(set, sets.get(j)));
+        }
+
+        if(sets.size()==1){
+            resultList.add(intersect(set, set));
+        }
+
+        return resultList;
     }
+
+    public static List<String> intersect(Collection<Document> set1, Collection<Document> set2) {
+        Collection<Document> smallerSet;
+        Collection<Document> largerSet;
+
+        if (set1.size() <= set2.size()) {
+            smallerSet = set1;
+            largerSet = set2;
+        } else {
+            smallerSet = set2;
+            largerSet = set1;
+        }
+        Set<String> finalIntersection = new HashSet<>();
+
+        for (Document doc1 : smallerSet) {
+            List<String> ertekList1 = splitErtek(doc1.getString("ertek"));
+
+            Set<String> tempIntersection = new HashSet<>();
+            for (Document doc2 : largerSet) {
+                List<String> ertekList2 = splitErtek(doc2.getString("ertek"));
+                Set<String> currentIntersection = new HashSet<>(ertekList1);
+                currentIntersection.retainAll(ertekList2);
+                tempIntersection.addAll(currentIntersection);
+            }
+            finalIntersection.addAll(tempIntersection);
+        }
+
+        return new ArrayList<>(finalIntersection);
+    }
+
+    private static List<String> splitErtek(String ertek) {
+        if (ertek == null || ertek.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(ertek.split(";"));
+    }
+
 
     private static String constructIndexName(String attributeName, String tableName) {
         StringBuilder indexNameBuilder = new StringBuilder();
@@ -630,7 +685,7 @@ public class Server extends Thread {
             currentDatabase = databaseName;
             System.out.println("Using database: " + databaseName);
             out.println("> Using database: " + databaseName);
-            out.println("DBFORQUERY "+databaseName);
+            out.println("DBFORQUERY " + databaseName);
         } else {
             System.out.println("Database not found: " + databaseName);
             out.println("> Database " + "'" + databaseName + "'" + " does not exist. Make sure you entered the name correctly.");
@@ -1217,7 +1272,6 @@ public class Server extends Thread {
         databases.get(currentDatabase).addTable(table);
 
 
-
         JSONObject tableObj = new JSONObject();
         tableObj.put("table_name", tableName);
 
@@ -1528,7 +1582,6 @@ public class Server extends Thread {
         } finally {
             mongoDBHandler.close();
         }
-
 
 
     }
