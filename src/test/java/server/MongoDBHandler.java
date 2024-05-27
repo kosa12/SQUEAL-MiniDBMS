@@ -29,15 +29,15 @@ public class MongoDBHandler {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
     /**
-                 Isten, áldd meg a magyart
-                Jó kedvvel, bőséggel,
-                Nyújts feléje védő kart,
-                Ha küzd ellenséggel;
-                Bal sors akit régen tép,
-                Hozz rá víg esztendőt,
-                Megbünhödte már e nép
-                A multat s jövendőt!
-            */
+     Isten, áldd meg a magyart
+     Jó kedvvel, bőséggel,
+     Nyújts feléje védő kart,
+     Ha küzd ellenséggel;
+     Bal sors akit régen tép,
+     Hozz rá víg esztendőt,
+     Megbünhödte már e nép
+     A multat s jövendőt!
+     */
     public void insertDocument(String databaseName, String collectionName, Document document) {
 
 
@@ -95,12 +95,32 @@ public class MongoDBHandler {
 
 
     public List<String> getAllCollections(String databaseName) {
-        List<String> collections = new ArrayList<>();
-        MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
-        for (String collection : iterable) {
-            collections.add(collection);
+        int maxRetries = 25;
+        int attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
+                List<String> collections = new ArrayList<>();
+                for (String collection : iterable) {
+                    collections.add(collection);
+                }
+                return collections;
+            } catch (Exception e) {
+                System.err.println("An error occurred while retrieving collections (attempt " + (attempt + 1) + "): " + e.getMessage());
+                attempt++;
+                if (attempt >= maxRetries) {
+                    System.err.println("Failed to retrieve collections after " + maxRetries + " attempts.");
+                } else {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
         }
-        return collections;
+        return new ArrayList<>();
     }
 
     public boolean indexExists(String databaseName, String indexName) {
@@ -169,33 +189,6 @@ public class MongoDBHandler {
         }
 
         return result;
-    }
-
-    private boolean filterIsNumber(Bson filter) {
-        String filterValue = filter.toString();
-        return isInteger(filterValue.trim());
-    }
-
-    private boolean isInteger(String str) {
-        try {
-            if (str.endsWith("}")) {
-                str = str.substring(0, str.length() - 1);
-            }
-            String[] parts = str.split(",");
-            Integer numericValue = null;
-            for (String part : parts) {
-                String trimmedPart = part.trim();
-                if (trimmedPart.startsWith("value=")) {
-                    numericValue = Integer.parseInt(trimmedPart.substring(6));
-                    break;
-                }
-            }
-
-            return numericValue != null;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-
     }
 
 

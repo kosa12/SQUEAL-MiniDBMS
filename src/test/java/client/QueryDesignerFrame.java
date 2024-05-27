@@ -361,11 +361,35 @@ public class QueryDesignerFrame extends JFrame {
             super.paintComponent(g);
             for (String conn : fkConnectedTables) {
                 String[] parts = conn.split(" ");
-                Point p1 = tablePositions.get(parts[0]);
-                Point p2 = tablePositions.get(parts[1]);
-                if (p1 != null && p2 != null) {
+
+                JTable table1 = getTableByName(parts[0],panel);
+                JTable table2 = getTableByName(parts[1],panel);
+                if (table1 != null && table2 != null) {
+                    Point p1 = table1.getLocationOnScreen();
+                    Point p2 = table2.getLocationOnScreen();
+                    // System.out.println(p1.x + " | " + p1.y + " <> " + p2.x + " | " + p2.y);
                     g.setColor(Color.BLACK);
-                    g.drawLine(p1.x, p1.y, p2.x, p2.y);
+                    g.drawLine(p1.x - table1.getWidth(),p1.y - 160, p2.x - table2.getWidth() ,p2.y - 160);
+
+                }
+            }
+        }
+
+    }
+
+    private JTable getTableByName(String searchedTable,JPanel panel){
+
+        Component[] components = panel.getComponents();
+        for (Component component : components) {
+            if (component instanceof JScrollPane) {
+                JScrollPane scrollPane = (JScrollPane) component;
+                Component viewportView = scrollPane.getViewport().getView();
+                if (viewportView instanceof JTable) {
+                    JTable table = (JTable) viewportView;
+                    if(table.getName().equals(searchedTable)){
+                        return table;
+                    }
+
                 }
             }
         }
