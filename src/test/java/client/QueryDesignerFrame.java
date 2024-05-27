@@ -29,6 +29,7 @@ public class QueryDesignerFrame extends JFrame {
     private int padding;
     private Map<String, List<String>> selectedItems;
     private List<String> fkConnectedTables;
+    private Map<String, Point> tablePositions;
 
     public QueryDesignerFrame(List<String> jCheckBoxes, String currentdatabase) {
         this.checkBoxes = jCheckBoxes;
@@ -37,6 +38,7 @@ public class QueryDesignerFrame extends JFrame {
         panel.setLayout(null);
         panel.setBackground(new Color(239, 240, 243));
         fkConnectedTables = new ArrayList<>();
+        tablePositions = new HashMap<>();
         this.setLayout(new BorderLayout());
 
         this.padding = 10;
@@ -141,27 +143,28 @@ public class QueryDesignerFrame extends JFrame {
             rowHeight = aux * 20 + 25 ;
             maxHeight = Math.max(maxHeight, rowHeight);
 
+            int newX, newY;
             if (i > 0 && panel.getComponentCount() > 0) {
                 Component lastComponent = panel.getComponent(panel.getComponentCount() - 1);
+                int lastX = lastComponent.getX();
                 int lastY = lastComponent.getY();
                 int lastHeight = lastComponent.getHeight();
-                if (lastY + lastHeight + rowHeight > panel.getHeight()) {
-                    int newX = 0;
-                    int newY = lastY + lastHeight + padding;
-                    scrollPane.setBounds(newX, newY, 300, rowHeight);
+                if (lastX + 300 + padding > panel.getWidth()) {
+                    newX = 0;
+                    newY = lastY + lastHeight + padding;
                 } else {
-                    int newX = (i % 3) * 350;
-                    int newY = lastY;
-                    scrollPane.setBounds(newX, newY, 300, rowHeight);
+                    newX = lastX + 300 + padding;
+                    newY = lastY;
                 }
             } else {
-                // First table
-                int newX = 0;
-                int newY = 0;
-                scrollPane.setBounds(newX, newY, 300, rowHeight);
+                newX = 0;
+                newY = 0;
             }
 
+            scrollPane.setBounds(newX, newY, 300, rowHeight);
             panel.add(scrollPane);
+
+            tablePositions.put(table.getName(), new Point(newX + 150, newY + rowHeight / 2));
 
             int finalI = i;
             model.addTableModelListener(new TableModelListener() {
@@ -190,7 +193,7 @@ public class QueryDesignerFrame extends JFrame {
                 }
             });
 
-
+            int finalRowHeight = rowHeight;
             MouseAdapter mouseAdapter = new MouseAdapter() {
                 private Point initialClick;
                 private JComponent parent;
@@ -219,8 +222,8 @@ public class QueryDesignerFrame extends JFrame {
                     int Y = thisY + yMoved;
 
                     parent.setLocation(X, Y);
+                    tablePositions.put(table.getName(), new Point(X + 150, Y + finalRowHeight / 2));
                     panel.repaint();
-
                 }
             };
 
@@ -229,7 +232,6 @@ public class QueryDesignerFrame extends JFrame {
         }
         panel.setPreferredSize(new Dimension(panel.getWidth(), maxHeight));
     }
-
 
     private void updateTextArea() {
         List<String> selectedColumns = selectedItems
@@ -243,7 +245,7 @@ public class QueryDesignerFrame extends JFrame {
         String selectedColumnsString = String.join(", ", selectedColumns);
         String fromTableName = "";
         if(!selectedTables.isEmpty()){
-            fromTableName = selectedTables.getFirst();
+            fromTableName = selectedTables.get(0);
         }
 
         List<String> connections = getForeignKeyConnections("src/test/java/databases/" + currentdb + ".json", currentdb, selectedTables, fromTableName, fkConnectedTables);
@@ -353,45 +355,19 @@ public class QueryDesignerFrame extends JFrame {
         return connections;
     }
 
-
     private class TablePanel extends JPanel{
         @Override
         protected void paintComponent(Graphics g){
             super.paintComponent(g);
             for (String conn : fkConnectedTables) {
                 String[] parts = conn.split(" ");
-                JTable table1 = getTableByName(parts[0],panel);
-                JTable table2 = getTableByName(parts[1],panel);
-                if (table1 != null && table2 != null) {
-                    Point p1 = table1.getLocationOnScreen();
-                    Point p2 = table2.getLocationOnScreen();
-
+                Point p1 = tablePositions.get(parts[0]);
+                Point p2 = tablePositions.get(parts[1]);
+                if (p1 != null && p2 != null) {
                     g.setColor(Color.BLACK);
-                    g.drawLine(p1.x - table1.getWidth()/2,p1.y - table1.getHeight(), p2.x - table2.getWidth()/2 ,p2.y-table2.getHeight());
-
+                    g.drawLine(p1.x, p1.y, p2.x, p2.y);
                 }
             }
         }
-
-
     }
-
-    private JTable getTableByName(String searchedTable,JPanel panel){
-
-        Component[] components = panel.getComponents();
-        for (Component component : components) {
-            if (component instanceof JScrollPane) {
-                JScrollPane scrollPane = (JScrollPane) component;
-                Component viewportView = scrollPane.getViewport().getView();
-                if (viewportView instanceof JTable) {
-                    JTable table = (JTable) viewportView;
-                    if(table.getName().equals(searchedTable)){
-                        return table;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
 }
