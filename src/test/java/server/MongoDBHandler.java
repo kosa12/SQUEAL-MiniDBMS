@@ -21,8 +21,7 @@ public class MongoDBHandler {
     private static final Object lock = new Object();
     private static String databaseName1;
     private static String collectionName1;
-
-
+    private static MongoDBHandler instance;
     public MongoDBHandler() {
         mongoClient = MongoClients.create("mongodb://localhost:27017");
     }
@@ -93,14 +92,43 @@ public class MongoDBHandler {
 
 
     public List<String> getAllCollections(String databaseName) {
-        List<String> collections = new ArrayList<>();
-        MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
-        for (String collection : iterable) {
-            collections.add(collection);
+        int maxRetries = 15;
+        int attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                MongoIterable<String> iterable = mongoClient.getDatabase(databaseName).listCollectionNames();
+                List<String> collections = new ArrayList<>();
+                for (String collection : iterable) {
+                    collections.add(collection);
+                }
+                return collections;
+            } catch (Exception e) {
+                System.err.println("An error occurred while retrieving collections (attempt " + (attempt + 1) + "): " + e.getMessage());
+                attempt++;
+                if (attempt >= maxRetries) {
+                    System.err.println("Failed to retrieve collections after " + maxRetries + " attempts.");
+                } else {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
         }
-        return collections;
+        return new ArrayList<>();
     }
-
+    public static MongoDBHandler getInstance() {
+        if (instance == null) {
+            synchronized (MongoDBHandler.class) {
+                if (instance == null) {
+                    instance = new MongoDBHandler();
+                }
+            }
+        }
+        return instance;
+    }
     public boolean indexExists(String databaseName, String indexName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         for (String name : database.listCollectionNames()) {

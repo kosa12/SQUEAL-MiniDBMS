@@ -195,7 +195,7 @@ public class Server extends Thread {
                             return;
                         }
 
-                        out.println(command);
+                        //out.println(command);
 
                         String[] parts = command.trim().split("\\s+");
                         if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
@@ -481,7 +481,7 @@ public class Server extends Thread {
 
         String indexName = constructIndexName(attributeName, tableName);
 
-        List<String> indexes = getRelevantCollections(tableName, mongoDBHandler);
+        List<String> indexes = getRelevantCollections(tableName);
         boolean isThereAnIndex = false;
         String matchedIndexName = "";
 
@@ -516,7 +516,7 @@ public class Server extends Thread {
             String vegsoIndexName = "";
             boolean indexCreated = false;
             while (!indexCreated) {
-                List<String> updatedIndexes = getRelevantCollections(tableName, mongoDBHandler);
+                List<String> updatedIndexes = getRelevantCollections(tableName);
                 for (String index : updatedIndexes) {
                     if (index.contains(createIndexName)) {
                         indexCreated = true;
@@ -755,12 +755,12 @@ public class Server extends Thread {
         mongoDBHandler.close();
         updateIndexes(tableName, values, out, primaryKeyValue);
 
-        out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
+        //out.println("> Row inserted/updated into MongoDB collection: " + collectionName);
     }
 
     private static void updateIndexes(String tableName, String[] values, PrintWriter out, String primaryKeyValue) {
-        MongoDBHandler mongoDBHandler = new MongoDBHandler();
-        List<String> relevantCollections = getRelevantCollections(tableName, mongoDBHandler);
+        MongoDBHandler mongoDBHandler = MongoDBHandler.getInstance();
+        List<String> relevantCollections = getRelevantCollections(tableName);
 
         List<List<String>> attributeNamesList = new ArrayList<>();
 
@@ -837,7 +837,8 @@ public class Server extends Thread {
         mongoDBHandler.close();
     }
 
-    private static List<String> getRelevantCollections(String tableName, MongoDBHandler mongoDBHandler) {
+    private static List<String> getRelevantCollections(String tableName) {
+        MongoDBHandler mongoDBHandler = new MongoDBHandler();
         List<String> relevantCollections = new ArrayList<>();
         String indexSuffix = "-" + tableName + "-index";
         for (String collection : mongoDBHandler.getAllCollections(currentDatabase)) {
@@ -845,6 +846,7 @@ public class Server extends Thread {
                 relevantCollections.add(collection);
             }
         }
+        mongoDBHandler.close();
         return relevantCollections;
     }
 
@@ -876,7 +878,7 @@ public class Server extends Thread {
 
         MongoDBHandler mongoDBHandler = new MongoDBHandler();
         long deletedCount = mongoDBHandler.deleteDocumentByPK(currentDatabase, tableName, primaryKeyValue);
-        List<String> relevantCollections = getRelevantCollections(tableName, mongoDBHandler);
+        List<String> relevantCollections = getRelevantCollections(tableName);
 
 
         Table table = databases.get(currentDatabase).getTable(tableName);
