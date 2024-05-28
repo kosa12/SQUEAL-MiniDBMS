@@ -10,9 +10,11 @@ import java.awt.event.MouseEvent;
 public class OurNode extends DefaultMutableTreeNode {
     private final String currentDatabase;
     private final Client client;
+    private static JTextArea clientOutput;
 
-    public OurNode(Object userObject, String currentDatabase, Client client) {
+    public OurNode(Object userObject, String currentDatabase, Client client, JTextArea clientOutput) {
         super(userObject);
+        this.clientOutput = clientOutput;
         this.currentDatabase = currentDatabase;
         this.client = client;
     }
@@ -46,7 +48,7 @@ public class OurNode extends DefaultMutableTreeNode {
                 System.out.println("Visual Editor - selected: " + name);
                 System.out.println("Current Database: " + currentDatabase);
 
-                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name, currentDatabase, client);
+                VisualEditorFrame visualEditorFrame = new VisualEditorFrame(name, currentDatabase, client, clientOutput);
             });
             popupMenu.add(menuItem);
             popupMenu.show(component, x, y);

@@ -207,8 +207,6 @@ public class Client_GUI extends JFrame {
         //////////////////////////
 
 
-        fileExplorer = new FileExplorer(client);
-        fileExplorer.setPreferredSize(new Dimension(175,3000));
         //this.add(fileExplorer);
 
 
@@ -232,7 +230,7 @@ public class Client_GUI extends JFrame {
 
         JScrollPane qScrollPane = new JScrollPane(querry);
         qScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        qScrollPane.setPreferredSize(new Dimension(1350,400));
+        qScrollPane.setPreferredSize(new Dimension(1700,440));
         jPanel.add(qScrollPane);
 
 
@@ -247,11 +245,15 @@ public class Client_GUI extends JFrame {
 
         output.setEditable(false);
 
+        fileExplorer = new FileExplorer(client, output);
+        fileExplorer.setPreferredSize(new Dimension(175,3000));
+
+
         client.setOutputTextArea(output);
 
         JScrollPane oScrollPane = new JScrollPane(output);
         oScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        oScrollPane.setPreferredSize(new Dimension(1350,400));
+        oScrollPane.setPreferredSize(new Dimension(1700,440));
         jPanel.add(oScrollPane);
 
         //////////////////////////////////////

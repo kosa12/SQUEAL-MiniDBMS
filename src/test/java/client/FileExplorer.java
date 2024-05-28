@@ -22,12 +22,13 @@ public class FileExplorer extends JPanel {
     private final JButton matyasButton;
     private final JButton krisztiButton;
     private String currentDatabase;
-
+    private JTextArea clientOutput;
     private Client client;
 
-    public FileExplorer(Client client) {
+    public FileExplorer(Client client, JTextArea output) {
+        this.clientOutput = output;
         this.setPreferredSize(new Dimension(175,1000));
-        root = new OurNode("databases", currentDatabase, client);
+        root = new OurNode("databases", currentDatabase, client,clientOutput);
 
         File rootDirectory = new File("src/test/java/databases/");
         addFiles(root, rootDirectory);
@@ -83,7 +84,7 @@ public class FileExplorer extends JPanel {
                     continue;
                 } else {
                     String nodeName = file.isDirectory() ? file.getName() : file.getName().replace(".json", "");
-                    OurNode node = new OurNode(nodeName, currentDatabase, client);
+                    OurNode node = new OurNode(nodeName, currentDatabase, client, clientOutput);
                     parentNode.add(node);
                     if (file.isDirectory()) {
                         addFiles(node, file);
@@ -104,7 +105,7 @@ public class FileExplorer extends JPanel {
             String[] tables = getTablesFromDatabase(databaseFile);
             if (tables != null) {
                 for (String tableName : tables) {
-                    node.add(new OurNode(tableName, currentDatabase, client));
+                    node.add(new OurNode(tableName, currentDatabase, client, clientOutput));
                 }
             }
             ((DefaultTreeModel) tree.getModel()).reload(node);

@@ -984,7 +984,7 @@ public class Server extends Thread {
                                 if (attributeJson.containsKey("is_referenced_by_fk")) {
                                     JSONArray referencedByFkArray = (JSONArray) attributeJson.get("is_referenced_by_fk");
                                     if (!referencedByFkArray.isEmpty()) {
-                                        out.println("> Error: Cannot delete row because it is referenced by another table.");
+                                        out.println("> Error: Cannot delete row (error: 405) because it is referenced by another table.");
                                         return true;
                                     }
                                 }
