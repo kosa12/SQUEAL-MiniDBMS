@@ -21,12 +21,13 @@ public class VisualEditorFrame extends JFrame {
     private final JButton delSelRow;
     private final JButton insertNewRow;
     private final Client client;
-
+    private JTextArea clientOutput;
     private final JButton exit;
 
-    public VisualEditorFrame(String tableName, String databaseName, Client client) {
+    public VisualEditorFrame(String tableName, String databaseName, Client client, JTextArea clientOutput) {
         this.clickedTableName = tableName;
         this.currentDatabase = databaseName;
+        this.clientOutput = clientOutput;
         this.client = client;
 
         panel = new JPanel();
@@ -113,11 +114,15 @@ public class VisualEditorFrame extends JFrame {
         if (row != -1) {
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             String primaryKeyValue = (String) model.getValueAt(row, 0);
-            model.removeRow(row);
             String useCommand = "USE " + currentDatabase + ";";
             client.sendMessage(useCommand);
             String command = "DELETE FROM " + clickedTableName + " WHERE _id=" + primaryKeyValue + ";";
             client.sendMessage(command);
+
+            if(!clientOutput.getText().contains("(error: 405)")){
+                model.removeRow(row);
+            }
+
         } else {
             JOptionPane.showMessageDialog(null, "Please select a row to delete.");
         }
