@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 import static server.Server.getIsItEnd;
@@ -174,15 +176,23 @@ public class MongoDBHandler {
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
         // Parse condition
-        String[] parts = condition.split("\\s+");
-        if (parts.length != 3) {
+        Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
+        Matcher matcher = pattern.matcher(condition);
+        List<String> parts = new ArrayList<>();
+
+        while (matcher.find()) {
+            parts.add(matcher.group(1) != null ? matcher.group(1) : matcher.group());
+        }
+
+
+        if (parts.size() != 3) {
             System.err.println("Invalid condition format. Expected format: <field> <operator> <value>");
             return result;
         }
 
-        String field = parts[0];
-        String operator = parts[1];
-        String value = parts[2];
+        String field = parts.get(0);
+        String operator = parts.get(1);
+        String value = parts.get(2);
 
         Bson filter = createFilter(field, operator, value);
         if (filter == null) {
@@ -200,8 +210,13 @@ public class MongoDBHandler {
             System.out.println("Using aggregation pipeline with filter: " + filter.toBsonDocument(Document.class, database.getCodecRegistry()));
             convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
         } else {
-            System.out.println("Using simple filter: " + filter.toBsonDocument(Document.class, database.getCodecRegistry()));
-            convertedDocuments = collection.find(filter).into(new ArrayList<>());
+            List<Bson> pipeline = List.of(
+                    Aggregates.addFields(new Field<>("convertedId", new Document("$toString", "$_id"))),
+                    Aggregates.match(createFilter("convertedId", operator, value))
+            );
+
+            System.out.println("Using aggregation pipeline with filter: " + filter.toBsonDocument(Document.class, database.getCodecRegistry()));
+            convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
         }
 
         System.out.println("Documents found: " + convertedDocuments.size());

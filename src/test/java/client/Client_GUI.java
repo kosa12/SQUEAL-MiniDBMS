@@ -230,7 +230,7 @@ public class Client_GUI extends JFrame {
 
         JScrollPane qScrollPane = new JScrollPane(querry);
         qScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        qScrollPane.setPreferredSize(new Dimension(1700,440));
+        qScrollPane.setPreferredSize(new Dimension(1400,440));
         jPanel.add(qScrollPane);
 
 
@@ -253,7 +253,7 @@ public class Client_GUI extends JFrame {
 
         JScrollPane oScrollPane = new JScrollPane(output);
         oScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        oScrollPane.setPreferredSize(new Dimension(1700,440));
+        oScrollPane.setPreferredSize(new Dimension(1400,440));
         jPanel.add(oScrollPane);
 
         //////////////////////////////////////

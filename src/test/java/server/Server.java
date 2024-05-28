@@ -15,6 +15,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -472,14 +474,21 @@ public class Server extends Thread {
     private static List<List<String>> fetchRowsWithFilter(String tableName, List<String> conditions, PrintWriter out, List<String> attributeNamesList) throws InterruptedException {
         ArrayList<Set<Document>> sets = new ArrayList<>(conditions.size());
         Set<Document> set;
+        Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
         for (String condition : conditions) {
             set = new HashSet<>();
-            String[] parts = condition.split("\\s+");
-            if (parts.length != 3) {
+            Matcher matcher = pattern.matcher(condition);
+            List<String> parts = new ArrayList<>();
+
+            while (matcher.find()) {
+                parts.add(matcher.group(1) != null ? matcher.group(1) : matcher.group());
+            }
+
+            if (parts.size() != 3) {
                 out.println("> Invalid condition: " + condition);
                 return null;
             }
-            String attributeName = parts[0];
+            String attributeName = parts.getFirst();
 
             String indexName = constructIndexName(attributeName, tableName);
             MongoDBHandler mongoDBHandler = new MongoDBHandler();
@@ -623,7 +632,7 @@ public class Server extends Thread {
     private static void printAttributeHeaderOut(PrintWriter out, String[] selectedAttributes) {
         out.println();
         for (String attribute : selectedAttributes) {
-            out.print("\t  " + attribute + "\t  ");
+            out.print(attribute + "\t\t");
         }
         out.println();
     }
@@ -634,7 +643,7 @@ public class Server extends Thread {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         for (Object attributeObj : attributes) {
             JSONObject attribute = (JSONObject) attributeObj;
-            out.print("\t  " + attribute.get("name") + "\t  ");
+            out.print(attribute.get("name") + "\t");
         }
 
         out.println();
