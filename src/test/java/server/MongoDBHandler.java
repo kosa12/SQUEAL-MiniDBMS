@@ -1,13 +1,10 @@
 package server;
 
 import com.mongodb.client.*;
-import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.*;
 import org.bson.Document;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -170,6 +167,53 @@ public class MongoDBHandler {
         return collection.deleteOne(query).getDeletedCount();
     }
 
+    public List<String> indexedNestedLoopJoin(String databaseName, String leftCollectionName, String rightCollectionName, int leftIndex, int rightIndex) {
+        List<String> result = new ArrayList<>();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> leftCollection = database.getCollection(leftCollectionName);
+        MongoCollection<Document> rightCollection = database.getCollection(rightCollectionName);
+
+        for (Document leftDoc : leftCollection.find()) {
+            String joinKey;
+            if(leftIndex==0){
+                joinKey = leftDoc.getString("_id");
+            } else {
+                String ertekLeft = leftDoc.getString("ertek");
+                String[] leftValues = ertekLeft.split(";");
+                joinKey = leftValues[leftIndex-1];
+            }
+
+            for(Document rightDoc : rightCollection.find()) {
+                String rightKey;
+               if(rightIndex==0){
+                   rightKey = rightDoc.getString("_id");
+               }
+               else {
+                   String ertekRight = rightDoc.getString("ertek");
+                   String[] rightValues = ertekRight.split(";");
+                   rightKey = rightValues[rightIndex-1];
+               }
+
+                if (joinKey.equals(rightKey)) {
+                    String ertekLeft = leftDoc.getString("ertek");
+                    String ertekIDLeft = leftDoc.getString("_id");
+                    String ertekRight = rightDoc.getString("ertek");
+                    String ertekIDRight = rightDoc.getString("_id");
+
+                    String resultString = ertekIDLeft + ";" + ertekLeft + ";" + ertekIDRight + ";" + ertekRight;
+
+                    result.add(resultString);
+                }
+            }
+
+        }
+
+        return result;
+    }
+
+
+
+
     public static List<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition) {
         List<Document> result = new ArrayList<>();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -191,6 +235,10 @@ public class MongoDBHandler {
         }
 
         String field = parts.get(0);
+        if (field.contains(".")) {
+            field = field.split("\\.")[1];
+        }
+
         String operator = parts.get(1);
         String value = parts.get(2);
 
@@ -360,6 +408,8 @@ public class MongoDBHandler {
     }
 
     public void close() {
-        mongoClient.close();
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
     }
 }

@@ -28,7 +28,6 @@ public class ClientMain {
                 message = appendEndAfterInserts(message);
                 client.sendMessage(message);
 
-
                 SwingUtilities.invokeLater(() -> outputTextArea.setText(""));
             });
 
