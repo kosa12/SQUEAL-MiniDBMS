@@ -8,7 +8,7 @@ import java.util.Random;
 public class TestWritingScript {
     public static void main(String[] args) {
         int numInserts = 100000;
-        String tableName = "asd";
+        String tableName = "books";
         String filePath = "src/test/java/tester/scripts/insert_script_asd.txt";
 
         generateInsertScript(numInserts, tableName, filePath);
@@ -26,9 +26,8 @@ public class TestWritingScript {
             for (int i = 0; i < numInserts; i++) {
                 int id = i + 1;
                 String name = "Name_" + id;
-                int age = random.nextInt(100) + 1;
-
-                String insertStatement = "INSERT INTO " + tableName + " (id, name, age) VALUES (" + id + ", '" + name + "', " + age + ");";
+                int authorId = random.nextInt(1000) + 1;
+                String insertStatement = "INSERT INTO " + tableName + " (books_bookid, books_title, authors_authorid) VALUES (" + id + ", '" + name + "', " + authorId +");";
                 writer.write(insertStatement);
                 writer.newLine();
             }

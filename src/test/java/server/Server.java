@@ -1,7 +1,6 @@
 package server;
 
 import com.mongodb.client.*;
-
 import com.mongodb.client.model.Filters;
 import data.Attribute;
 import data.Database;
@@ -24,8 +23,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
-
-import javax.print.Doc;
 
 public class Server extends Thread {
     private ServerSocket serverSocket;
@@ -215,7 +212,7 @@ public class Server extends Thread {
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("DELETE") && parts[1].equalsIgnoreCase("FROM")) {
                             deleteRow(command, out);
                         } else if (parts.length >= 4 && parts[0].equalsIgnoreCase("SELECT")) {
-                            selectFromTable(command, out);
+                            handleSelect(command, out);
                         } else if (parts.length >= 3) {
                             String operation = parts[0].toLowerCase();
                             String objectType = parts[1].toLowerCase();
@@ -258,8 +255,10 @@ public class Server extends Thread {
             }
             clientSocket.close();
             out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -267,7 +266,7 @@ public class Server extends Thread {
         return isItEnd;
     }
 
-    private static void selectFromTable(String command, PrintWriter out) throws InterruptedException {
+    private static void handleSelect(String command, PrintWriter out) throws InterruptedException {
         String[] parts = command.split("\\s+");
 
         String tableName = extractTableName(parts);
@@ -287,69 +286,410 @@ public class Server extends Thread {
             return;
         }
 
-        if (parts[1].equals("*")) {
-            if (command.toLowerCase().contains("where")) {
-                // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
-                List<String> conditions = extractConditions(command);
-                List<String> attributeNamesList = extractAttributeNamesALL(parts);
+        List<String> attributeNamesList = extractAttributeNames(parts);
+        if (attributeNamesList.isEmpty()) {
+            out.println("> No attributes selected.");
+            return;
+        }
+
+        if (command.toLowerCase().contains("join")) {
+            List<String> tableNames = new ArrayList<>();
+            List<String[]> joinConditions = new ArrayList<>();
+
+            command = command.toLowerCase();
+            String[] joinParts = command.split("join");
+
+            if (joinParts.length < 2) {
+                out.println("Invalid JOIN syntax.");
+                return;
+            }
+
+            String initialPart = joinParts[0];
+            String[] initialParts = initialPart.split("from");
+
+            if (initialParts.length != 2) {
+                out.println("Invalid FROM syntax.");
+                return;
+            }
+
+            String leftTable = initialParts[1].trim();
+            tableNames.add(leftTable);
+
+            for (int i = 1; i < joinParts.length; i++) {
+                String[] onParts = joinParts[i].split("on");
+
+                if (onParts.length != 2) {
+                    out.println("Invalid ON syntax.");
+                    return;
+                }
+
+                String rightTable = onParts[0].trim();
+                tableNames.add(rightTable);
+
+                String[] onCondition = onParts[1].split("=", 2);
+
+                if (onCondition.length != 2) {
+                    out.println("Invalid ON condition.");
+                    return;
+                }
+
+                String leftCondition = onCondition[0].trim();
+                String rightCondition = onCondition[1].trim();
+
+                int whereIndex = rightCondition.toLowerCase().indexOf("where");
+                if (whereIndex != -1) {
+                    rightCondition = rightCondition.substring(0, whereIndex).trim();
+                }
+
+                joinConditions.add(new String[]{leftCondition, rightCondition});
+
+            }
+
+            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            List<String> joinedDocs = new ArrayList<>();
+            List<Integer> docSizes = new ArrayList<>();
+            List<List<String>> joinedDocsList = new ArrayList<>();
+            for (int i = 0; i < joinConditions.size(); i++) {
+                String leftField = joinConditions.get(i)[0];
+                String rightField = joinConditions.get(i)[1];
+
+                leftTable = leftField.split("\\.")[0];
+                String rightTable = rightField.split("\\.")[0];
+                List<String> partialJoinedDocs2 = new ArrayList<>();
+
+                partialJoinedDocs2.add(leftTable);
+                partialJoinedDocs2.add(rightTable);
+                joinedDocsList.add(partialJoinedDocs2);
+
+                String leftAttribute = leftField.split("\\.")[1];
+                String rightAttributepre = rightField.split("\\.")[1];
+                int whereIndex = rightAttributepre.toLowerCase().indexOf("where");
+                String rightAttribute = (whereIndex == -1) ? rightField.split("\\.")[1] : rightField.split("\\.")[1].substring(0, whereIndex).trim();
+
+                JSONObject tableFormatLeft = readTableFormat(currentDatabase, leftTable, out);
+                JSONObject tableFormatRight = readTableFormat(currentDatabase, rightTable, out);
+
+                int indexofjoinKeyLeft = getIndexKey(tableFormatLeft, leftAttribute);
+                int indexofjoinKeyRight = getIndexKey(tableFormatRight, rightAttribute);
+
+                List<String> partialJoinedDocs = mongoDBHandler.indexedNestedLoopJoin(currentDatabase, leftTable, rightTable, indexofjoinKeyLeft, indexofjoinKeyRight);
+                if (i == 0) {
+                    joinedDocs = partialJoinedDocs;
+                    String temp = joinedDocs.getFirst();
+                    String[] tempArray = temp.split(";");
+                    docSizes.add(tempArray.length);
+                } else {
+                    String temp = partialJoinedDocs.getFirst();
+                    String[] tempArray = temp.split(";");
+                    docSizes.add(tempArray.length);
+                    joinedDocs = mergeJoinResults(joinedDocs, partialJoinedDocs, indexofjoinKeyLeft, indexofjoinKeyRight);
+
+                }
+            }
+
+            System.out.println("JoinedDocs ended ");
+
+            List<String> attributeNamesListJOIN = new ArrayList<>();
+            for(List<String> joinedDocsListPart : joinedDocsList){
+                for(String table : joinedDocsListPart){
+                    JSONObject tableFormat2 = readTableFormat(currentDatabase, table, out);
+                    JSONArray attributes = (JSONArray) tableFormat2.get("attributes");
+                    for (Object attributeObj : attributes) {
+                        JSONObject attribute = (JSONObject) attributeObj;
+                        attributeNamesListJOIN.add(attribute.get("name").toString());
+                    }
+                }
+            }
+
+            List<JSONObject> tables = new ArrayList<>();
+            for (String tableName2 : tableNames) {
+                tables.add(readTableFormat(currentDatabase, tableName2, out));
+            }
+
+            if (attributeNamesList.getFirst().equals("*")) {
+                List<String> attributes = new ArrayList<>();
+                for (JSONObject table : tables) {
+                    JSONArray attributesArray = (JSONArray) table.get("attributes");
+                    for (Object attributeObj : attributesArray) {
+                        JSONObject attribute = (JSONObject) attributeObj;
+                        attributes.add(attribute.get("name").toString());
+                    }
+                }
+
+                if (command.toLowerCase().contains("where")) {
+                    List<String> conditions = extractConditions(command);
+                    if (conditions != null) {
+                        List<List<String>> rows = fetchRowsWithFilterJoin(conditions, out, attributeNamesList);
+                        System.out.println("Rows ended ");
+                        if (rows != null && !rows.isEmpty()) {
+                            List<String> result = buildResult(rows, joinedDocs);
+                            printAttributeHeaderOut(out, attributes.toArray(new String[0]));
+                            printAllJoinRows(out, result);
+                        }
+                    }
+                } else {
+                    System.out.println("Rows ended ");
+                    printAttributeHeaderOut(out, attributes.toArray(new String[0]));
+                    printAllJoinRows(out, joinedDocs);
+                }
+            } else {
+                if (command.toLowerCase().contains("where")) {
+                    HashMap<String, Integer> TableAttributeNumber = new HashMap<>();
+                    for (JSONObject table : tables) {
+                        JSONArray attributes = (JSONArray) table.get("attributes");
+                        String tableName2 = table.get("table_name").toString();
+                        int attributeCount = attributes.size();
+                        TableAttributeNumber.put(tableName2, attributeCount);
+                    }
+
+                    List<Integer> indexes = new ArrayList<>();
+                    List<String> attributes = new ArrayList<>();
+                    for (String attribute : attributeNamesList) {
+                        String[] partsAttribute = attribute.split("\\.");
+                        String tableNameAttribute = partsAttribute[0];
+                        String attributeName = partsAttribute[1];
+                        JSONObject tableFormatforAttribute = readTableFormat(currentDatabase, tableNameAttribute, out);
+
+                        if (tableFormatforAttribute == null) {
+                            out.println("> Table format not found for table '" + tableNameAttribute + "'");
+                            return;
+                        }
+
+                        int index = attributeNamesListJOIN.indexOf(attributeName);
+
+                        indexes.add(index);
+                        attributes.add(attributeName);
+                    }
+
+                    List<String> conditions = extractConditions(command);
+                    List<List<String>> rows = fetchRowsWithFilterJoin(conditions, out, attributeNamesList);
+                    System.out.println("Rows ended ");
+                    List<Integer> indexes2 = new ArrayList<>();
+                    for(String condition : conditions){
+                        String[] partsAttribute = condition.split(" ");
+                        String tableNameAttribute = partsAttribute[0];
+                        tableNameAttribute = tableNameAttribute.split("\\.")[0];
+
+                        JSONObject tableFormatforAttribute = readTableFormat(currentDatabase, tableNameAttribute, out);
+
+                        if (tableFormatforAttribute == null) {
+                            out.println("> Table format not found for table '" + tableNameAttribute + "'");
+                            return;
+                        }
+
+                        JSONArray attributes2 = (JSONArray) tableFormatforAttribute.get("attributes");
+                        for (Object attributeObj : attributes2) {
+                            JSONObject attribute = (JSONObject) attributeObj;
+                            String attributeName = attribute.get("name").toString();
+                            Boolean isPK = (Boolean) attribute.get("is_pk");
+                            if (isPK) {
+                                int index = attributeNamesListJOIN.indexOf(attributeName);
+                                indexes2.add(index);
+                            }
+                        }
+                    }
+                    if (rows != null && !rows.isEmpty()) {
+                        List<String> result2 = buildResult(rows, joinedDocs, indexes2);
+                        List<List<String>> result = new ArrayList<>();
+                        for (String doc : result2) {
+                            String[] docString = doc.split(";");
+                            List<String> row = new ArrayList<>();
+                            for (int index : indexes) {
+                                row.add(docString[index]);
+                            }
+                            result.add(row);
+                        }
+
+                        printAttributeHeaderOut(out, attributes.toArray(new String[0]));
+                        printAllJoinRows2(out, result);
+                    }
+                } else {
+                    List<Integer> indexes = new ArrayList<>();
+                    List<String> attributes = new ArrayList<>();
+
+                    for (String attribute : attributeNamesList) {
+                        String[] partsAttribute = attribute.split("\\.");
+                        String tableNameAttribute = partsAttribute[0];
+                        String attributeName = partsAttribute[1];
+                        JSONObject tableFormatforAttribute = readTableFormat(currentDatabase, tableNameAttribute, out);
+
+                        if (tableFormatforAttribute == null) {
+                            out.println("> Table format not found for table '" + tableNameAttribute + "'");
+                            return;
+                        }
+
+                        int index = attributeNamesListJOIN.indexOf(attributeName);
+
+                        indexes.add(index);
+                        attributes.add(attributeName);
+                    }
+
+                    System.out.println("Rows ended ");
+                    printAttributeHeaderOut(out, attributes.toArray(new String[0]));
+                    out.println("Rows ended ");
+                    out.println();
+                    for (String doc : joinedDocs) {
+                        String[] docString = doc.split(";");
+                        List<String> result = new ArrayList<>();
+                        for (int index : indexes) {
+
+                            result.add(docString[index]);
+                        }
+                        out.println("|\t" + String.join("\t|\t", result) + "\t|");
+                    }
+                }
+            }
+            mongoDBHandler.close();
+        } else {
+            if (parts[1].equals("*")) {
+                if (command.toLowerCase().contains("where")) {
+                    // SELECT * FROM ETC WHERE LOREMIPSUM = lofasz;
+                    List<String> conditions = extractConditions(command);
+                    if (attributeNamesList.isEmpty()) {
+                        out.println("> No attributes selected.");
+                        return;
+                    }
+
+                    if (conditions != null) {
+                        List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
+                        System.out.println("Rows ended ");
+                        if (rows != null && !rows.isEmpty()) {
+                            List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
+                            printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
+                            printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
+                        }
+                    } else {
+                        out.println("> Invalid WHERE clause.");
+                    }
+
+
+                } else {
+                    // SELECT * FROM ETC;
+                    List<String[]> rows = fetchAllRowsFromTable(tableName, out);
+                    System.out.println("Rows ended ");
+                    if (rows != null) {
+                        printSelectedRowsALL(out, tableFormat, rows);
+                    }
+                }
+            } else {
                 if (attributeNamesList.isEmpty()) {
                     out.println("> No attributes selected.");
                     return;
                 }
 
-                if (conditions != null) {
-                    List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
-                    if (rows != null && !rows.isEmpty()) {
-                        List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
-                        printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
-                        printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
+                if (command.toLowerCase().contains("where")) {
+                    // SELECT A, B, C FROM ETC WHERE LOREMIPSUM = lofasz;
+                    List<String> conditions = extractConditions(command);
+                    if (conditions != null) {
+                        List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
+                        if (rows != null && !rows.isEmpty()) {
+                            List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
+                            printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
+                            printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
+                        }
+                    } else {
+                        out.println("> Invalid WHERE clause.");
                     }
                 } else {
-                    out.println("> Invalid WHERE clause.");
-                }
-            } else {
-                // SELECT * FROM ETC;
-                List<String[]> rows = fetchAllRowsFromTable(tableName, out);
-                if (rows != null) {
-                    printSelectedRowsALL(out, tableFormat, rows);
-                }
-            }
-        } else {
-            List<String> attributeNamesList = extractAttributeNames(parts);
-            if (attributeNamesList.isEmpty()) {
-                out.println("> No attributes selected.");
-                return;
-            }
-
-            if (command.toLowerCase().contains("where")) {
-                // SELECT A, B, C FROM ETC WHERE LOREMIPSUM = lofasz;
-                List<String> conditions = extractConditions(command);
-                if (conditions != null) {
-                    List<List<String>> rows = fetchRowsWithFilter(tableName, conditions, out, attributeNamesList);
-                    if (rows != null && !rows.isEmpty()) {
-                        List<String[]> ertekek = getErtekekfromTable(out, rows, tableName);
+                    // SELECT A, B, C FROM ETC;
+                    List<String[]> rows = fetchAllRowsFromTable(tableName, out);
+                    if (rows != null) {
                         printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
-                        printSelectedRows(out, tableFormat, ertekek, attributeNamesList.toArray(new String[0]));
+                        printSelectedRows(out, tableFormat, rows, attributeNamesList.toArray(new String[0]));
                     }
-                } else {
-                    out.println("> Invalid WHERE clause.");
-                }
-            } else {
-                // SELECT A, B, C FROM ETC;
-                List<String[]> rows = fetchAllRowsFromTable(tableName, out);
-                if (rows != null) {
-                    printAttributeHeaderOut(out, attributeNamesList.toArray(new String[0]));
-                    printSelectedRows(out, tableFormat, rows, attributeNamesList.toArray(new String[0]));
                 }
             }
         }
+    }
+
+    private static List<String> mergeJoinResults(List<String> previousJoinedDocs, List<String> newJoinedDocs, int indexofjoinKeyLeft, int indexofjoinKeyRight) {
+        List<String> mergedResults = new ArrayList<>();
+
+        for (String prevDoc : previousJoinedDocs) {
+            String[] prevFields = prevDoc.split(";");
+            for (String newDoc : newJoinedDocs) {
+                String[] newFields = newDoc.split(";");
+                if (prevFields[indexofjoinKeyLeft].equals(newFields[indexofjoinKeyRight])) {
+                    String mergedDoc = String.join(";", prevFields) + ";" + String.join(";", Arrays.copyOfRange(newFields, 0, newFields.length));
+                    mergedResults.add(mergedDoc);
+                }
+            }
+        }
+
+        return mergedResults;
+    }
+
+    private static List<String> buildResult(List<List<String>> rows, List<String> joinedDocs, List<Integer> indexes) {
+        List<String> result = new ArrayList<>();
+        for (String doc : joinedDocs) {
+            String[] docString = doc.split(";");
+            for (List<String> row : rows) {
+                for (String rowXD : row) {
+                    for(int index : indexes){
+                        if (docString[index].equals(rowXD)) {
+                            result.add(doc);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private static List<String> buildResult(List<List<String>> rows, List<String> joinedDocs) {
+        List<String> result = new ArrayList<>();
+        for (String doc : joinedDocs) {
+            String[] docString = doc.split(";");
+            for (List<String> row : rows) {
+                for (String rowXD : row) {
+                    if (docString[0].equals(rowXD)) {
+                        result.add(doc);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+
+    private static void printAllJoinRows(PrintWriter out, List<String> joinedDocs) {
+        if (joinedDocs.isEmpty()) {
+            out.println("No matching records found.");
+            return;
+        }
+
+        out.println();
+        for (String doc : joinedDocs) {
+            String[] docString = doc.split(";");
+            for (String docPart : docString) {
+                out.print(docPart);
+                for (int i = 0; i < 50 - docPart.length(); i++) {
+                    out.print(" ");
+                }
+            }
+            out.println();
+        }
+
+    }
+
+    private static void printAllJoinRows2(PrintWriter out, List<List<String>> joinedDocs) {
+        for (List<String> doc : joinedDocs) {
+            for (String docPart : doc) {
+                out.print(docPart);
+                for (int i = 0; i < 50 - docPart.length(); i++) {
+                    out.print(" ");
+                }
+            }
+            out.println();
+        }
+
     }
 
     private static List<String[]> getErtekekfromTable(PrintWriter out, List<List<String>> rows, String tableName) {
 
         List<String[]> ertekek = new ArrayList<>();
         for (List<String> row : rows) {
-            for(String rowXD : row){
+            for (String rowXD : row) {
                 String[] primaryKeys = new String[]{row.get(row.indexOf(rowXD))};
                 for (String primaryKey : primaryKeys) {
                     Document document = fetchDocumentByPrimaryKey(tableName, primaryKey);
@@ -403,40 +743,6 @@ public class Server extends Thread {
                     attributeNamesList.add(attributeName.trim());
                 }
             }
-        }
-        return attributeNamesList;
-    }
-
-    private static List<String> extractAttributeNamesALL(String[] parts) {
-        List<String> attributeNamesList = new ArrayList<>();
-        String path = "src/test/java/databases/" + currentDatabase + ".json";
-        JSONParser parser = new JSONParser();
-        try {
-            Object obj = parser.parse(new FileReader(path));
-            JSONArray databaseArray = (JSONArray) obj;
-
-            for (Object databaseObj : databaseArray) {
-                JSONObject databaseJson = (JSONObject) databaseObj;
-
-                JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
-                if (tablesArray != null) {
-                    for (Object tableObj : tablesArray) {
-                        JSONObject tableJson = (JSONObject) tableObj;
-                        String tableName = (String) tableJson.get("table_name");
-
-                        if (tableName.equals(parts[3])) {
-                            JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
-                            for (Object attributeObj : attributesArray) {
-                                JSONObject attributeJson = (JSONObject) attributeObj;
-                                String attributeName = (String) attributeJson.get("name");
-                                attributeNamesList.add(attributeName);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
         }
         return attributeNamesList;
     }
@@ -544,7 +850,91 @@ public class Server extends Thread {
             resultList.add(intersect(set, sets.get(j)));
         }
 
-        if(sets.size()==1){
+        if (sets.size() == 1) {
+            resultList.add(intersect(set, set));
+        }
+
+        return resultList;
+    }
+
+    private static List<List<String>> fetchRowsWithFilterJoin(List<String> conditions, PrintWriter out, List<String> attributeNamesList) throws InterruptedException {
+        ArrayList<Set<Document>> sets = new ArrayList<>(conditions.size());
+        Set<Document> set;
+        Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
+        for (String condition : conditions) {
+            set = new HashSet<>();
+            Matcher matcher = pattern.matcher(condition);
+            List<String> parts = new ArrayList<>();
+
+            while (matcher.find()) {
+                parts.add(matcher.group(1) != null ? matcher.group(1) : matcher.group());
+            }
+
+            if (parts.size() != 3) {
+                out.println("> Invalid condition: " + condition);
+                return null;
+            }
+
+            String attributeName = parts.getFirst();
+            String[] partsAttribute = attributeName.split("\\.");
+            String tableName = partsAttribute[0];
+            attributeName = partsAttribute[1];
+
+            String indexName = constructIndexName(attributeName, tableName);
+            MongoDBHandler mongoDBHandler = new MongoDBHandler();
+            List<String> indexes = getRelevantCollections(tableName, mongoDBHandler);
+
+            boolean isThereAnIndex = false;
+            String matchedIndexName = "";
+
+            String[] desiredParts = indexName.split("-");
+            int desiredLength = desiredParts.length;
+            String[] desiredAttributes = Arrays.copyOfRange(desiredParts, 0, desiredLength - 2);
+
+            for (String index : indexes) {
+                String[] indexParts = index.split("-");
+                int length = indexParts.length;
+                if (length >= 3 && indexParts[length - 1].equalsIgnoreCase("index") && indexParts[length - 2].equalsIgnoreCase(tableName)) {
+                    String[] indexAttributes = Arrays.copyOfRange(indexParts, 1, length - 2);
+                    if (Arrays.equals(indexAttributes, desiredAttributes)) {
+                        isThereAnIndex = true;
+                        matchedIndexName = index;
+                        break;
+                    }
+                }
+            }
+
+            if (isThereAnIndex) {
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                if (result != null) {
+                    for (Document doc : result) {
+                        set.add(doc);
+                    }
+                }
+            } else {
+                String createIndexName = tableName + attributeName.toUpperCase();
+
+                String command = "CREATE INDEX " + createIndexName + " ON " + tableName + " ( " + attributeName + " );";
+                createIndex(command, out);
+                StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
+                MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                if (result != null) {
+                    for (Document doc : result) {
+                        set.add(doc);
+                    }
+                }
+            }
+            sets.add(set);
+        }
+
+        set = new HashSet<>(sets.getFirst());
+        List<List<String>> resultList = new ArrayList<>();
+        for (int j = 1; j < sets.size(); j++) {
+            resultList.add(intersect(set, sets.get(j)));
+        }
+
+        if (sets.size() == 1) {
             resultList.add(intersect(set, set));
         }
 
@@ -632,18 +1022,23 @@ public class Server extends Thread {
     private static void printAttributeHeaderOut(PrintWriter out, String[] selectedAttributes) {
         out.println();
         for (String attribute : selectedAttributes) {
-            out.print(attribute + "\t\t");
+            out.print(attribute);
+            for (int i = 0; i < 40 - attribute.length(); i++) {
+                out.print(" ");
+            }
         }
         out.println();
     }
-
 
     private static void printSelectedRowsALL(PrintWriter out, JSONObject tableFormat, List<String[]> rows) {
         out.println();
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         for (Object attributeObj : attributes) {
             JSONObject attribute = (JSONObject) attributeObj;
-            out.print(attribute.get("name") + "\t");
+            out.print(attribute.get("name"));
+            for (int i = 0; i < 40 - attribute.size(); i++) {
+                out.print(" ");
+            }
         }
 
         out.println();
@@ -676,6 +1071,44 @@ public class Server extends Thread {
             }
         }
     }
+
+    private static boolean checkTableForReference(JSONArray currentDatabaseJson, String tableName, String attributeName, String referencedTable, String referencedAttribute) {
+        for (Object databaseObj : currentDatabaseJson) {
+            JSONObject databaseJson = (JSONObject) databaseObj;
+            JSONArray tablesArray = (JSONArray) databaseJson.get("tables");
+
+            if (tablesArray != null) {
+                for (Object tableObj : tablesArray) {
+                    JSONObject tableJson = (JSONObject) tableObj;
+                    if (tableJson.get("table_name").equals(tableName)) {
+                        JSONArray attributesArray = (JSONArray) tableJson.get("attributes");
+
+                        if (attributesArray != null) {
+                            for (Object attributeObj : attributesArray) {
+                                JSONObject attributeJson = (JSONObject) attributeObj;
+                                if (attributeJson.get("name").equals(attributeName) && attributeJson.containsKey("is_referenced_by_fk")) {
+                                    JSONArray referencesFk = (JSONArray) attributeJson.get("is_referenced_by_fk");
+
+                                    for (Object refObj : referencesFk) {
+                                        JSONObject refJson = (JSONObject) refObj;
+                                        String refTable = (String) refJson.get("fkTableName");
+                                        String refAttribute = (String) refJson.get("fkName");
+
+                                        if (refTable.equals(referencedTable) && refAttribute.equals(referencedAttribute)) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 
     private static void handleUseDatabase(String databaseName, PrintWriter out) {
         Database db = databases.get(databaseName);
@@ -1852,7 +2285,4 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
-
 }
-
-
