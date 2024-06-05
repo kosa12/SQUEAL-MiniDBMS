@@ -11,9 +11,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -182,9 +179,7 @@ public class MongoDBHandler {
                 String[] rightValues = ertekRight.split(";");
                 rightKey = rightValues[rightIndex - 1];
             }
-
-
-            rightIndexMap.computeIfAbsent(rightKey, k -> new ArrayList<>()).add(rightDoc);
+            rightIndexMap.computeIfAbsent(rightKey, _ -> new ArrayList<>()).add(rightDoc);
         }
 
         for (Document leftDoc : leftCollection.find()) {
