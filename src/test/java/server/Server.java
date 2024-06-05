@@ -296,8 +296,8 @@ public class Server extends Thread {
             List<String> tableNames = new ArrayList<>();
             List<String[]> joinConditions = new ArrayList<>();
 
-            command = command.toLowerCase();
-            String[] joinParts = command.split("join");
+
+            String[] joinParts = command.toLowerCase().split("join");
 
             if (joinParts.length < 2) {
                 out.println("Invalid JOIN syntax.");
@@ -749,7 +749,8 @@ public class Server extends Thread {
 
     private static List<String> extractConditions(String command) {
         List<String> conditions = new ArrayList<>();
-        int whereIndex = command.toLowerCase().indexOf("where");
+        String commandLower = command.toLowerCase();
+        int whereIndex = commandLower.indexOf("where");
         if (whereIndex == -1) {
             return conditions;
         }
@@ -821,7 +822,7 @@ public class Server extends Thread {
             }
 
             if (isThereAnIndex) {
-                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -834,7 +835,7 @@ public class Server extends Thread {
                 createIndex(command, out);
                 StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
                 MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
-                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -877,6 +878,10 @@ public class Server extends Thread {
 
             String attributeName = parts.getFirst();
             String[] partsAttribute = attributeName.split("\\.");
+            if(partsAttribute.length != 2){
+                out.println("> Invalid attribute name: " + attributeName + ", add the tablename before the attribute name: 'tablename.attribute'");
+                return null;
+            }
             String tableName = partsAttribute[0];
             attributeName = partsAttribute[1];
 
@@ -905,7 +910,7 @@ public class Server extends Thread {
             }
 
             if (isThereAnIndex) {
-                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -918,7 +923,7 @@ public class Server extends Thread {
                 createIndex(command, out);
                 StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
                 MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
-                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -1971,6 +1976,8 @@ public class Server extends Thread {
                 out.println("> One or more columns not found in table format for table '" + tableName + "'");
                 return;
             }
+
+            out.println("> Creating index for " + records.size() + " records in table '" + tableName + "'....");
 
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");
