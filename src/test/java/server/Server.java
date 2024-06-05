@@ -23,8 +23,11 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Server extends Thread {
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
     private ServerSocket serverSocket;
     private static HashMap<String, Database> databases = new HashMap<>();
     private static String currentDatabase;
@@ -296,8 +299,7 @@ public class Server extends Thread {
             List<String> tableNames = new ArrayList<>();
             List<String[]> joinConditions = new ArrayList<>();
 
-            command = command.toLowerCase();
-            String[] joinParts = command.split("join");
+            String[] joinParts = command.toLowerCase().split("join");
 
             if (joinParts.length < 2) {
                 out.println("Invalid JOIN syntax.");
@@ -352,6 +354,9 @@ public class Server extends Thread {
             for (int i = 0; i < joinConditions.size(); i++) {
                 String leftField = joinConditions.get(i)[0];
                 String rightField = joinConditions.get(i)[1];
+                if (rightField.contains("group by")) {
+                    rightField = rightField.split("group by")[0].trim();
+                }
 
                 leftTable = leftField.split("\\.")[0];
                 String rightTable = rightField.split("\\.")[0];
@@ -390,8 +395,8 @@ public class Server extends Thread {
             System.out.println("JoinedDocs ended ");
 
             List<String> attributeNamesListJOIN = new ArrayList<>();
-            for(List<String> joinedDocsListPart : joinedDocsList){
-                for(String table : joinedDocsListPart){
+            for (List<String> joinedDocsListPart : joinedDocsList) {
+                for (String table : joinedDocsListPart) {
                     JSONObject tableFormat2 = readTableFormat(currentDatabase, table, out);
                     JSONArray attributes = (JSONArray) tableFormat2.get("attributes");
                     for (Object attributeObj : attributes) {
@@ -424,13 +429,24 @@ public class Server extends Thread {
                         if (rows != null && !rows.isEmpty()) {
                             List<String> result = buildResult(rows, joinedDocs);
                             printAttributeHeaderOut(out, attributes.toArray(new String[0]));
-                            printAllJoinRows(out, result);
+                            if (command.toLowerCase().contains("group by")) {
+                                String groupbySection = command.split("group by")[1].trim();
+                                groupby(groupbySection, out, result, attributeNamesList, attributes);
+                            } else {
+                                printAllJoinRows(out, result);
+                            }
+
                         }
                     }
                 } else {
                     System.out.println("Rows ended ");
                     printAttributeHeaderOut(out, attributes.toArray(new String[0]));
-                    printAllJoinRows(out, joinedDocs);
+                    if (command.toLowerCase().contains("group by")) {
+                        String groupbySection = command.split("group by")[1].trim();
+                        groupby(groupbySection, out, joinedDocs, attributeNamesList, attributes);
+                    } else {
+                        printAllJoinRows(out, joinedDocs);
+                    }
                 }
             } else {
                 if (command.toLowerCase().contains("where")) {
@@ -465,7 +481,7 @@ public class Server extends Thread {
                     List<List<String>> rows = fetchRowsWithFilterJoin(conditions, out, attributeNamesList);
                     System.out.println("Rows ended ");
                     List<Integer> indexes2 = new ArrayList<>();
-                    for(String condition : conditions){
+                    for (String condition : conditions) {
                         String[] partsAttribute = condition.split(" ");
                         String tableNameAttribute = partsAttribute[0];
                         tableNameAttribute = tableNameAttribute.split("\\.")[0];
@@ -501,7 +517,21 @@ public class Server extends Thread {
                         }
 
                         printAttributeHeaderOut(out, attributes.toArray(new String[0]));
-                        printAllJoinRows2(out, result);
+
+                        if (command.toLowerCase().contains("group by")) {
+                            String groupbySection = command.split("group by")[1].trim();
+
+                            List<String> newResult = new ArrayList<>();
+                            for (List<String> row : result) {
+                                String rowString = String.join(";", row);
+                                newResult.add(rowString);
+                            }
+
+                            groupby(groupbySection, out, newResult, attributeNamesList, attributes);
+                        } else {
+                            printAllJoinRows2(out, result);
+                        }
+
                     }
                 } else {
                     List<Integer> indexes = new ArrayList<>();
@@ -528,15 +558,21 @@ public class Server extends Thread {
                     printAttributeHeaderOut(out, attributes.toArray(new String[0]));
                     out.println("Rows ended ");
                     out.println();
-                    for (String doc : joinedDocs) {
-                        String[] docString = doc.split(";");
-                        List<String> result = new ArrayList<>();
-                        for (int index : indexes) {
 
-                            result.add(docString[index]);
+                    if (command.toLowerCase().contains("group by")) {
+
+                    } else {
+                        for (String doc : joinedDocs) {
+                            String[] docString = doc.split(";");
+                            List<String> result = new ArrayList<>();
+                            for (int index : indexes) {
+
+                                result.add(docString[index]);
+                            }
+                            out.println("|\t" + String.join("\t|\t", result) + "\t|");
                         }
-                        out.println("|\t" + String.join("\t|\t", result) + "\t|");
                     }
+
                 }
             }
             mongoDBHandler.close();
@@ -602,6 +638,85 @@ public class Server extends Thread {
         }
     }
 
+    private static void groupby(String groupbySection, PrintWriter out, List<String> result, List<String> attributeNamesList, List<String> attributes) {
+        String[] groupByAttributes = groupbySection.split(",");
+
+        int correctAttribute = 0;
+        for (String groupByAttribute : groupByAttributes) {
+            groupByAttribute = groupByAttribute.trim().replaceAll(" ", "");
+            int index = attributeNamesList.indexOf(groupByAttribute);
+            if (index != -1) {
+                correctAttribute++;
+            }
+        }
+
+        List<List<String>> allGroups = new ArrayList<>();
+        allGroups.add(result);
+
+        if (correctAttribute != groupByAttributes.length && !attributeNamesList.getFirst().equals("*")) {
+            out.println("> Invalid group by attributes.");
+            return;
+        }
+
+        if (attributeNamesList.getFirst().equals("*")) {
+            for (String groupByAttribute : groupByAttributes) {
+                groupByAttribute = groupByAttribute.trim().replaceAll(" ", "");
+                String[] groupByAttributes2 = groupByAttribute.split("\\.");
+                if (groupByAttributes2.length != 2) {
+                    out.println("> Invalid group by attributes.");
+                    return;
+                }
+                groupByAttribute = groupByAttributes2[1];
+                if(!attributes.contains(groupByAttribute)) {
+                    out.println("> Invalid group by attributes.");
+                    return;
+                }
+            }
+        }
+
+        for (String groupByAttribute : groupByAttributes) {
+            String groupByAttributeTrimmed = groupByAttribute.split("\\.")[1].trim();
+            int index = attributes.indexOf(groupByAttributeTrimmed);
+            allGroups = getNewGroups(allGroups, index);
+        }
+
+
+
+        for (List<String> group : allGroups) {
+            for (String attribute : attributes) {
+                for (int i = 0; i < 50 - attribute.length(); i++) {
+                    out.print("-");
+                }
+            }
+            printAllJoinRows(out, group);
+        }
+
+    }
+
+    private static List<List<String>> getNewGroups(List<List<String>> allGroups, int index) {
+        List<List<String>> newGroups = new ArrayList<>();
+        for (List<String> group : allGroups) {
+            Set<String> uniqueValues = new HashSet<>();
+            for (String doc : group) {
+                String[] docString = doc.split(";");
+                uniqueValues.add(docString[index]);
+            }
+
+            for (String uniqueValue : uniqueValues) {
+                List<String> newGroup = new ArrayList<>();
+                for (String doc : group) {
+                    String[] docString = doc.split(";");
+                    if (docString[index].equals(uniqueValue)) {
+                        newGroup.add(doc);
+                    }
+                }
+                newGroups.add(newGroup);
+            }
+        }
+        return newGroups;
+    }
+
+
     private static List<String> mergeJoinResults(List<String> previousJoinedDocs, List<String> newJoinedDocs, int indexofjoinKeyLeft, int indexofjoinKeyRight) {
         List<String> mergedResults = new ArrayList<>();
 
@@ -625,7 +740,7 @@ public class Server extends Thread {
             String[] docString = doc.split(";");
             for (List<String> row : rows) {
                 for (String rowXD : row) {
-                    for(int index : indexes){
+                    for (int index : indexes) {
                         if (docString[index].equals(rowXD)) {
                             result.add(doc);
                         }
@@ -749,7 +864,8 @@ public class Server extends Thread {
 
     private static List<String> extractConditions(String command) {
         List<String> conditions = new ArrayList<>();
-        int whereIndex = command.toLowerCase().indexOf("where");
+        String commandLower = command.toLowerCase();
+        int whereIndex = commandLower.indexOf("where");
         if (whereIndex == -1) {
             return conditions;
         }
@@ -758,6 +874,9 @@ public class Server extends Thread {
         String[] conditionsArray = conditionString.split("\\s+and\\s+");
 
         for (String condition : conditionsArray) {
+            if (condition.contains("group by")) {
+                condition = condition.split("group by")[0].trim();
+            }
             conditions.add(condition.trim());
         }
 
@@ -821,7 +940,7 @@ public class Server extends Thread {
             }
 
             if (isThereAnIndex) {
-                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -834,7 +953,7 @@ public class Server extends Thread {
                 createIndex(command, out);
                 StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
                 MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
-                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -877,6 +996,10 @@ public class Server extends Thread {
 
             String attributeName = parts.getFirst();
             String[] partsAttribute = attributeName.split("\\.");
+            if (partsAttribute.length != 2) {
+                out.println("> Invalid attribute name: " + attributeName + ", add the tablename before the attribute name: 'tablename.attribute'");
+                return null;
+            }
             String tableName = partsAttribute[0];
             attributeName = partsAttribute[1];
 
@@ -905,7 +1028,7 @@ public class Server extends Thread {
             }
 
             if (isThereAnIndex) {
-                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition);
+                List<Document> result = MongoDBHandler.fetchRowsWithFilterFromIndex(currentDatabase, matchedIndexName, condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -918,7 +1041,7 @@ public class Server extends Thread {
                 createIndex(command, out);
                 StringBuilder indexNameBuilder = new StringBuilder(createIndexName + "-" + attributeName + "-" + tableName + "-index");
                 MongoDBHandler mongoDBHandler1 = new MongoDBHandler();
-                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition);
+                List<Document> result = mongoDBHandler1.fetchRowsWithFilterFromIndex(currentDatabase, indexNameBuilder.toString(), condition, out);
                 if (result != null) {
                     for (Document doc : result) {
                         set.add(doc);
@@ -1971,6 +2094,8 @@ public class Server extends Thread {
                 out.println("> One or more columns not found in table format for table '" + tableName + "'");
                 return;
             }
+
+            out.println("> Creating index for " + records.size() + " records in table '" + tableName + "'....");
 
             for (Document record : records) {
                 String primaryKeyValue = record.getString("_id");

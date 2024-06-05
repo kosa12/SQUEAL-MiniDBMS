@@ -11,14 +11,9 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.io.PrintWriter;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +48,7 @@ public class MongoDBHandler {
         MongoCollection<Document> collection = database.getCollection(collectionName);
 
         synchronized (lock) {
-            int BATCH_SIZE = 1000;
+            int BATCH_SIZE = 10000;
             if (documentList.size() < BATCH_SIZE) {
                 documentList.add(document);
                 databaseName1 = databaseName;
@@ -173,48 +168,48 @@ public class MongoDBHandler {
         MongoCollection<Document> leftCollection = database.getCollection(leftCollectionName);
         MongoCollection<Document> rightCollection = database.getCollection(rightCollectionName);
 
+
+        Map<String, List<Document>> rightIndexMap = new HashMap<>();
+        for (Document rightDoc : rightCollection.find()) {
+            String rightKey;
+            if (rightIndex == 0) {
+                rightKey = rightDoc.getString("_id");
+            } else {
+                String ertekRight = rightDoc.getString("ertek");
+                String[] rightValues = ertekRight.split(";");
+                rightKey = rightValues[rightIndex - 1];
+            }
+            rightIndexMap.computeIfAbsent(rightKey, _ -> new ArrayList<>()).add(rightDoc);
+        }
+
         for (Document leftDoc : leftCollection.find()) {
             String joinKey;
-            if(leftIndex==0){
+            if (leftIndex == 0) {
                 joinKey = leftDoc.getString("_id");
             } else {
                 String ertekLeft = leftDoc.getString("ertek");
                 String[] leftValues = ertekLeft.split(";");
-                joinKey = leftValues[leftIndex-1];
+                joinKey = leftValues[leftIndex - 1];
             }
 
-            for(Document rightDoc : rightCollection.find()) {
-                String rightKey;
-               if(rightIndex==0){
-                   rightKey = rightDoc.getString("_id");
-               }
-               else {
-                   String ertekRight = rightDoc.getString("ertek");
-                   String[] rightValues = ertekRight.split(";");
-                   rightKey = rightValues[rightIndex-1];
-               }
-
-                if (joinKey.equals(rightKey)) {
+            List<Document> matchingRightDocs = rightIndexMap.get(joinKey);
+            if (matchingRightDocs != null) {
+                for (Document rightDoc : matchingRightDocs) {
                     String ertekLeft = leftDoc.getString("ertek");
                     String ertekIDLeft = leftDoc.getString("_id");
                     String ertekRight = rightDoc.getString("ertek");
                     String ertekIDRight = rightDoc.getString("_id");
 
                     String resultString = ertekIDLeft + ";" + ertekLeft + ";" + ertekIDRight + ";" + ertekRight;
-
                     result.add(resultString);
                 }
             }
-
         }
 
         return result;
     }
 
-
-
-
-    public static List<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition) {
+    public static List<Document> fetchRowsWithFilterFromIndex(String databaseName, String collectionName, String condition, PrintWriter out) {
         List<Document> result = new ArrayList<>();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
@@ -267,7 +262,7 @@ public class MongoDBHandler {
             convertedDocuments = collection.aggregate(pipeline).into(new ArrayList<>());
         }
 
-        System.out.println("Documents found: " + convertedDocuments.size());
+        out.println("Rows found: " + convertedDocuments.size());
         return convertedDocuments;
     }
 
