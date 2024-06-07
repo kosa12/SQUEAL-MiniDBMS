@@ -376,8 +376,12 @@ public class Server extends Thread {
 
                 int indexofjoinKeyLeft = getIndexKey(tableFormatLeft, leftAttribute);
                 int indexofjoinKeyRight = getIndexKey(tableFormatRight, rightAttribute);
-
+                long startTime = System.currentTimeMillis();
                 List<String> partialJoinedDocs = mongoDBHandler.indexedNestedLoopJoin(currentDatabase, leftTable, rightTable, indexofjoinKeyLeft, indexofjoinKeyRight);
+                long endTime = System.currentTimeMillis();
+                long elapsedTime = endTime - startTime;
+                double elapsedTimeInSeconds = elapsedTime / 1000.0;
+                out.println("Elapsed time: " + elapsedTimeInSeconds + " seconds");
                 if (i == 0) {
                     joinedDocs = partialJoinedDocs;
                     String temp = joinedDocs.getFirst();
@@ -526,7 +530,6 @@ public class Server extends Thread {
                                 String rowString = String.join(";", row);
                                 newResult.add(rowString);
                             }
-
                             groupby(groupbySection, out, newResult, attributeNamesList, attributes);
                         } else {
                             printAllJoinRows2(out, result);
@@ -560,7 +563,8 @@ public class Server extends Thread {
                     out.println();
 
                     if (command.toLowerCase().contains("group by")) {
-
+                        String groupbySection = command.split("group by")[1].trim();
+                        groupby(groupbySection, out, joinedDocs, attributeNamesList, attributes);
                     } else {
                         for (String doc : joinedDocs) {
                             String[] docString = doc.split(";");
@@ -667,7 +671,7 @@ public class Server extends Thread {
                     return;
                 }
                 groupByAttribute = groupByAttributes2[1];
-                if(!attributes.contains(groupByAttribute)) {
+                if (!attributes.contains(groupByAttribute)) {
                     out.println("> Invalid group by attributes.");
                     return;
                 }
@@ -679,7 +683,6 @@ public class Server extends Thread {
             int index = attributes.indexOf(groupByAttributeTrimmed);
             allGroups = getNewGroups(allGroups, index);
         }
-
 
 
         for (List<String> group : allGroups) {
@@ -1109,8 +1112,7 @@ public class Server extends Thread {
     }
 
 
-    private static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows, String[] selectedAttributes) {
-
+    public static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows, String[] selectedAttributes) {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
         Map<String, Integer> attributeIndices = new HashMap<>();
 
@@ -1121,20 +1123,30 @@ public class Server extends Thread {
 
         List<String[]> filteredRows = new ArrayList<>();
         for (String[] row : rows) {
-            String[] filteredRow = new String[selectedAttributes.length];
-            for (int i = 0; i < selectedAttributes.length; i++) {
-                int index = attributeIndices.getOrDefault(selectedAttributes[i], -1);
-                if (index != -1 && index < row.length) {
-                    filteredRow[i] = row[index];
-                } else {
-                    filteredRow[i] = "";
+            String[] filteredRow;
+
+            if (selectedAttributes[0].equals("*")) {
+                filteredRow = new String[attributes.size()];
+                for (int i = 0; i < attributes.size(); i++) {
+                    filteredRow[i] = i < row.length ? row[i] : "";
+                }
+            } else {
+                filteredRow = new String[selectedAttributes.length];
+                for (int i = 0; i < selectedAttributes.length; i++) {
+                    int index = attributeIndices.getOrDefault(selectedAttributes[i], -1);
+                    if (index != -1 && index < row.length) {
+                        filteredRow[i] = row[index];
+                    } else {
+                        filteredRow[i] = "";
+                    }
                 }
             }
             filteredRows.add(filteredRow);
         }
 
-        StringBuilder delimiter = new StringBuilder();
-        delimiter.append("-".repeat(Math.max(0, selectedAttributes.length * 40)));
+
+
+        String delimiter = "-".repeat(Math.max(0, (Math.max(selectedAttributes.length, attributes.size())) * 40));
         out.println(delimiter);
         for (String[] row : filteredRows) {
             out.println("|\t" + String.join("\t|\t", row) + "\t|");
