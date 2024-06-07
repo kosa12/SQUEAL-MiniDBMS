@@ -198,7 +198,7 @@ public class Server extends Thread {
                             return;
                         }
 
-                        out.println(command);
+
 
                         String[] parts = command.trim().split("\\s+");
                         if (parts.length == 2 && parts[0].equalsIgnoreCase("SHOW")) {
@@ -443,7 +443,7 @@ public class Server extends Thread {
                         }
                     }
                 } else {
-                    System.out.println("Rows ended ");
+
                     printAttributeHeaderOut(out, attributes.toArray(new String[0]));
                     if (command.toLowerCase().contains("group by")) {
                         String groupbySection = command.split("group by")[1].trim();
@@ -557,15 +557,15 @@ public class Server extends Thread {
                         attributes.add(attributeName);
                     }
 
-                    System.out.println("Rows ended ");
+                    out.println("Rows joined:" + joinedDocs.size());
                     printAttributeHeaderOut(out, attributes.toArray(new String[0]));
-                    out.println("Rows ended ");
                     out.println();
 
                     if (command.toLowerCase().contains("group by")) {
                         String groupbySection = command.split("group by")[1].trim();
                         groupby(groupbySection, out, joinedDocs, attributeNamesList, attributes);
                     } else {
+
                         for (String doc : joinedDocs) {
                             String[] docString = doc.split(";");
                             List<String> result = new ArrayList<>();
@@ -1068,29 +1068,28 @@ public class Server extends Thread {
     }
 
     public static List<String> intersect(Collection<Document> set1, Collection<Document> set2) {
-        Collection<Document> smallerSet;
-        Collection<Document> largerSet;
+        Collection<Document> smallerSet = set1.size() <= set2.size() ? set1 : set2;
+        Collection<Document> largerSet = set1.size() > set2.size() ? set1 : set2;
 
-        if (set1.size() <= set2.size()) {
-            smallerSet = set1;
-            largerSet = set2;
-        } else {
-            smallerSet = set2;
-            largerSet = set1;
+        Map<Document, Set<String>> ertekMap1 = new HashMap<>();
+        Map<Document, Set<String>> ertekMap2 = new HashMap<>();
+
+        for (Document doc : smallerSet) {
+            ertekMap1.put(doc, new HashSet<>(splitErtek(doc.getString("ertek"))));
         }
+
+        for (Document doc : largerSet) {
+            ertekMap2.put(doc, new HashSet<>(splitErtek(doc.getString("ertek"))));
+        }
+
         Set<String> finalIntersection = new HashSet<>();
 
-        for (Document doc1 : smallerSet) {
-            List<String> ertekList1 = splitErtek(doc1.getString("ertek"));
-
-            Set<String> tempIntersection = new HashSet<>();
-            for (Document doc2 : largerSet) {
-                List<String> ertekList2 = splitErtek(doc2.getString("ertek"));
+        for (Set<String> ertekList1 : ertekMap1.values()) {
+            for (Set<String> ertekList2 : ertekMap2.values()) {
                 Set<String> currentIntersection = new HashSet<>(ertekList1);
                 currentIntersection.retainAll(ertekList2);
-                tempIntersection.addAll(currentIntersection);
+                finalIntersection.addAll(currentIntersection);
             }
-            finalIntersection.addAll(tempIntersection);
         }
 
         return new ArrayList<>(finalIntersection);
@@ -1103,14 +1102,12 @@ public class Server extends Thread {
         return Arrays.asList(ertek.split(";"));
     }
 
-
     private static String constructIndexName(String attributeName, String tableName) {
         StringBuilder indexNameBuilder = new StringBuilder();
         indexNameBuilder.append(attributeName).append("-");
         indexNameBuilder.append(tableName).append("-index");
         return indexNameBuilder.toString();
     }
-
 
     public static void printSelectedRows(PrintWriter out, JSONObject tableFormat, List<String[]> rows, String[] selectedAttributes) {
         JSONArray attributes = (JSONArray) tableFormat.get("attributes");
@@ -1143,8 +1140,6 @@ public class Server extends Thread {
             }
             filteredRows.add(filteredRow);
         }
-
-
 
         String delimiter = "-".repeat(Math.max(0, (Math.max(selectedAttributes.length, attributes.size())) * 40));
         out.println(delimiter);
